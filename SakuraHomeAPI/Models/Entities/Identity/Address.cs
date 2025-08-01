@@ -11,9 +11,9 @@ namespace SakuraHomeAPI.Models.Entities.Identity
     /// User address entity
     /// </summary>
     [Table("Addresses")]
-    public class Address : AuditableEntity
+    public class Address : BaseEntity, IAuditable, ISoftDelete
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; } // Changed to Guid to match User
 
         [Required, MaxLength(100)]
         public string Name { get; set; }
@@ -44,6 +44,17 @@ namespace SakuraHomeAPI.Models.Entities.Identity
 
         [MaxLength(500)]
         public string Notes { get; set; }
+
+        // Audit properties (implementing IAuditable with int)
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public int? CreatedBy { get; set; }
+        public int? UpdatedBy { get; set; }
+
+        // Soft delete properties (implementing ISoftDelete with int)
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+        public int? DeletedBy { get; set; }
 
         // Navigation
         public virtual User User { get; set; }

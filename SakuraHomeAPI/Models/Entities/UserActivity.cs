@@ -20,7 +20,7 @@ namespace SakuraHomeAPI.Models.Entities
         [MaxLength(1000)]
         public string Details { get; set; } // JSON string for additional data
 
-        public Guid? RelatedEntityId { get; set; } // Product ID, Order ID, etc.
+        public int? RelatedEntityId { get; set; } // Product ID, Order ID, etc. - Changed from Guid? to int?
 
         [MaxLength(100)]
         public string RelatedEntityType { get; set; } // Product, Order, etc.

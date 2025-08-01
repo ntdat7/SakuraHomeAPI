@@ -18,7 +18,7 @@ namespace SakuraHomeAPI.Models.Entities.Orders
     {
         #region Basic Information
 
-        public int UserId { get; set; }
+        public Guid UserId { get; set; } // Changed to Guid to match User
 
         [Required, MaxLength(20)]
         public string OrderNumber { get; set; }

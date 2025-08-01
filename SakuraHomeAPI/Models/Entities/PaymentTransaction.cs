@@ -14,7 +14,7 @@ namespace SakuraHomeAPI.Models.Entities
         public new Guid? UserId { get; set; }
 
         [Required]
-        public Guid OrderId { get; set; }
+        public int OrderId { get; set; } // Changed from Guid to int to match Order.Id
 
         [Required, MaxLength(100)]
         public string TransactionId { get; set; }

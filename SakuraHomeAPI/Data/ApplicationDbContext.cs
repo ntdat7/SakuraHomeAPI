@@ -10,15 +10,17 @@ using SakuraHomeAPI.Models.Entities.Products;
 using SakuraHomeAPI.Models.Entities.Reviews;
 using SakuraHomeAPI.Models.Entities.UserCart;
 using SakuraHomeAPI.Models.Entities.UserWishlist;
-using SakuraHomeAPI.Models.Enums;
+using SakuraHomeAPI.Data;
 using System.Reflection;
 
 namespace SakuraHomeAPI.Data
 {
     /// <summary>
-    /// Application database context
+    /// Application database context with proper Guid support
     /// </summary>
-    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
+    public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid,
+        IdentityUserClaim<Guid>, IdentityUserRole<Guid>, IdentityUserLogin<Guid>,
+        IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -101,20 +103,24 @@ namespace SakuraHomeAPI.Data
             // Configure Identity tables
             ConfigureIdentityTables(builder);
 
-            // Configure indexes
+            // Configure indexes for performance
             ConfigureIndexes(builder);
 
-            // Configure relationships
+            // Configure entity relationships
             ConfigureRelationships(builder);
 
-            // Configure constraints
+            // Configure database constraints
             ConfigureConstraints(builder);
 
             // Configure value conversions
             ConfigureValueConversions(builder);
 
-            // Seed data
-            SeedMasterData(builder);
+            // Fix audit navigation properties for entities with mixed audit types
+            // These entities inherit from AuditableEntity (int-based) but have Guid foreign keys
+            ConfigureAuditNavigationProperties(builder);
+
+            // Seed master data using external seeder
+            DatabaseSeeder.SeedData(builder);
         }
 
         /// <summary>
@@ -122,7 +128,7 @@ namespace SakuraHomeAPI.Data
         /// </summary>
         private void ConfigureIdentityTables(ModelBuilder builder)
         {
-            // Rename Identity tables
+            // Rename Identity tables for better naming
             builder.Entity<User>().ToTable("Users");
             builder.Entity<IdentityRole<Guid>>().ToTable("Roles");
             builder.Entity<IdentityUserRole<Guid>>().ToTable("UserRoles");
@@ -131,24 +137,41 @@ namespace SakuraHomeAPI.Data
             builder.Entity<IdentityRoleClaim<Guid>>().ToTable("RoleClaims");
             builder.Entity<IdentityUserToken<Guid>>().ToTable("UserTokens");
 
-            // Configure User entity
+            // Configure User entity with indexes and relationships
             builder.Entity<User>(entity =>
             {
+                // Indexes for performance
                 entity.HasIndex(u => u.Email).IsUnique();
                 entity.HasIndex(u => u.PhoneNumber);
                 entity.HasIndex(u => u.CreatedAt);
                 entity.HasIndex(u => u.LastLoginAt);
                 entity.HasIndex(u => u.Status);
                 entity.HasIndex(u => u.Role);
+
+                // Configure self-referencing relationships for audit fields
+                entity.HasOne(u => u.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(u => u.CreatedBy)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(u => u.UpdatedByUser)
+                    .WithMany()
+                    .HasForeignKey(u => u.UpdatedBy)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(u => u.DeletedByUser)
+                    .WithMany()
+                    .HasForeignKey(u => u.DeletedBy)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
 
         /// <summary>
-        /// Configure database indexes for performance
+        /// Configure database indexes for optimal performance
         /// </summary>
         private void ConfigureIndexes(ModelBuilder builder)
         {
-            // Product indexes
+            // Product indexes for search and filtering
             builder.Entity<Product>(entity =>
             {
                 entity.HasIndex(p => p.SKU).IsUnique();
@@ -163,6 +186,7 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(p => p.IsFeatured);
                 entity.HasIndex(p => p.IsNew);
                 entity.HasIndex(p => p.IsBestseller);
+                // Composite indexes for common queries
                 entity.HasIndex(p => new { p.CategoryId, p.IsActive, p.IsDeleted });
                 entity.HasIndex(p => new { p.BrandId, p.IsActive, p.IsDeleted });
             });
@@ -184,7 +208,7 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(b => new { b.IsActive, b.IsDeleted });
             });
 
-            // Order indexes
+            // Order indexes for admin and user queries
             builder.Entity<Order>(entity =>
             {
                 entity.HasIndex(o => o.OrderNumber).IsUnique();
@@ -195,7 +219,7 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(o => o.CreatedAt);
             });
 
-            // Review indexes
+            // Review indexes for product pages
             builder.Entity<Review>(entity =>
             {
                 entity.HasIndex(r => r.ProductId);
@@ -206,28 +230,27 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(r => new { r.ProductId, r.IsApproved, r.IsActive, r.IsDeleted });
             });
 
-            // Translation indexes
+            // Translation indexes for multi-language support
             builder.Entity<Translation>(entity =>
             {
                 entity.HasIndex(t => new { t.EntityType, t.EntityId, t.FieldName, t.Language }).IsUnique();
                 entity.HasIndex(t => t.Language);
             });
 
-            // Cart indexes
+            // Cart and Wishlist indexes
             builder.Entity<CartItem>(entity =>
             {
                 entity.HasIndex(ci => ci.CartId);
                 entity.HasIndex(ci => new { ci.CartId, ci.ProductId, ci.ProductVariantId }).IsUnique();
             });
 
-            // Wishlist indexes
             builder.Entity<WishlistItem>(entity =>
             {
                 entity.HasIndex(wi => wi.WishlistId);
                 entity.HasIndex(wi => new { wi.WishlistId, wi.ProductId }).IsUnique();
             });
 
-            // Analytics indexes
+            // Analytics indexes for reporting
             builder.Entity<ProductView>(entity =>
             {
                 entity.HasIndex(pv => pv.ProductId);
@@ -252,7 +275,7 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(ua => new { ua.RelatedEntityType, ua.RelatedEntityId });
             });
 
-            // Inventory indexes
+            // Inventory tracking indexes
             builder.Entity<InventoryLog>(entity =>
             {
                 entity.HasIndex(il => il.ProductId);
@@ -270,7 +293,7 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(n => n.CreatedAt);
             });
 
-            // Contact message indexes
+            // System indexes
             builder.Entity<ContactMessage>(entity =>
             {
                 entity.HasIndex(cm => cm.UserId);
@@ -278,7 +301,6 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(cm => cm.CreatedAt);
             });
 
-            // System settings indexes
             builder.Entity<SystemSetting>(entity =>
             {
                 entity.HasIndex(ss => ss.Key).IsUnique();
@@ -305,7 +327,7 @@ namespace SakuraHomeAPI.Data
         }
 
         /// <summary>
-        /// Configure entity relationships
+        /// Configure entity relationships and foreign keys
         /// </summary>
         private void ConfigureRelationships(ModelBuilder builder)
         {
@@ -329,14 +351,13 @@ namespace SakuraHomeAPI.Data
                 .HasForeignKey(c => c.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Product variants
+            // Product variants and images
             builder.Entity<ProductVariant>()
                 .HasOne(pv => pv.Product)
                 .WithMany(p => p.Variants)
                 .HasForeignKey(pv => pv.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Product images
             builder.Entity<ProductImage>()
                 .HasOne(pi => pi.Product)
                 .WithMany(p => p.ProductImages)
@@ -375,7 +396,7 @@ namespace SakuraHomeAPI.Data
                 .HasForeignKey<Wishlist>(w => w.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Cart items
+            // Shopping cart relationships
             builder.Entity<CartItem>()
                 .HasOne(ci => ci.Cart)
                 .WithMany(c => c.CartItems)
@@ -388,7 +409,7 @@ namespace SakuraHomeAPI.Data
                 .HasForeignKey(ci => ci.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Wishlist items
+            // Wishlist relationships
             builder.Entity<WishlistItem>()
                 .HasOne(wi => wi.Wishlist)
                 .WithMany(w => w.WishlistItems)
@@ -512,20 +533,47 @@ namespace SakuraHomeAPI.Data
             builder.Entity<ProductTag>()
                 .HasOne(pt => pt.Product)
                 .WithMany(p => p.ProductTags)
-                .HasForeignKey(pt => pt.ProductId);
+                .HasForeignKey(pt => pt.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<ProductTag>()
                 .HasOne(pt => pt.Tag)
                 .WithMany(t => t.ProductTags)
-                .HasForeignKey(pt => pt.TagId);
+                .HasForeignKey(pt => pt.TagId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Review votes composite key
             builder.Entity<ReviewVote>()
                 .HasKey(rv => new { rv.ReviewId, rv.UserId });
+
+            builder.Entity<ReviewVote>()
+                .HasOne(rv => rv.Review)
+                .WithMany(r => r.ReviewVotes)
+                .HasForeignKey(rv => rv.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ReviewVote>()
+                .HasOne(rv => rv.User)
+                .WithMany()
+                .HasForeignKey(rv => rv.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure additional entities that have cascade issues
+            builder.Entity<ReviewImage>()
+                .HasOne(ri => ri.Review)
+                .WithMany(r => r.ReviewImages)
+                .HasForeignKey(ri => ri.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<OrderStatusHistory>()
+                .HasOne(osh => osh.Order)
+                .WithMany()
+                .HasForeignKey(osh => osh.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         /// <summary>
-        /// Configure database constraints
+        /// Configure database constraints for data integrity
         /// </summary>
         private void ConfigureConstraints(ModelBuilder builder)
         {
@@ -581,14 +629,14 @@ namespace SakuraHomeAPI.Data
                 .HasCheckConstraint("CK_PaymentTransaction_Fee", "Fee >= 0");
 
             // Coupon constraints
-            builder.Entity<Coupon>()
-                .HasCheckConstraint("CK_Coupon_Value", "Value >= 0");
+            builder.Entity<Coupon>(entity =>
+            {
+                entity.HasCheckConstraint("CK_Coupon_Value", "Value >= 0");
 
-            builder.Entity<Coupon>()
-                .HasCheckConstraint("CK_Coupon_UsageLimit", "UsageLimit IS NULL OR UsageLimit >= 0");
+                entity.HasCheckConstraint("CK_Coupon_UsageLimit", "UsageLimit IS NULL OR UsageLimit >= 0");
 
-            builder.Entity<Coupon>()
-                .HasCheckConstraint("CK_Coupon_UsedCount", "UsedCount >= 0");
+                entity.HasCheckConstraint("CK_Coupon_UsedCount", "UsedCount >= 0");
+            });
 
             // Shipping constraints
             builder.Entity<ShippingRate>()
@@ -596,106 +644,199 @@ namespace SakuraHomeAPI.Data
         }
 
         /// <summary>
-        /// Configure value conversions for enums, etc.
+        /// Configure value conversions for enums and custom types
         /// </summary>
         private void ConfigureValueConversions(ModelBuilder builder)
         {
-            // Configure enum to string conversions if needed
-            // This helps with better readability in database
+            // Example: Convert enum to string for better database readability
+            // Uncomment and modify as needed based on your enums
 
-            // Example: Convert OrderStatus enum to string
             // builder.Entity<Order>()
+            //     .Property(e => e.Status)
+            //     .HasConversion<string>();
+
+            // builder.Entity<Product>()
             //     .Property(e => e.Status)
             //     .HasConversion<string>();
         }
 
         /// <summary>
-        /// Seed master data
+        /// Configure audit navigation properties for entities with mixed audit types
+        /// This method handles entities that inherit from AuditableEntity (int-based) but have Guid foreign keys to User
         /// </summary>
-        private void SeedMasterData(ModelBuilder builder)
+        private void ConfigureAuditNavigationProperties(ModelBuilder builder)
         {
+            // Since AuditableEntity uses int? for audit foreign keys but User has Guid primary key,
+            // we need to explicitly configure these relationships as they won't work by convention
+            
+            // The issue is that some entities inherit from AuditableEntity (int audit fields) 
+            // but try to reference User entities (Guid primary key)
+            // We need to ignore the navigation properties for these mismatched relationships
+            
+            // Configure Review entity - now that ApprovedBy is Guid?, we can configure the relationship properly
+            builder.Entity<Review>(entity =>
+            {
+                entity.Ignore(r => r.CreatedByUser);
+                entity.Ignore(r => r.UpdatedByUser);
+                entity.Ignore(r => r.DeletedByUser);
+                
+                // Now configure the ApprovedByUser relationship properly since ApprovedBy is Guid?
+                entity.HasOne(r => r.ApprovedByUser)
+                    .WithMany()
+                    .HasForeignKey(r => r.ApprovedBy)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
 
-        var settingsData = new[]
-        {
-            new SystemSetting {
-                Id = 1,
-                Key = "SiteName",
-                Value = "Sakura Home",
-                Description = "Website name",
-                Type = SettingType.String,
-                Category = "General",
-                IsPublic = true,
-                CreatedAt = new DateTime(2024, 1, 1),
-                UpdatedAt = new DateTime(2024, 1, 1)
-            },
-            new SystemSetting {
-                Id = 2,
-                Key = "DefaultLanguage",
-                Value = "vi",
-                Description = "Default language",
-                Type = SettingType.String,
-                Category = "General",
-                IsPublic = true,
-                CreatedAt = new DateTime(2024, 1, 1),
-                UpdatedAt = new DateTime(2024, 1, 1)
-            },
-            new SystemSetting {
-                Id = 3,
-                Key = "DefaultCurrency",
-                Value = "VND",
-                Description = "Default currency",
-                Type = SettingType.String,
-                Category = "General",
-                IsPublic = true,
-                CreatedAt = new DateTime(2024, 1, 1),
-                UpdatedAt = new DateTime(2024, 1, 1)
-            },
-            new SystemSetting {
-                Id = 4,
-                Key = "ItemsPerPage",
-                Value = "20",
-                Description = "Items per page",
-                Type = SettingType.Number,
-                Category = "General",
-                IsPublic = true,
-                CreatedAt = new DateTime(2024, 1, 1),
-                UpdatedAt = new DateTime(2024, 1, 1)
-            },
-            new SystemSetting {
-                Id = 5,
-                Key = "AllowGuestCheckout",
-                Value = "false",
-                Description = "Allow guest checkout",
-                Type = SettingType.Boolean,
-                Category = "Orders",
-                IsPublic = true,
-                CreatedAt = new DateTime(2024, 1, 1),
-                UpdatedAt = new DateTime(2024, 1, 1)
-            },
-            new SystemSetting {
-                Id = 6,
-                Key = "AutoApproveReviews",
-                Value = "false",
-                Description = "Auto approve reviews",
-                Type = SettingType.Boolean,
-                Category = "Reviews",
-                IsPublic = false,
-                CreatedAt = new DateTime(2024, 1, 1),
-                UpdatedAt = new DateTime(2024, 1, 1)
-            }
-        };
+            // Configure Brand entity - inherits from ContentEntity -> ... -> AuditableEntity
+            builder.Entity<Brand>(entity =>
+            {
+                entity.Ignore(b => b.CreatedByUser);
+                entity.Ignore(b => b.UpdatedByUser);
+                entity.Ignore(b => b.DeletedByUser);
+            });
 
+            // Configure Category entity - inherits from ContentEntity -> ... -> AuditableEntity  
+            builder.Entity<Category>(entity =>
+            {
+                entity.Ignore(c => c.CreatedByUser);
+                entity.Ignore(c => c.UpdatedByUser);
+                entity.Ignore(c => c.DeletedByUser);
+            });
 
-            builder.Entity<SystemSetting>().HasData(settingsData);
+            // Configure Product entity - inherits from ContentEntity -> ... -> AuditableEntity
+            builder.Entity<Product>(entity =>
+            {
+                entity.Ignore(p => p.CreatedByUser);
+                entity.Ignore(p => p.UpdatedByUser);
+                entity.Ignore(p => p.DeletedByUser);
+            });
 
-            // Seed default categories
-            builder.Entity<Category>().HasData(
-                new Category { Id = 1, Name = "Food & Beverages", Slug = "food-beverages", Description = "Japanese food and drinks", DisplayOrder = 1, IsActive = true, CreatedAt = new DateTime(2024, 1, 1), UpdatedAt = new DateTime(2024, 1, 1) },
-                new Category { Id = 2, Name = "Beauty & Health", Slug = "beauty-health", Description = "Japanese cosmetics and health products", DisplayOrder = 2, IsActive = true, CreatedAt = new DateTime(2024, 1, 1), UpdatedAt = new DateTime(2024, 1, 1) },
-                new Category { Id = 3, Name = "Fashion", Slug = "fashion", Description = "Japanese fashion and accessories", DisplayOrder = 3, IsActive = true, CreatedAt = new DateTime(2024, 1, 1), UpdatedAt = new DateTime(2024, 1, 1) },
-                new Category { Id = 4, Name = "Electronics", Slug = "electronics", Description = "Japanese electronics and gadgets", DisplayOrder = 4, IsActive = true, CreatedAt = new DateTime(2024, 1, 1), UpdatedAt = new DateTime(2024, 1, 1) },
-                new Category { Id = 5, Name = "Home & Living", Slug = "home-living", Description = "Japanese home decor and living items", DisplayOrder = 5, IsActive = true, CreatedAt = new DateTime(2024, 1, 1), UpdatedAt = new DateTime(2024, 1, 1) }
-            );
+            // Configure Tag entity - inherits from FullEntity -> ... -> AuditableEntity
+            builder.Entity<Tag>(entity =>
+            {
+                entity.Ignore(t => t.CreatedByUser);
+                entity.Ignore(t => t.UpdatedByUser);
+                entity.Ignore(t => t.DeletedByUser);
+            });
+
+            // Configure Notification entity - it inherits from AuditableEntity but doesn't need User audit navigation
+            builder.Entity<Notification>(entity =>
+            {
+                // Ignore the audit navigation properties since they're incompatible
+                entity.Ignore(n => n.CreatedByUser);
+                entity.Ignore(n => n.UpdatedByUser);
+            });
+
+            // Configure other entities that inherit from AuditableEntity and have similar issues
+            builder.Entity<SystemSetting>(entity =>
+            {
+                entity.Ignore(s => s.CreatedByUser);
+                entity.Ignore(s => s.UpdatedByUser);
+            });
+
+            builder.Entity<Translation>(entity =>
+            {
+                entity.Ignore(t => t.CreatedByUser);
+                entity.Ignore(t => t.UpdatedByUser);
+            });
+
+            builder.Entity<ProductImage>(entity =>
+            {
+                entity.Ignore(pi => pi.CreatedByUser);
+                entity.Ignore(pi => pi.UpdatedByUser);
+            });
+
+            builder.Entity<CartItem>(entity =>
+            {
+                entity.Ignore(ci => ci.CreatedByUser);
+                entity.Ignore(ci => ci.UpdatedByUser);
+            });
+
+            builder.Entity<WishlistItem>(entity =>
+            {
+                entity.Ignore(wi => wi.CreatedByUser);
+                entity.Ignore(wi => wi.UpdatedByUser);
+            });
+
+            builder.Entity<Order>(entity =>
+            {
+                entity.Ignore(o => o.CreatedByUser);
+                entity.Ignore(o => o.UpdatedByUser);
+            });
+
+            builder.Entity<OrderNote>(entity =>
+            {
+                entity.Ignore(on => on.CreatedByUser);
+                entity.Ignore(on => on.UpdatedByUser);
+            });
+
+            builder.Entity<ReviewResponse>(entity =>
+            {
+                entity.Ignore(rr => rr.CreatedByUser);
+                entity.Ignore(rr => rr.UpdatedByUser);
+            });
+
+            builder.Entity<Wishlist>(entity =>
+            {
+                entity.Ignore(w => w.CreatedByUser);
+                entity.Ignore(w => w.UpdatedByUser);
+            });
+
+            builder.Entity<Cart>(entity =>
+            {
+                entity.Ignore(c => c.CreatedByUser);
+                entity.Ignore(c => c.UpdatedByUser);
+            });
+
+            builder.Entity<ProductAttribute>(entity =>
+            {
+                entity.Ignore(pa => pa.CreatedByUser);
+                entity.Ignore(pa => pa.UpdatedByUser);
+                entity.Ignore(pa => pa.DeletedByUser); // Added this line
+            });
+
+            builder.Entity<ProductAttributeValue>(entity =>
+            {
+                entity.Ignore(pav => pav.CreatedByUser);
+                entity.Ignore(pav => pav.UpdatedByUser);
+            });
+
+            builder.Entity<CategoryAttribute>(entity =>
+            {
+                entity.Ignore(ca => ca.CreatedByUser);
+                entity.Ignore(ca => ca.UpdatedByUser);
+                entity.Ignore(ca => ca.DeletedByUser);
+            });
+
+            // Configure other entities that inherit from FullEntity -> AuditableEntity
+            builder.Entity<ProductVariant>(entity =>
+            {
+                entity.Ignore(pv => pv.CreatedByUser);
+                entity.Ignore(pv => pv.UpdatedByUser);
+                entity.Ignore(pv => pv.DeletedByUser);
+            });
+
+            // Configure entities that have shadow properties being created by EF
+            builder.Entity<ProductTag>(entity =>
+            {
+                entity.Ignore(pt => pt.CreatedByUser);
+                entity.Ignore(pt => pt.UpdatedByUser);
+            });
+
+            builder.Entity<OrderStatusHistory>(entity =>
+            {
+                entity.Ignore(osh => osh.CreatedByUser);
+                entity.Ignore(osh => osh.UpdatedByUser);
+            });
+
+            builder.Entity<ReviewImage>(entity =>
+            {
+                entity.Ignore(ri => ri.CreatedByUser);
+                entity.Ignore(ri => ri.UpdatedByUser);
+            });
+
+            // Note: For entities that properly need audit tracking with User references,
+            // they should inherit from AuditableGuidEntity instead of AuditableEntity
         }
 
         /// <summary>
@@ -717,7 +858,7 @@ namespace SakuraHomeAPI.Data
         }
 
         /// <summary>
-        /// Update audit fields for entities
+        /// Update audit fields for entities automatically
         /// </summary>
         private void UpdateAuditFields()
         {
@@ -732,16 +873,16 @@ namespace SakuraHomeAPI.Data
                 if (entry.State == EntityState.Added)
                 {
                     entity.CreatedAt = now;
+                    // Set CreatedBy if you have current user context
+                    // entity.CreatedBy = GetCurrentUserId();
                 }
 
                 entity.UpdatedAt = now;
-
-                // Set CreatedBy and UpdatedBy from current user context if available
-                // This would typically come from HttpContext or a service
-                // For now, we'll leave them as they are set by the application
+                // Set UpdatedBy if you have current user context
+                // entity.UpdatedBy = GetCurrentUserId();
             }
 
-            // Handle soft delete
+            // Handle soft delete automatically
             var softDeleteEntries = ChangeTracker.Entries()
                 .Where(e => e.Entity is ISoftDelete && e.State == EntityState.Deleted);
 
@@ -751,7 +892,24 @@ namespace SakuraHomeAPI.Data
                 var entity = (ISoftDelete)entry.Entity;
                 entity.IsDeleted = true;
                 entity.DeletedAt = DateTime.UtcNow;
+                // Set DeletedBy if you have current user context
+                // entity.DeletedBy = GetCurrentUserId();
             }
         }
+
+        /// <summary>
+        /// Helper method to get current user ID - implement based on your authentication system
+        /// </summary>
+        /*
+        private Guid? GetCurrentUserId()
+        {
+            // This would typically be implemented using IHttpContextAccessor
+            // to get the current user's ID from the JWT token or claims
+            // Example implementation:
+            // return _httpContextAccessor.HttpContext?.User?
+            //     .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return null;
+        }
+        */
     }
 }

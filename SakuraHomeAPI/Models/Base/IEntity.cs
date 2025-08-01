@@ -24,6 +24,17 @@ namespace SakuraHomeAPI.Models.Base
     }
 
     /// <summary>
+    /// Interface for Guid-based entities that need audit tracking
+    /// </summary>
+    public interface IGuidAuditable
+    {
+        DateTime CreatedAt { get; set; }
+        DateTime UpdatedAt { get; set; }
+        Guid? CreatedBy { get; set; }
+        Guid? UpdatedBy { get; set; }
+    }
+
+    /// <summary>
     /// Interface for entities that support soft delete
     /// </summary>
     public interface ISoftDelete
@@ -31,6 +42,16 @@ namespace SakuraHomeAPI.Models.Base
         bool IsDeleted { get; set; }
         DateTime? DeletedAt { get; set; }
         int? DeletedBy { get; set; }
+    }
+
+    /// <summary>
+    /// Interface for Guid-based entities that support soft delete
+    /// </summary>
+    public interface IGuidSoftDelete
+    {
+        bool IsDeleted { get; set; }
+        DateTime? DeletedAt { get; set; }
+        Guid? DeletedBy { get; set; }
     }
 
     /// <summary>

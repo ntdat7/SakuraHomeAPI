@@ -12,7 +12,7 @@ namespace SakuraHomeAPI.Models.Entities.Products
         public Guid UserId { get; set; }
 
         [Required]
-        public Guid ProductId { get; set; }
+        public int ProductId { get; set; } // Changed from Guid to int to match Product.Id
 
         public int ViewCount { get; set; } = 1;
 

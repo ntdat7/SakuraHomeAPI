@@ -17,7 +17,7 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
     [Table("Reviews")]
     public class Review : FullEntity
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; } // Changed from int to Guid to match User.Id
         public int ProductId { get; set; }
         public int? OrderId { get; set; } // Link to order for verified purchases
 
@@ -48,7 +48,7 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
         public string Attributes { get; set; } // JSON
 
         public DateTime? ApprovedAt { get; set; }
-        public int? ApprovedBy { get; set; }
+        public Guid? ApprovedBy { get; set; } // Changed from int? to Guid? to match User.Id
         public string RejectionReason { get; set; }
 
         public virtual User User { get; set; }
@@ -111,7 +111,7 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
 
         #region Methods
 
-        public void Approve(int? approvedBy = null)
+        public void Approve(Guid? approvedBy = null)
         {
             IsApproved = true;
             ApprovedAt = DateTime.UtcNow;
@@ -119,13 +119,12 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
             RejectionReason = null;
         }
 
-        public void Reject(string reason, int? rejectedBy = null)
+        public void Reject(string reason, Guid? rejectedBy = null)
         {
             IsApproved = false;
             ApprovedAt = null;
             ApprovedBy = null;
             RejectionReason = reason;
-            UpdatedBy = rejectedBy;
             UpdatedAt = DateTime.UtcNow;
         }
 
@@ -135,7 +134,7 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
             UpdatedAt = DateTime.UtcNow;
         }
 
-        public void AddHelpfulVote(int userId)
+        public void AddHelpfulVote(Guid userId)
         {
             var existing = ReviewVotes.FirstOrDefault(rv => rv.UserId == userId);
             if (existing != null)
@@ -160,7 +159,7 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
             }
         }
 
-        public void AddUnhelpfulVote(int userId)
+        public void AddUnhelpfulVote(Guid userId)
         {
             var existing = ReviewVotes.FirstOrDefault(rv => rv.UserId == userId);
             if (existing != null)
@@ -185,7 +184,7 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
             }
         }
 
-        public void Report(int reportedBy, string reason)
+        public void Report(Guid reportedBy, string reason)
         {
             ReportCount++;
             // Extend with detailed tracking if needed

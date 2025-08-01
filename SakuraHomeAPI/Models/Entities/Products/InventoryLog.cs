@@ -19,8 +19,8 @@ namespace SakuraHomeAPI.Models.Entities.Products
 
         #region Basic Information
         [Required]
-        public Guid ProductId { get; set; }
-        public Guid? ProductVariantId { get; set; }
+        public int ProductId { get; set; } // Changed from Guid to int to match Product.Id
+        public int? ProductVariantId { get; set; } // Changed from Guid? to int? to match ProductVariant.Id
         [Required]
         public InventoryAction Action { get; set; }
         [Required]
@@ -36,7 +36,7 @@ namespace SakuraHomeAPI.Models.Entities.Products
         public string Reason { get; set; }
         [MaxLength(100)]
         public string ReferenceType { get; set; } // Order, Return, Adjustment, etc.
-        public Guid? ReferenceId { get; set; } // Order ID, Return ID, etc.
+        public int? ReferenceId { get; set; } // Order ID, Return ID, etc. - Changed from Guid? to int?
         [MaxLength(50)]
         public string BatchNumber { get; set; }
         public DateTime? ExpiryDate { get; set; }

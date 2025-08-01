@@ -16,31 +16,31 @@ namespace SakuraHomeAPI.Models.Entities.Identity
     /// Kế thừa từ IdentityUser<Guid> để tương thích với ASP.NET Core Identity
     /// </summary>
     [Table("Users")]
-    public class User : IdentityUser<Guid>, IAuditable, ISoftDelete, IActivatable
+    public class User : IdentityUser<Guid>, IGuidAuditable, IGuidSoftDelete, IActivatable
     {
         #region Identity Properties Override
         // Email đã có sẵn từ IdentityUser, chỉ cần override validation
         [Required, MaxLength(255), EmailAddress]
-        public override string Email { get; set; }
+        public override string Email { get; set; } = string.Empty;
 
         // PhoneNumber đã có sẵn từ IdentityUser
         [MaxLength(20), Phone]
-        public override string PhoneNumber { get; set; }
+        public override string? PhoneNumber { get; set; }
         #endregion
 
         #region Basic Information
 
         [MaxLength(100)]
-        public string FirstName { get; set; }
+        public string FirstName { get; set; } = string.Empty;
 
         [MaxLength(100)]
-        public string LastName { get; set; }
+        public string LastName { get; set; } = string.Empty;
 
         public DateTime? DateOfBirth { get; set; }
         public Gender? Gender { get; set; }
 
         [MaxLength(500)]
-        public string Avatar { get; set; }
+        public string? Avatar { get; set; }
 
         #endregion
 
@@ -65,7 +65,7 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public LoginProvider Provider { get; set; } = LoginProvider.Local;
 
         [MaxLength(255)]
-        public string ExternalId { get; set; }
+        public string? ExternalId { get; set; }
 
         // EmailConfirmed đã có sẵn từ IdentityUser
         public bool EmailVerified
@@ -77,7 +77,7 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public DateTime? EmailVerifiedAt { get; set; }
 
         [MaxLength(100)]
-        public string EmailVerificationToken { get; set; }
+        public string? EmailVerificationToken { get; set; }
 
         // PhoneNumberConfirmed đã có sẵn từ IdentityUser
         public bool PhoneVerified
@@ -89,10 +89,10 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public DateTime? PhoneVerifiedAt { get; set; }
 
         [MaxLength(10)]
-        public string PhoneVerificationCode { get; set; }
+        public string? PhoneVerificationCode { get; set; }
 
         [MaxLength(100)]
-        public string PasswordResetToken { get; set; }
+        public string? PasswordResetToken { get; set; }
         public DateTime? PasswordResetExpires { get; set; }
 
         // AccessFailedCount đã có sẵn từ IdentityUser
@@ -106,7 +106,7 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public DateTime? LastLoginAt { get; set; }
 
         [MaxLength(45)]
-        public string LastLoginIp { get; set; }
+        public string? LastLoginIp { get; set; }
 
         #endregion
 
@@ -120,20 +120,20 @@ namespace SakuraHomeAPI.Models.Entities.Identity
 
         #endregion
 
-        #region Audit Properties (từ IAuditable)
+        #region Audit Properties (từ IAuditable) - FIXED: Changed to Guid to match User key type
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-        public int? CreatedBy { get; set; }
-        public int? UpdatedBy { get; set; }
+        public Guid? CreatedBy { get; set; }
+        public Guid? UpdatedBy { get; set; }
 
         #endregion
 
-        #region Soft Delete Properties (từ ISoftDelete)
+        #region Soft Delete Properties (từ ISoftDelete) - FIXED: Changed to Guid
 
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
-        public int? DeletedBy { get; set; }
+        public Guid? DeletedBy { get; set; }
 
         #endregion
 
@@ -176,8 +176,8 @@ namespace SakuraHomeAPI.Models.Entities.Identity
 
         public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-        public virtual Wishlist Wishlist { get; set; }
-        public virtual Cart Cart { get; set; }
+        public virtual Wishlist? Wishlist { get; set; }
+        public virtual Cart? Cart { get; set; }
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
         public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public virtual ICollection<ContactMessage> ContactMessages { get; set; } = new List<ContactMessage>();
@@ -185,15 +185,15 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public virtual ICollection<ProductView> ProductViews { get; set; } = new List<ProductView>();
         public virtual ICollection<SearchLog> SearchLogs { get; set; } = new List<SearchLog>();
 
-        // Navigation properties cho audit
+        // Navigation properties cho audit - FIXED: Changed to Guid
         [ForeignKey("CreatedBy")]
-        public virtual User CreatedByUser { get; set; }
+        public virtual User? CreatedByUser { get; set; }
 
         [ForeignKey("UpdatedBy")]
-        public virtual User UpdatedByUser { get; set; }
+        public virtual User? UpdatedByUser { get; set; }
 
         [ForeignKey("DeletedBy")]
-        public virtual User DeletedByUser { get; set; }
+        public virtual User? DeletedByUser { get; set; }
 
         #endregion
 
