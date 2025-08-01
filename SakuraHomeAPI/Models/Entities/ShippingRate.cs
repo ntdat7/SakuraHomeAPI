@@ -8,7 +8,7 @@ namespace SakuraHomeAPI.Models.Entities
     public class ShippingRate : BaseEntity
     {
         [Required]
-        public Guid ShippingZoneId { get; set; }
+        public int ShippingZoneId { get; set; } // Changed from Guid to int to match ShippingZone.Id
 
         [Required, MaxLength(100)]
         public string Name { get; set; }

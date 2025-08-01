@@ -14,7 +14,7 @@ namespace SakuraHomeAPI.Models.Entities.UserCart
     [Table("Carts")]
     public class Cart : AuditableEntity
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; } // Changed from int to Guid to match User.Id
 
         [MaxLength(100)]
         public string SessionId { get; set; } // For guest users

@@ -15,7 +15,7 @@ namespace SakuraHomeAPI.Models.Entities.UserWishlist
     public class Wishlist : AuditableEntity
     {
         [Required]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; } // Changed from int to Guid to match User.Id
 
         [MaxLength(255)]
         public string Name { get; set; } = "My Wishlist";

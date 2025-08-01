@@ -33,13 +33,29 @@ builder.Host.UseSerilog();
 
 // Add services to the container.
 
-// Database Configuration
+// Database Configuration - FIXED: Added retry logic and better error handling
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("SakuraHomeAPI")));
+        sqlOptions =>
+        {
+            sqlOptions.MigrationsAssembly("SakuraHomeAPI");
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+        });
 
-// Identity Configuration
-builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
+    // Enable sensitive data logging only in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
+    }
+});
+
+// Identity Configuration - FIXED: Using Guid as key type to match your User model
+builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 {
     // Password settings
     options.Password.RequireDigit = true;
@@ -66,9 +82,16 @@ builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// JWT Authentication
+// JWT Authentication - FIXED: Better error handling for missing configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
+var jwtKey = jwtSettings["Key"];
+
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new InvalidOperationException("JWT Key is not configured in appsettings.json");
+}
+
+var key = Encoding.ASCII.GetBytes(jwtKey);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -77,7 +100,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment(); // Only require HTTPS in production
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -88,7 +111,23 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = jwtSettings["Audience"],
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        RequireExpirationTime = true
+    };
+
+    // Event handlers for better debugging
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Log.Warning("JWT Authentication failed: {Error}", context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Log.Information("JWT Token validated for user: {User}", context.Principal?.Identity?.Name);
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -107,6 +146,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.WriteIndented = builder.Environment.IsDevelopment();
     });
 
 // FluentValidation
@@ -120,7 +160,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 // Memory Cache
 builder.Services.AddMemoryCache();
 
-// CORS
+// CORS - FIXED: Better configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -128,6 +168,14 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader();
+    });
+
+    options.AddPolicy("Development", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5173", "https://localhost:5173")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 
     options.AddPolicy("Production", policy =>
@@ -236,6 +284,7 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sakura Home API V1");
         c.RoutePrefix = string.Empty; // Swagger at root
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
 }
 else
@@ -258,10 +307,10 @@ app.UseResponseCompression();
 // Static Files
 app.UseStaticFiles();
 
-// CORS
+// CORS - FIXED: Better environment handling
 if (app.Environment.IsDevelopment())
 {
-    app.UseCors("AllowAll");
+    app.UseCors("Development");
 }
 else
 {
@@ -278,28 +327,56 @@ app.UseHealthChecks("/health");
 // Controllers
 app.MapControllers();
 
-// Database Migration and Seeding
+// Database Migration and Seeding - FIXED: Better error handling
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
+        Log.Information("Starting database migration and seeding...");
+
         var context = services.GetRequiredService<ApplicationDbContext>();
         var userManager = services.GetRequiredService<UserManager<User>>();
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
-        // Apply pending migrations
-        context.Database.Migrate();
+        // Test database connection first
+        if (await context.Database.CanConnectAsync())
+        {
+            Log.Information("Database connection successful");
+
+            // Apply pending migrations
+            var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+            if (pendingMigrations.Any())
+            {
+                Log.Information("Applying {Count} pending migrations", pendingMigrations.Count());
+                await context.Database.MigrateAsync();
+                Log.Information("Database migrations applied successfully");
+            }
+            else
+            {
+                Log.Information("No pending migrations found");
+            }
+        }
+        else
+        {
+            Log.Error("Cannot connect to database. Please check your connection string.");
+            throw new InvalidOperationException("Database connection failed");
+        }
 
         // Seed data
-       // await SeedData.Initialize(services, userManager, roleManager);
+        // await SeedData.Initialize(services, userManager, roleManager);
 
         Log.Information("Database migration and seeding completed successfully");
     }
     catch (Exception ex)
     {
         Log.Error(ex, "An error occurred while migrating or seeding the database");
-        throw;
+
+        // Don't throw in production to avoid application crash
+        if (app.Environment.IsDevelopment())
+        {
+            throw;
+        }
     }
 }
 
@@ -311,7 +388,7 @@ app.Lifetime.ApplicationStopping.Register(() =>
 
 try
 {
-    Log.Information("Starting Sakura Home API");
+    Log.Information("Starting Sakura Home API on {Environment} environment", app.Environment.EnvironmentName);
     app.Run();
 }
 catch (Exception ex)

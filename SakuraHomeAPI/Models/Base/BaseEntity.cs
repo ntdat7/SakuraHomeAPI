@@ -1,18 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using SakuraHomeAPI.Models.Entities.Catalog;
 using SakuraHomeAPI.Models.Entities.Identity;
+using SakuraHomeAPI.Models.Entities.Catalog;
 
 namespace SakuraHomeAPI.Models.Base
 {
+    #region Base Entity Classes
+
     /// <summary>
-    /// Base entity with only Id property
+    /// Base entity with integer primary key only
     /// </summary>
     public abstract class BaseEntity : IEntity
     {
         [Key]
         public int Id { get; set; }
+    }
+
+    /// <summary>
+    /// Base entity with Guid primary key only (for user-related entities)
+    /// </summary>
+    public abstract class BaseGuidEntity
+    {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
     }
 
     /// <summary>
@@ -24,6 +35,21 @@ namespace SakuraHomeAPI.Models.Base
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public int? CreatedBy { get; set; }
         public int? UpdatedBy { get; set; }
+
+        // Navigation properties for audit tracking
+        public virtual User CreatedByUser { get; set; }
+        public virtual User UpdatedByUser { get; set; }
+    }
+
+    /// <summary>
+    /// Guid-based entity with audit tracking
+    /// </summary>
+    public abstract class AuditableGuidEntity : BaseGuidEntity, IGuidAuditable
+    {
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public Guid? CreatedBy { get; set; }
+        public Guid? UpdatedBy { get; set; }
 
         // Navigation properties for audit tracking
         public virtual User CreatedByUser { get; set; }
@@ -43,10 +69,30 @@ namespace SakuraHomeAPI.Models.Base
     }
 
     /// <summary>
+    /// Guid-based entity with soft delete functionality
+    /// </summary>
+    public abstract class SoftDeleteGuidEntity : AuditableGuidEntity, IGuidSoftDelete
+    {
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+        public Guid? DeletedBy { get; set; }
+
+        public virtual User DeletedByUser { get; set; }
+    }
+
+    /// <summary>
     /// Full-featured entity with all common properties
     /// Most entities should inherit from this
     /// </summary>
     public abstract class FullEntity : SoftDeleteEntity, IActivatable
+    {
+        public bool IsActive { get; set; } = true;
+    }
+
+    /// <summary>
+    /// Full-featured Guid entity
+    /// </summary>
+    public abstract class FullGuidEntity : SoftDeleteGuidEntity, IActivatable
     {
         public bool IsActive { get; set; } = true;
     }
@@ -102,11 +148,16 @@ namespace SakuraHomeAPI.Models.Base
     public abstract class LogEntity : BaseEntity
     {
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         [MaxLength(45)]
         public string IpAddress { get; set; }
+
         [MaxLength(500)]
         public string UserAgent { get; set; }
-        public Guid? UserId { get; set; } 
+
+        public Guid? UserId { get; set; }
         public virtual User User { get; set; }
     }
+
+    #endregion
 }

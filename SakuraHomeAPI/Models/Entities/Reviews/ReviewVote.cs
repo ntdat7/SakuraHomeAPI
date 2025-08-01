@@ -12,7 +12,7 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
     public class ReviewVote : BaseEntity
     {
         public int ReviewId { get; set; }
-        public int UserId { get; set; }
+        public Guid UserId { get; set; } // Changed from int to Guid to match User.Id
         public bool IsHelpful { get; set; } // true = helpful, false = unhelpful
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

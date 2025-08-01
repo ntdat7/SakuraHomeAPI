@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace SakuraHomeAPI.Models.Entities
 {
     [Table("ContactMessages")]
-    public class ContactMessage : AuditableEntity
+    public class ContactMessage : BaseEntity, IAuditable, ISoftDelete
     {
         public Guid? UserId { get; set; } // Nullable for anonymous messages
 
@@ -34,6 +34,17 @@ namespace SakuraHomeAPI.Models.Entities
         public DateTime? RespondedAt { get; set; }
 
         public Guid? RespondedBy { get; set; }
+
+        // Audit properties (implementing IAuditable with int)
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public int? CreatedBy { get; set; }
+        public int? UpdatedBy { get; set; }
+
+        // Soft delete properties (implementing ISoftDelete with int)
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+        public int? DeletedBy { get; set; }
 
         // Navigation Properties
         public virtual User User { get; set; }
