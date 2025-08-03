@@ -33,8 +33,6 @@ namespace SakuraHomeAPI.Models.Entities.UserCart
         public virtual Product Product { get; set; }
         public virtual ProductVariant ProductVariant { get; set; }
 
-        public virtual ICollection<CartItem> Items { get; set; }
-            = new List<CartItem>();
         #region Computed Properties
 
         [NotMapped]

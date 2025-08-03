@@ -177,7 +177,7 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
         public virtual Wishlist? Wishlist { get; set; }
-        public virtual Cart? Cart { get; set; }
+        public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
         public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public virtual ICollection<ContactMessage> ContactMessages { get; set; } = new List<ContactMessage>();

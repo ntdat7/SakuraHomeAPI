@@ -21,12 +21,12 @@ namespace SakuraHomeAPI.Models.Entities.UserWishlist
         public string Name { get; set; } = "My Wishlist";
 
         [MaxLength(1000)]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         public bool IsPublic { get; set; } = false;
         public bool IsDefault { get; set; } = true;
 
-        public virtual User User { get; set; }
+        public virtual User? User { get; set; }
         public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
 
         #region Computed Properties
@@ -51,7 +51,7 @@ namespace SakuraHomeAPI.Models.Entities.UserWishlist
 
         #region Methods
 
-        public WishlistItem AddItem(int productId, string notes = null)
+        public WishlistItem AddItem(int productId, string? notes = null)
         {
             var existing = WishlistItems.FirstOrDefault(wi => wi.ProductId == productId);
             if (existing != null)
