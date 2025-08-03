@@ -14,12 +14,12 @@ namespace SakuraHomeAPI.Models.Entities.UserCart
     [Table("Carts")]
     public class Cart : AuditableEntity
     {
-        public Guid UserId { get; set; } // Changed from int to Guid to match User.Id
+        public Guid? UserId { get; set; } // Nullable for guest carts
 
         [MaxLength(100)]
         public string SessionId { get; set; } // For guest users
 
-        public virtual User User { get; set; }
+        public virtual User? User { get; set; }
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
         #region Computed Properties

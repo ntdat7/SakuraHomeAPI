@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using static Azure.Core.HttpHeader;
 
 namespace SakuraHomeAPI.Models.Entities.Orders
 {
@@ -21,7 +20,7 @@ namespace SakuraHomeAPI.Models.Entities.Orders
         public Guid UserId { get; set; } // Changed to Guid to match User
 
         [Required, MaxLength(20)]
-        public string OrderNumber { get; set; }
+        public string OrderNumber { get; set; } = string.Empty;
 
         #endregion
 
@@ -60,28 +59,28 @@ namespace SakuraHomeAPI.Models.Entities.Orders
         #region Shipping Information
 
         [Required, MaxLength(100)]
-        public string ReceiverName { get; set; }
+        public string ReceiverName { get; set; } = string.Empty;
 
         [Required, MaxLength(20), Phone]
-        public string ReceiverPhone { get; set; }
+        public string ReceiverPhone { get; set; } = string.Empty;
 
         [MaxLength(255)]
-        public string ReceiverEmail { get; set; }
+        public string? ReceiverEmail { get; set; }
 
         [Required]
-        public string ShippingAddress { get; set; }
+        public string ShippingAddress { get; set; } = string.Empty;
 
         [MaxLength(255)]
-        public string BillingAddress { get; set; }
+        public string? BillingAddress { get; set; }
 
         public DeliveryMethod DeliveryMethod { get; set; } = DeliveryMethod.Standard;
         public DateTime? EstimatedDeliveryDate { get; set; }
 
         [MaxLength(100)]
-        public string TrackingNumber { get; set; }
+        public string? TrackingNumber { get; set; }
 
         [MaxLength(255)]
-        public string ShippingCarrier { get; set; }
+        public string? ShippingCarrier { get; set; }
 
         #endregion
 
@@ -90,7 +89,7 @@ namespace SakuraHomeAPI.Models.Entities.Orders
         public int? CouponId { get; set; }
 
         [MaxLength(50)]
-        public string CouponCode { get; set; }
+        public string? CouponCode { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal CouponDiscount { get; set; } = 0;
@@ -115,16 +114,16 @@ namespace SakuraHomeAPI.Models.Entities.Orders
 
         #region Notes & Additional Information
 
-        public string CustomerNotes { get; set; }
-        public string AdminNotes { get; set; }
-        public string CancelReason { get; set; }
-        public string ReturnReason { get; set; }
+        public string? CustomerNotes { get; set; }
+        public string? AdminNotes { get; set; }
+        public string? CancelReason { get; set; }
+        public string? ReturnReason { get; set; }
 
         public CancellationReason? CancellationReasonCode { get; set; }
         public ReturnReason? ReturnReasonCode { get; set; }
 
         public bool IsGift { get; set; } = false;
-        public string GiftMessage { get; set; }
+        public string? GiftMessage { get; set; }
         public bool GiftWrapRequested { get; set; } = false;
 
         public bool IsUrgent { get; set; } = false;
@@ -135,10 +134,10 @@ namespace SakuraHomeAPI.Models.Entities.Orders
 
         #region Navigation Properties
 
-        public virtual User User { get; set; }
-        public virtual Coupon Coupon { get; set; }
-        public virtual PaymentMethodInfo PaymentMethodDetails { get; set; }
-        public virtual ShippingZone ShippingZone { get; set; }
+        public virtual User? User { get; set; }
+        public virtual Coupon? Coupon { get; set; }
+        public virtual PaymentMethodInfo? PaymentMethodDetails { get; set; }
+        public virtual ShippingZone? ShippingZone { get; set; }
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public virtual ICollection<PaymentTransaction> PaymentTransactions { get; set; } = new List<PaymentTransaction>();
         public virtual ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
@@ -228,7 +227,7 @@ namespace SakuraHomeAPI.Models.Entities.Orders
         /// <summary>
         /// Update order status with history tracking
         /// </summary>
-        public void UpdateStatus(OrderStatus newStatus, string notes = null, int? updatedBy = null)
+        public void UpdateStatus(OrderStatus newStatus, string? notes = null, int? updatedBy = null)
         {
             var oldStatus = Status;
             Status = newStatus;
@@ -309,7 +308,6 @@ namespace SakuraHomeAPI.Models.Entities.Orders
 
             return true;
         }
-
 
         /// <summary>
         /// Remove coupon

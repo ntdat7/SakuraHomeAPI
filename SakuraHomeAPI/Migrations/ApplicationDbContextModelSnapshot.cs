@@ -378,8 +378,8 @@ namespace SakuraHomeAPI.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             IsFeatured = true,
-                            IsOfficial = false,
-                            IsVerified = false,
+                            IsOfficial = true,
+                            IsVerified = true,
                             LogoUrl = "/images/brands/shiseido-logo.png",
                             MetaDescription = "Discover Shiseido's premium Japanese beauty and skincare products",
                             MetaKeywords = "shiseido, japanese cosmetics, skincare, beauty",
@@ -411,8 +411,8 @@ namespace SakuraHomeAPI.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             IsFeatured = true,
-                            IsOfficial = false,
-                            IsVerified = false,
+                            IsOfficial = true,
+                            IsVerified = true,
                             LogoUrl = "/images/brands/sony-logo.png",
                             MetaDescription = "Explore Sony's innovative Japanese electronics and entertainment products",
                             MetaKeywords = "sony, japanese electronics, innovation, technology",
@@ -444,8 +444,8 @@ namespace SakuraHomeAPI.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             IsFeatured = true,
-                            IsOfficial = false,
-                            IsVerified = false,
+                            IsOfficial = true,
+                            IsVerified = true,
                             LogoUrl = "/images/brands/pocky-logo.png",
                             MetaDescription = "Enjoy the famous Japanese Pocky snacks in various flavors",
                             MetaKeywords = "pocky, japanese snacks, glico, biscuit sticks",
@@ -457,6 +457,138 @@ namespace SakuraHomeAPI.Migrations
                             TwitterUrl = "https://twitter.com/PockyUSA",
                             UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Website = "https://www.pocky.com",
+                            YoutubeUrl = "https://www.youtube.com/channel/UCKnLVZLq7pGOK8OGnJxZZjw"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AverageRating = 0.0,
+                            ContactEmail = "info@ippodo-tea.co.jp",
+                            ContactPhone = "+81-75-211-3421",
+                            Country = "Japan",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Traditional Japanese tea company established in Kyoto",
+                            DisplayOrder = 0,
+                            FacebookUrl = "https://www.facebook.com/IppodoTea",
+                            FollowerCount = 0,
+                            FoundedYear = new DateTime(1717, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Headquarters = "Kyoto, Japan",
+                            InstagramUrl = "https://www.instagram.com/ippodo_tea",
+                            IsActive = true,
+                            IsDeleted = false,
+                            IsFeatured = true,
+                            IsOfficial = false,
+                            IsVerified = false,
+                            LogoUrl = "/images/brands/ippodo-logo.png",
+                            MetaDescription = "Premium Japanese tea including ceremonial matcha from Kyoto's oldest tea house",
+                            MetaKeywords = "ippodo, japanese tea, matcha, ceremonial grade, kyoto",
+                            MetaTitle = "Ippodo Tea - Traditional Japanese Tea Master",
+                            Name = "Ippodo Tea",
+                            ProductCount = 0,
+                            ReviewCount = 0,
+                            Slug = "ippodo-tea",
+                            TwitterUrl = "https://twitter.com/ippodo_tea",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Website = "https://www.ippodo-tea.co.jp",
+                            YoutubeUrl = "https://www.youtube.com/channel/UCKnLVZLq7pGOK8OGnJxZZjw"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AverageRating = 0.0,
+                            ContactEmail = "info@meiji.com",
+                            ContactPhone = "+81-3-3273-3001",
+                            Country = "Japan",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Japanese pharmaceutical and health food company",
+                            DisplayOrder = 0,
+                            FacebookUrl = "https://www.facebook.com/MeijiGlobal",
+                            FollowerCount = 0,
+                            FoundedYear = new DateTime(1906, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Headquarters = "Tokyo, Japan",
+                            InstagramUrl = "https://www.instagram.com/meiji_global",
+                            IsActive = true,
+                            IsDeleted = false,
+                            IsFeatured = true,
+                            IsOfficial = false,
+                            IsVerified = false,
+                            LogoUrl = "/images/brands/meiji-logo.png",
+                            MetaDescription = "Trusted Japanese brand for health foods, supplements and nutritional products",
+                            MetaKeywords = "meiji, japanese health, supplements, collagen, nutrition",
+                            MetaTitle = "Meiji - Japanese Health & Nutrition",
+                            Name = "Meiji",
+                            ProductCount = 0,
+                            ReviewCount = 0,
+                            Slug = "meiji",
+                            TwitterUrl = "https://twitter.com/meiji_global",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Website = "https://www.meiji.com",
+                            YoutubeUrl = "https://www.youtube.com/channel/UCKnLVZLq7pGOK8OGnJxZZjw"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AverageRating = 0.0,
+                            ContactEmail = "info@uniqlo.com",
+                            ContactPhone = "+81-3-6252-5181",
+                            Country = "Japan",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Japanese casual wear designer, manufacturer and retailer",
+                            DisplayOrder = 0,
+                            FacebookUrl = "https://www.facebook.com/uniqlo",
+                            FollowerCount = 0,
+                            FoundedYear = new DateTime(1984, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Headquarters = "Tokyo, Japan",
+                            InstagramUrl = "https://www.instagram.com/uniqlo",
+                            IsActive = true,
+                            IsDeleted = false,
+                            IsFeatured = true,
+                            IsOfficial = true,
+                            IsVerified = true,
+                            LogoUrl = "/images/brands/uniqlo-logo.png",
+                            MetaDescription = "Innovative Japanese fashion brand with advanced fabric technology like Heattech",
+                            MetaKeywords = "uniqlo, japanese fashion, heattech, innovative clothing, casual wear",
+                            MetaTitle = "UNIQLO - Japanese Fashion Innovation",
+                            Name = "UNIQLO",
+                            ProductCount = 0,
+                            ReviewCount = 0,
+                            Slug = "uniqlo",
+                            TwitterUrl = "https://twitter.com/uniqlo_global",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Website = "https://www.uniqlo.com",
+                            YoutubeUrl = "https://www.youtube.com/user/UNIQLO"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AverageRating = 0.0,
+                            ContactEmail = "info@kutani-kiln.com",
+                            ContactPhone = "+81-761-57-3341",
+                            Country = "Japan",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Traditional Japanese ceramic and craft manufacturer from Ishikawa",
+                            DisplayOrder = 0,
+                            FacebookUrl = "https://www.facebook.com/KutaniKiln",
+                            FollowerCount = 0,
+                            FoundedYear = new DateTime(1655, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Headquarters = "Ishikawa, Japan",
+                            InstagramUrl = "https://www.instagram.com/kutani_kiln",
+                            IsActive = true,
+                            IsDeleted = false,
+                            IsFeatured = false,
+                            IsOfficial = false,
+                            IsVerified = false,
+                            LogoUrl = "/images/brands/kutani-logo.png",
+                            MetaDescription = "Authentic Japanese ceramics and traditional crafts from the historic Kutani region",
+                            MetaKeywords = "kutani, japanese ceramics, traditional crafts, pottery, tea sets",
+                            MetaTitle = "Kutani Kiln - Traditional Japanese Ceramics",
+                            Name = "Kutani Kiln",
+                            ProductCount = 0,
+                            ReviewCount = 0,
+                            Slug = "kutani-kiln",
+                            TwitterUrl = "https://twitter.com/uniqlo_global",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Website = "https://www.kutani-kiln.com",
                             YoutubeUrl = "https://www.youtube.com/channel/UCKnLVZLq7pGOK8OGnJxZZjw"
                         });
                 });
@@ -1548,16 +1680,13 @@ namespace SakuraHomeAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AdminNotes")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BillingAddress")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("CancelReason")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("CancellationReasonCode")
@@ -1570,7 +1699,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CouponCode")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -1592,7 +1720,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(3)");
 
                     b.Property<string>("CustomerNotes")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DeliveredDate")
@@ -1608,7 +1735,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("GiftMessage")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("GiftWrapFee")
@@ -1634,7 +1760,7 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("PaymentMethodDetailsId")
+                    b.Property<int?>("PaymentMethodDetailsId")
                         .HasColumnType("int");
 
                     b.Property<int?>("PaymentMethodId")
@@ -1647,7 +1773,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ReceiverEmail")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -1668,7 +1793,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ReturnReason")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("ReturnReasonCode")
@@ -1685,7 +1809,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShippingCarrier")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -1708,7 +1831,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TrackingNumber")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -1787,6 +1909,9 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int?>("ProductVariantId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ProductVariantId1")
+                        .HasColumnType("int");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
@@ -1814,9 +1939,13 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductVariantId");
 
+                    b.HasIndex("ProductVariantId1");
+
                     b.ToTable("OrderItems", t =>
                         {
                             t.HasCheckConstraint("CK_OrderItem_Quantity", "Quantity > 0");
+
+                            t.HasCheckConstraint("CK_OrderItem_TotalPrice", "TotalPrice >= 0");
 
                             t.HasCheckConstraint("CK_OrderItem_UnitPrice", "UnitPrice >= 0");
                         });
@@ -1876,9 +2005,6 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("NewStatus")
                         .HasColumnType("int");
 
@@ -1892,64 +2018,22 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("OrderId1")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
-
-                    b.Property<Guid>("UpdatedByUserId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
-
                     b.HasIndex("OrderId");
 
-                    b.HasIndex("UpdatedByUserId");
+                    b.HasIndex("OrderId1");
 
                     b.ToTable("OrderStatusHistory");
-                });
-
-            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Orders.ProductTag", b =>
-                {
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TagId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("UpdatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ProductId", "TagId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("TagId");
-
-                    b.HasIndex("UpdatedByUserId");
-
-                    b.ToTable("ProductTags");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.PaymentMethodInfo", b =>
@@ -2442,6 +2526,526 @@ namespace SakuraHomeAPI.Migrations
 
                             t.HasCheckConstraint("CK_Product_Weight", "Weight IS NULL OR Weight >= 0");
                         });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AgeRestriction = 0,
+                            AllowBackorder = false,
+                            AllowPreorder = false,
+                            AuthenticityInfo = "Authentic Glico Pocky imported directly from Japan",
+                            AuthenticityLevel = 3,
+                            AvailableFrom = new DateTime(2023, 12, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "PCK20240101",
+                            BrandId = 3,
+                            CartCount = 0,
+                            CategoryId = 1,
+                            Condition = 1,
+                            CostPrice = 30000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Delicious Japanese Pocky chocolate biscuit sticks. Perfect snack for any time of the day. Made with high-quality ingredients and authentic Japanese recipe.",
+                            DimensionUnit = 1,
+                            Dimensions = "15.5x2.0x1.2",
+                            DisplayOrder = 1,
+                            ExpiryDate = new DateTime(2024, 7, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            GiftWrappingFee = 10000m,
+                            Height = 1.2m,
+                            Ingredients = "Wheat flour, sugar, chocolate, vegetable oil, whole milk powder",
+                            IsActive = true,
+                            IsBestseller = false,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = true,
+                            IsGiftWrappingAvailable = true,
+                            IsLimitedEdition = false,
+                            IsNew = true,
+                            JapaneseRegion = 2,
+                            Length = 15.5m,
+                            MainImage = "/images/products/pocky-chocolate.jpg",
+                            ManufactureDate = new DateTime(2023, 12, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "The most beloved Japanese snack worldwide!",
+                            MaxStock = 1000,
+                            MetaDescription = "Buy authentic Pocky chocolate biscuit sticks online. Premium Japanese snack perfect for sharing.",
+                            MetaKeywords = "pocky, chocolate, japanese snack, biscuit sticks, glico",
+                            MetaTitle = "Pocky Chocolate Sticks - Authentic Japanese Snack",
+                            MinStock = 50,
+                            Name = "Pocky Chocolate Sticks",
+                            Origin = "Osaka",
+                            OriginalPrice = 50000m,
+                            Price = 45000m,
+                            Rating = 4.5m,
+                            ReviewCount = 25,
+                            SKU = "POCKY-CHOC-001",
+                            ShortDescription = "Classic Japanese chocolate biscuit sticks",
+                            Slug = "pocky-chocolate-sticks",
+                            SoldCount = 150,
+                            Status = 1,
+                            Stock = 500,
+                            Tags = "New Arrival, Best Seller, Japanese Snack",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Ready to eat. Store in cool, dry place.",
+                            ViewCount = 1250,
+                            Visibility = 1,
+                            Weight = 47m,
+                            WeightUnit = 1,
+                            Width = 2.0m,
+                            WishlistCount = 45
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AgeRestriction = 0,
+                            AllowBackorder = false,
+                            AllowPreorder = true,
+                            AuthenticityInfo = "Certified ceremonial grade matcha from century-old tea gardens in Uji",
+                            AuthenticityLevel = 5,
+                            AvailableFrom = new DateTime(2023, 11, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "MTH20231201",
+                            BrandId = 4,
+                            CartCount = 0,
+                            CategoryId = 1,
+                            Condition = 1,
+                            CostPrice = 250000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Authentic Japanese ceremonial grade matcha green tea powder from the renowned tea fields of Uji, Kyoto. Perfect for traditional tea ceremony, matcha lattes, and baking. Rich in antioxidants and L-theanine.",
+                            DimensionUnit = 1,
+                            Dimensions = "8.0x8.0x8.0",
+                            DisplayOrder = 2,
+                            ExpiryDate = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            GiftWrappingFee = 15000m,
+                            Height = 8.0m,
+                            Ingredients = "100% pure stone-ground green tea leaves (Tencha)",
+                            IsActive = true,
+                            IsBestseller = true,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = true,
+                            IsGiftWrappingAvailable = true,
+                            IsLimitedEdition = false,
+                            IsNew = false,
+                            JapaneseRegion = 3,
+                            Length = 8.0m,
+                            MainImage = "/images/products/matcha-powder.jpg",
+                            ManufactureDate = new DateTime(2023, 11, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "Experience the authentic taste of Japanese tea ceremony",
+                            MaxStock = 200,
+                            MetaDescription = "Authentic ceremonial grade matcha from Uji, Kyoto. Perfect for tea ceremony and culinary use.",
+                            MetaKeywords = "matcha, green tea, ceremonial grade, uji, kyoto, japanese tea",
+                            MetaTitle = "Premium Ceremonial Matcha Powder - Uji Kyoto",
+                            MinStock = 10,
+                            Name = "Matcha Green Tea Powder - Ceremonial Grade",
+                            Origin = "Uji, Kyoto",
+                            OriginalPrice = 400000m,
+                            Price = 350000m,
+                            Rating = 4.8m,
+                            ReviewCount = 42,
+                            SKU = "MATCHA-PREM-001",
+                            ShortDescription = "Premium ceremonial grade matcha powder from Uji, Kyoto",
+                            Slug = "matcha-green-tea-powder-ceremonial",
+                            SoldCount = 89,
+                            Status = 1,
+                            Stock = 100,
+                            Tags = "Premium, Best Seller, Traditional, Organic",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Sift powder, add 70°C water, whisk in M-shape motion until frothy. 1-2g per serving.",
+                            ViewCount = 2100,
+                            Visibility = 1,
+                            Weight = 100m,
+                            WeightUnit = 1,
+                            Width = 8.0m,
+                            WishlistCount = 78
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AgeRestriction = 18,
+                            AllowBackorder = false,
+                            AllowPreorder = true,
+                            AuthenticityInfo = "Official Shiseido product with hologram authentication",
+                            AuthenticityLevel = 7,
+                            AvailableFrom = new DateTime(2023, 10, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "SHI20231001",
+                            BrandId = 1,
+                            CartCount = 0,
+                            CategoryId = 2,
+                            Condition = 1,
+                            CostPrice = 2000000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Shiseido's breakthrough anti-aging serum featuring ImuGeneration Technology™. Strengthens skin's natural defenses against daily damage while improving texture and radiance. Suitable for all skin types.",
+                            DimensionUnit = 1,
+                            Dimensions = "5.0x5.0x12.0",
+                            DisplayOrder = 3,
+                            ExpiryDate = new DateTime(2027, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            GiftWrappingFee = 25000m,
+                            Height = 12.0m,
+                            Ingredients = "Water, Butylene Glycol, Alcohol, Glycerin, PEG-75, Rosa Damascena Flower Water",
+                            IsActive = true,
+                            IsBestseller = true,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = true,
+                            IsGiftWrappingAvailable = true,
+                            IsLimitedEdition = false,
+                            IsNew = false,
+                            JapaneseRegion = 1,
+                            Length = 5.0m,
+                            MainImage = "/images/products/shiseido-ultimune.jpg",
+                            ManufactureDate = new DateTime(2023, 10, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "Unlock your skin's youth potential with cutting-edge Japanese technology",
+                            MaxStock = 100,
+                            MetaDescription = "Transform your skin with Shiseido Ultimune Power Infusing Concentrate. Advanced anti-aging technology for radiant skin.",
+                            MetaKeywords = "shiseido, ultimune, anti-aging, serum, skincare, japanese cosmetics",
+                            MetaTitle = "Shiseido Ultimune Anti-Aging Serum - Power Concentrate",
+                            MinStock = 5,
+                            Name = "Shiseido Ultimune Power Infusing Concentrate",
+                            Origin = "Tokyo",
+                            OriginalPrice = 3200000m,
+                            Price = 2800000m,
+                            Rating = 4.7m,
+                            ReviewCount = 38,
+                            SKU = "SHIS-ULTI-050",
+                            ShortDescription = "Revolutionary anti-aging serum that strengthens skin immunity",
+                            Slug = "shiseido-ultimune-power-concentrate",
+                            SoldCount = 67,
+                            Status = 1,
+                            Stock = 50,
+                            Tags = "Premium, Anti-Aging, Best Seller, Luxury",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Apply 2 pumps to clean face morning and evening before moisturizer",
+                            ViewCount = 3200,
+                            Visibility = 1,
+                            Weight = 200m,
+                            WeightUnit = 1,
+                            Width = 5.0m,
+                            WishlistCount = 125
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AgeRestriction = 18,
+                            AllowBackorder = true,
+                            AllowPreorder = false,
+                            AuthenticityInfo = "Lab-tested for purity and potency, certified by JFRL",
+                            AuthenticityLevel = 3,
+                            AvailableFrom = new DateTime(2023, 12, 17, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "COL20240115",
+                            BrandId = 5,
+                            CartCount = 0,
+                            CategoryId = 2,
+                            Condition = 1,
+                            CostPrice = 600000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "High-quality marine collagen supplement sourced from Japanese waters. Contains low molecular weight peptides for maximum absorption. Supports skin elasticity, hair strength, nail health, and joint mobility.",
+                            DimensionUnit = 1,
+                            Dimensions = "12.0x8.0x15.0",
+                            DisplayOrder = 4,
+                            ExpiryDate = new DateTime(2026, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Height = 15.0m,
+                            Ingredients = "Marine Collagen Peptides (Fish), Vitamin C, Hyaluronic Acid, Elastin",
+                            IsActive = true,
+                            IsBestseller = false,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = false,
+                            IsGiftWrappingAvailable = false,
+                            IsLimitedEdition = false,
+                            IsNew = true,
+                            JapaneseRegion = 4,
+                            Length = 12.0m,
+                            MainImage = "/images/products/marine-collagen.jpg",
+                            ManufactureDate = new DateTime(2023, 12, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "Beauty starts from within - nourish your body with premium marine collagen",
+                            MaxStock = 500,
+                            MetaDescription = "Premium Japanese marine collagen supplement for healthy skin and joints. High absorption rate for maximum benefits.",
+                            MetaKeywords = "marine collagen, supplement, japanese, skin health, joint health, beauty",
+                            MetaTitle = "Japanese Marine Collagen Supplement - Premium Quality",
+                            MinStock = 20,
+                            Name = "Japanese Marine Collagen Supplement - 30 Days",
+                            Origin = "Hokkaido",
+                            OriginalPrice = 950000m,
+                            Price = 850000m,
+                            Rating = 4.3m,
+                            ReviewCount = 18,
+                            SKU = "COL-MARIN-030",
+                            ShortDescription = "Premium marine collagen peptides for skin, hair, and joint health",
+                            Slug = "japanese-marine-collagen-supplement",
+                            SoldCount = 45,
+                            Status = 1,
+                            Stock = 200,
+                            Tags = "New Arrival, Health, Beauty from Within, Natural",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Take 1 sachet daily mixed with water or your favorite beverage. Best taken on empty stomach.",
+                            ViewCount = 890,
+                            Visibility = 1,
+                            Weight = 300m,
+                            WeightUnit = 1,
+                            Width = 8.0m,
+                            WishlistCount = 32
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AgeRestriction = 0,
+                            AllowBackorder = false,
+                            AllowPreorder = true,
+                            AuthenticityInfo = "Official Sony product with international warranty",
+                            AuthenticityLevel = 7,
+                            AvailableFrom = new DateTime(2023, 9, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "SNY20231120",
+                            BrandId = 2,
+                            CartCount = 0,
+                            CategoryId = 4,
+                            Condition = 1,
+                            CostPrice = 6500000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Sony's flagship wireless noise canceling headphones featuring advanced V1 processor and dual noise sensor technology. Exceptional sound quality with 30-hour battery life and quick charge capability.",
+                            DimensionUnit = 1,
+                            Dimensions = "21.0x18.0x8.0",
+                            DisplayOrder = 5,
+                            ExpiryDate = new DateTime(2029, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            GiftWrappingFee = 30000m,
+                            Height = 8.0m,
+                            Ingredients = "Plastic housing, Memory foam padding, Electronic components, Metal headband",
+                            IsActive = true,
+                            IsBestseller = true,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = true,
+                            IsGiftWrappingAvailable = true,
+                            IsLimitedEdition = false,
+                            IsNew = false,
+                            JapaneseRegion = 1,
+                            Length = 21.0m,
+                            MainImage = "/images/products/sony-wh1000xm5.jpg",
+                            ManufactureDate = new DateTime(2023, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "Silence the world, amplify your music",
+                            MaxStock = 150,
+                            MetaDescription = "Experience premium audio with Sony WH-1000XM5 wireless headphones. Industry-leading noise cancelation and 30-hour battery.",
+                            MetaKeywords = "sony, headphones, wireless, noise canceling, WH-1000XM5, premium audio",
+                            MetaTitle = "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
+                            MinStock = 10,
+                            Name = "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
+                            Origin = "Tokyo",
+                            OriginalPrice = 9000000m,
+                            Price = 8500000m,
+                            Rating = 4.9m,
+                            ReviewCount = 156,
+                            SKU = "SONY-WH1000XM5-BK",
+                            ShortDescription = "Industry-leading noise canceling wireless headphones with 30-hour battery",
+                            Slug = "sony-wh-1000xm5-wireless-headphones",
+                            SoldCount = 234,
+                            Status = 1,
+                            Stock = 75,
+                            Tags = "Premium, Best Seller, Audio, Technology",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Charge fully before first use. Download Sony Headphones Connect app for customization.",
+                            ViewCount = 8900,
+                            Visibility = 1,
+                            Weight = 250m,
+                            WeightUnit = 1,
+                            Width = 18.0m,
+                            WishlistCount = 445
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AgeRestriction = 0,
+                            AllowBackorder = true,
+                            AllowPreorder = false,
+                            AuthenticityInfo = "Authentic UNIQLO product with care label",
+                            AuthenticityLevel = 3,
+                            AvailableFrom = new DateTime(2023, 11, 17, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "UNI20240101",
+                            BrandId = 6,
+                            CartCount = 0,
+                            CategoryId = 3,
+                            Condition = 1,
+                            CostPrice = 400000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "UNIQLO's most advanced Heattech fabric technology that generates heat using body moisture. Ultra Warm version provides 2.25 times more warmth than regular Heattech. Perfect base layer for cold weather.",
+                            DimensionUnit = 1,
+                            Dimensions = "30.0x25.0x2.0",
+                            DisplayOrder = 6,
+                            ExpiryDate = new DateTime(2034, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            GiftWrappingFee = 8000m,
+                            Height = 2.0m,
+                            Ingredients = "Acrylic, Polyester, Rayon, Polyurethane, Heattech fiber blend",
+                            IsActive = true,
+                            IsBestseller = true,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = false,
+                            IsGiftWrappingAvailable = true,
+                            IsLimitedEdition = false,
+                            IsNew = false,
+                            JapaneseRegion = 1,
+                            Length = 30.0m,
+                            MainImage = "/images/products/uniqlo-heattech.jpg",
+                            ManufactureDate = new DateTime(2023, 11, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "Revolutionary warmth technology for the coldest days",
+                            MaxStock = 500,
+                            MetaDescription = "Stay warm with UNIQLO Heattech Ultra Warm crew neck t-shirt. Advanced thermal technology for maximum comfort.",
+                            MetaKeywords = "uniqlo, heattech, thermal wear, ultra warm, innerwear, winter clothing",
+                            MetaTitle = "UNIQLO Heattech Ultra Warm T-Shirt - Advanced Thermal",
+                            MinStock = 30,
+                            Name = "UNIQLO Heattech Ultra Warm Crew Neck Long Sleeve T-Shirt",
+                            Origin = "Tokyo",
+                            OriginalPrice = 650000m,
+                            Price = 590000m,
+                            Rating = 4.4m,
+                            ReviewCount = 89,
+                            SKU = "UNI-HEAT-ULTRA-M-BK",
+                            ShortDescription = "Advanced heat-generating thermal innerwear with 2.25x more warmth",
+                            Slug = "uniqlo-heattech-ultra-warm-tshirt",
+                            SoldCount = 178,
+                            Status = 1,
+                            Stock = 300,
+                            Tags = "Best Seller, Winter Essential, Comfort, Technology",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Wear as base layer. Machine wash cold, hang dry. Do not iron directly on fabric.",
+                            ViewCount = 2340,
+                            Visibility = 1,
+                            Weight = 150m,
+                            WeightUnit = 1,
+                            Width = 25.0m,
+                            WishlistCount = 67
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AgeRestriction = 0,
+                            AllowBackorder = false,
+                            AllowPreorder = true,
+                            AuthenticityInfo = "Authentic Kutani-yaki pottery with artisan signature",
+                            AuthenticityLevel = 5,
+                            AvailableFrom = new DateTime(2023, 10, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "TEA20231215",
+                            BrandId = 7,
+                            CartCount = 0,
+                            CategoryId = 5,
+                            Condition = 1,
+                            CostPrice = 800000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Exquisite traditional Japanese ceramic tea set featuring delicate sakura (cherry blossom) patterns. Includes teapot, 4 matching cups, and bamboo serving tray. Handcrafted by skilled Kutani artisans.",
+                            DimensionUnit = 1,
+                            Dimensions = "35.0x25.0x15.0",
+                            DisplayOrder = 7,
+                            ExpiryDate = new DateTime(2074, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            GiftWrappingFee = 50000m,
+                            Height = 15.0m,
+                            Ingredients = "High-grade ceramic clay, Natural glazes, Lead-free pigments, Bamboo tray",
+                            IsActive = true,
+                            IsBestseller = false,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = true,
+                            IsGiftWrappingAvailable = true,
+                            IsLimitedEdition = true,
+                            IsNew = false,
+                            JapaneseRegion = 99,
+                            Length = 35.0m,
+                            MainImage = "/images/products/ceramic-tea-set.jpg",
+                            ManufactureDate = new DateTime(2023, 10, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "Bring the beauty of Japanese spring to your tea time",
+                            MaxStock = 50,
+                            MetaDescription = "Elegant Japanese ceramic tea set with sakura design. Handcrafted Kutani pottery perfect for traditional tea ceremony.",
+                            MetaKeywords = "japanese tea set, ceramic, kutani, sakura, handcrafted, tea ceremony",
+                            MetaTitle = "Japanese Ceramic Tea Set - Sakura Collection Kutani",
+                            MinStock = 5,
+                            Name = "Traditional Japanese Ceramic Tea Set - Sakura Collection",
+                            Origin = "Ishikawa",
+                            OriginalPrice = 1350000m,
+                            Price = 1200000m,
+                            Rating = 4.8m,
+                            ReviewCount = 12,
+                            SKU = "TEA-SET-SAKURA-001",
+                            ShortDescription = "Handcrafted ceramic tea set with beautiful sakura blossom design",
+                            Slug = "japanese-ceramic-tea-set-sakura",
+                            SoldCount = 18,
+                            Status = 1,
+                            Stock = 25,
+                            Tags = "Limited Edition, Handcrafted, Traditional, Premium, Art",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Hand wash only. Do not use in microwave or dishwasher. Handle with care.",
+                            ViewCount = 1890,
+                            Visibility = 1,
+                            Weight = 1200m,
+                            WeightUnit = 1,
+                            Width = 25.0m,
+                            WishlistCount = 89
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AgeRestriction = 0,
+                            AllowBackorder = true,
+                            AllowPreorder = false,
+                            AuthenticityInfo = "Traditional Furoshiki technique with modern designs",
+                            AuthenticityLevel = 3,
+                            AvailableFrom = new DateTime(2023, 12, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            BatchNumber = "FUR20240120",
+                            BrandId = 7,
+                            CartCount = 0,
+                            CategoryId = 5,
+                            Condition = 1,
+                            CostPrice = 200000m,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Beautiful set of 3 Furoshiki wrapping cloths in small, medium, and large sizes. Features modern interpretations of traditional Japanese patterns. Perfect eco-friendly alternative to gift wrap and versatile for carrying items.",
+                            DimensionUnit = 1,
+                            Dimensions = "25.0x20.0x3.0",
+                            DisplayOrder = 8,
+                            ExpiryDate = new DateTime(2044, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Height = 3.0m,
+                            Ingredients = "100% Cotton fabric, Eco-friendly dyes, Traditional Japanese patterns",
+                            IsActive = true,
+                            IsBestseller = false,
+                            IsDeleted = false,
+                            IsDiscontinued = false,
+                            IsFeatured = false,
+                            IsGiftWrappingAvailable = false,
+                            IsLimitedEdition = false,
+                            IsNew = false,
+                            JapaneseRegion = 3,
+                            Length = 25.0m,
+                            MainImage = "/images/products/furoshiki-set.jpg",
+                            ManufactureDate = new DateTime(2023, 12, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MarketingDescription = "Wrap with purpose - beautiful, sustainable, and endlessly reusable",
+                            MaxStock = 300,
+                            MetaDescription = "Eco-friendly Japanese Furoshiki cloths with modern designs. Versatile for gift wrapping and everyday use.",
+                            MetaKeywords = "furoshiki, wrapping cloth, eco-friendly, japanese, sustainable, gift wrap",
+                            MetaTitle = "Furoshiki Wrapping Cloth Set - Modern Japanese Patterns",
+                            MinStock = 15,
+                            Name = "Furoshiki Wrapping Cloth Set - Modern Patterns",
+                            Origin = "Kyoto",
+                            OriginalPrice = 320000m,
+                            Price = 280000m,
+                            Rating = 4.2m,
+                            ReviewCount = 28,
+                            SKU = "FURO-SET-MOD-003",
+                            ShortDescription = "Eco-friendly traditional Japanese wrapping cloths in contemporary designs",
+                            Slug = "furoshiki-wrapping-cloth-set-modern",
+                            SoldCount = 67,
+                            Status = 1,
+                            Stock = 150,
+                            Tags = "Eco Friendly, Traditional, Sustainable, Versatile",
+                            TrackInventory = true,
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UsageGuide = "Multiple folding techniques for different uses. Machine washable, air dry recommended.",
+                            ViewCount = 1120,
+                            Visibility = 1,
+                            Weight = 200m,
+                            WeightUnit = 1,
+                            Width = 20.0m,
+                            WishlistCount = 34
+                        });
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.InventoryLog", b =>
@@ -2598,10 +3202,12 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal?>("MaxValue")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<decimal?>("MinValue")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -2819,6 +3425,36 @@ namespace SakuraHomeAPI.Migrations
                     b.ToTable("ProductImages");
                 });
 
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductTag", b =>
+                {
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("ProductTags");
+                });
+
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductVariant", b =>
                 {
                     b.Property<int>("Id")
@@ -2932,7 +3568,7 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ViewCount")
@@ -3206,9 +3842,6 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
 
@@ -3232,19 +3865,12 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("UpdatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int?>("Width")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedByUserId");
-
                     b.HasIndex("ReviewId");
-
-                    b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("ReviewImages");
                 });
@@ -3298,7 +3924,8 @@ namespace SakuraHomeAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("AverageRating")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
 
                     b.Property<int>("FiveStar")
                         .HasColumnType("int");
@@ -3337,7 +3964,20 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ReviewSummaries");
+                    b.ToTable("ReviewSummaries", t =>
+                        {
+                            t.HasCheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5");
+
+                            t.HasCheckConstraint("CK_ReviewSummary_Recommended", "Recommended >= 0");
+
+                            t.HasCheckConstraint("CK_ReviewSummary_StarCounts", "OneStar >= 0 AND TwoStar >= 0 AND ThreeStar >= 0 AND FourStar >= 0 AND FiveStar >= 0");
+
+                            t.HasCheckConstraint("CK_ReviewSummary_TotalReviews", "TotalReviews >= 0");
+
+                            t.HasCheckConstraint("CK_ReviewSummary_VerifiedPurchases", "VerifiedPurchases >= 0");
+
+                            t.HasCheckConstraint("CK_ReviewSummary_WithImages", "WithImages >= 0");
+                        });
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Reviews.ReviewVote", b =>
@@ -3778,13 +4418,12 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("Carts");
                 });
@@ -3798,9 +4437,6 @@ namespace SakuraHomeAPI.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CartItemId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -3826,6 +4462,9 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int?>("ProductVariantId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ProductVariantId1")
+                        .HasColumnType("int");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
@@ -3845,11 +4484,11 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.HasIndex("CartItemId");
-
                     b.HasIndex("ProductId");
 
                     b.HasIndex("ProductVariantId");
+
+                    b.HasIndex("ProductVariantId1");
 
                     b.HasIndex("CartId", "ProductId", "ProductVariantId")
                         .IsUnique()
@@ -3876,7 +4515,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -4133,9 +4771,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasOne("SakuraHomeAPI.Models.Entities.PaymentMethodInfo", "PaymentMethodDetails")
                         .WithMany()
-                        .HasForeignKey("PaymentMethodDetailsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PaymentMethodDetailsId");
 
                     b.HasOne("SakuraHomeAPI.Models.Entities.ShippingZone", "ShippingZone")
                         .WithMany()
@@ -4171,8 +4807,13 @@ namespace SakuraHomeAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("SakuraHomeAPI.Models.Entities.Products.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Products.ProductVariant", null)
                         .WithMany("OrderItems")
-                        .HasForeignKey("ProductVariantId");
+                        .HasForeignKey("ProductVariantId1");
 
                     b.Navigation("Order");
 
@@ -4194,64 +4835,17 @@ namespace SakuraHomeAPI.Migrations
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Orders.OrderStatusHistory", b =>
                 {
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("SakuraHomeAPI.Models.Entities.Orders.Order", "Order")
-                        .WithMany("StatusHistory")
+                        .WithMany()
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Orders.Order", null)
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("OrderId1");
 
                     b.Navigation("Order");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
-            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Orders.ProductTag", b =>
-                {
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Product", "Product")
-                        .WithMany("ProductTags")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Products.Tag", "Tag")
-                        .WithMany("ProductTags")
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("Product");
-
-                    b.Navigation("Tag");
-
-                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.PaymentTransaction", b =>
@@ -4299,7 +4893,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasOne("SakuraHomeAPI.Models.Entities.Product", "Product")
                         .WithMany("InventoryLogs")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("SakuraHomeAPI.Models.Entities.Products.ProductVariant", "ProductVariant")
@@ -4349,6 +4943,25 @@ namespace SakuraHomeAPI.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductTag", b =>
+                {
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Product", "Product")
+                        .WithMany("ProductTags")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Products.Tag", "Tag")
+                        .WithMany("ProductTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Tag");
+                });
+
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductVariant", b =>
                 {
                     b.HasOne("SakuraHomeAPI.Models.Entities.Product", "Product")
@@ -4371,8 +4984,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "User")
                         .WithMany("ProductViews")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Product");
 
@@ -4413,29 +5025,13 @@ namespace SakuraHomeAPI.Migrations
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Reviews.ReviewImage", b =>
                 {
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("SakuraHomeAPI.Models.Entities.Reviews.Review", "Review")
                         .WithMany("ReviewImages")
                         .HasForeignKey("ReviewId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
-
                     b.Navigation("Review");
-
-                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Reviews.ReviewResponse", b =>
@@ -4513,10 +5109,9 @@ namespace SakuraHomeAPI.Migrations
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserCart.Cart", b =>
                 {
                     b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "User")
-                        .WithOne("Cart")
-                        .HasForeignKey("SakuraHomeAPI.Models.Entities.UserCart.Cart", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("Carts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
@@ -4529,19 +5124,20 @@ namespace SakuraHomeAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SakuraHomeAPI.Models.Entities.UserCart.CartItem", null)
-                        .WithMany("Items")
-                        .HasForeignKey("CartItemId");
-
                     b.HasOne("SakuraHomeAPI.Models.Entities.Product", "Product")
                         .WithMany("CartItems")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SakuraHomeAPI.Models.Entities.Products.ProductVariant", "ProductVariant")
+                        .WithMany()
+                        .HasForeignKey("ProductVariantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Products.ProductVariant", null)
                         .WithMany("CartItems")
-                        .HasForeignKey("ProductVariantId");
+                        .HasForeignKey("ProductVariantId1");
 
                     b.Navigation("Cart");
 
@@ -4566,7 +5162,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasOne("SakuraHomeAPI.Models.Entities.Product", "Product")
                         .WithMany("WishlistItems")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SakuraHomeAPI.Models.Entities.UserWishlist.Wishlist", "Wishlist")
@@ -4604,7 +5200,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.Navigation("Addresses");
 
-                    b.Navigation("Cart");
+                    b.Navigation("Carts");
 
                     b.Navigation("ContactMessages");
 
@@ -4700,11 +5296,6 @@ namespace SakuraHomeAPI.Migrations
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserCart.Cart", b =>
                 {
                     b.Navigation("CartItems");
-                });
-
-            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserCart.CartItem", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserWishlist.Wishlist", b =>

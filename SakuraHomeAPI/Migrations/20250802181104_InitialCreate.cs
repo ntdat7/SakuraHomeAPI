@@ -645,7 +645,7 @@ namespace SakuraHomeAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     SessionId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -1055,9 +1055,7 @@ namespace SakuraHomeAPI.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
-                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UpdatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1072,18 +1070,6 @@ namespace SakuraHomeAPI.Migrations
                         name: "FK_ProductTags_Tags_TagId",
                         column: x => x.TagId,
                         principalTable: "Tags",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductTags_Users_CreatedByUserId",
-                        column: x => x.CreatedByUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductTags_Users_UpdatedByUserId",
-                        column: x => x.UpdatedByUserId,
-                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1132,7 +1118,7 @@ namespace SakuraHomeAPI.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     ViewCount = table.Column<int>(type: "int", nullable: false),
                     LastViewedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -1165,7 +1151,7 @@ namespace SakuraHomeAPI.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     TotalReviews = table.Column<int>(type: "int", nullable: false),
-                    AverageRating = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    AverageRating = table.Column<decimal>(type: "decimal(3,2)", precision: 3, scale: 2, nullable: false),
                     OneStar = table.Column<int>(type: "int", nullable: false),
                     TwoStar = table.Column<int>(type: "int", nullable: false),
                     ThreeStar = table.Column<int>(type: "int", nullable: false),
@@ -1179,6 +1165,12 @@ namespace SakuraHomeAPI.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ReviewSummaries", x => x.Id);
+                    table.CheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5");
+                    table.CheckConstraint("CK_ReviewSummary_Recommended", "Recommended >= 0");
+                    table.CheckConstraint("CK_ReviewSummary_StarCounts", "OneStar >= 0 AND TwoStar >= 0 AND ThreeStar >= 0 AND FourStar >= 0 AND FiveStar >= 0");
+                    table.CheckConstraint("CK_ReviewSummary_TotalReviews", "TotalReviews >= 0");
+                    table.CheckConstraint("CK_ReviewSummary_VerifiedPurchases", "VerifiedPurchases >= 0");
+                    table.CheckConstraint("CK_ReviewSummary_WithImages", "WithImages >= 0");
                     table.ForeignKey(
                         name: "FK_ReviewSummaries_Products_ProductId",
                         column: x => x.ProductId,
@@ -1223,12 +1215,11 @@ namespace SakuraHomeAPI.Migrations
                     OldStatus = table.Column<int>(type: "int", nullable: false),
                     NewStatus = table.Column<int>(type: "int", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OrderId1 = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
-                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UpdatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1240,17 +1231,10 @@ namespace SakuraHomeAPI.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrderStatusHistory_Users_CreatedByUserId",
-                        column: x => x.CreatedByUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_OrderStatusHistory_Users_UpdatedByUserId",
-                        column: x => x.UpdatedByUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_OrderStatusHistory_Orders_OrderId1",
+                        column: x => x.OrderId1,
+                        principalTable: "Orders",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1389,7 +1373,7 @@ namespace SakuraHomeAPI.Migrations
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_WishlistItems_Wishlists_WishlistId",
                         column: x => x.WishlistId,
@@ -1468,7 +1452,7 @@ namespace SakuraHomeAPI.Migrations
                     CustomOptions = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GiftMessage = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsGift = table.Column<bool>(type: "bit", nullable: false),
-                    CartItemId = table.Column<int>(type: "int", nullable: true),
+                    ProductVariantId1 = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
@@ -1479,11 +1463,6 @@ namespace SakuraHomeAPI.Migrations
                     table.PrimaryKey("PK_CartItems", x => x.Id);
                     table.CheckConstraint("CK_CartItem_Quantity", "Quantity > 0");
                     table.ForeignKey(
-                        name: "FK_CartItems_CartItems_CartItemId",
-                        column: x => x.CartItemId,
-                        principalTable: "CartItems",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_CartItems_Carts_CartId",
                         column: x => x.CartId,
                         principalTable: "Carts",
@@ -1493,13 +1472,19 @@ namespace SakuraHomeAPI.Migrations
                         name: "FK_CartItems_ProductVariants_ProductVariantId",
                         column: x => x.ProductVariantId,
                         principalTable: "ProductVariants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_CartItems_ProductVariants_ProductVariantId1",
+                        column: x => x.ProductVariantId1,
+                        principalTable: "ProductVariants",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_CartItems_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1543,8 +1528,7 @@ namespace SakuraHomeAPI.Migrations
                         name: "FK_InventoryLogs_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_InventoryLogs_Users_UserId",
                         column: x => x.UserId,
@@ -1571,12 +1555,14 @@ namespace SakuraHomeAPI.Migrations
                     VariantName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     VariantSku = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ProductAttributes = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ProductVariantId1 = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrderItems", x => x.Id);
                     table.CheckConstraint("CK_OrderItem_Quantity", "Quantity > 0");
+                    table.CheckConstraint("CK_OrderItem_TotalPrice", "TotalPrice >= 0");
                     table.CheckConstraint("CK_OrderItem_UnitPrice", "UnitPrice >= 0");
                     table.ForeignKey(
                         name: "FK_OrderItems_Orders_OrderId",
@@ -1587,6 +1573,12 @@ namespace SakuraHomeAPI.Migrations
                     table.ForeignKey(
                         name: "FK_OrderItems_ProductVariants_ProductVariantId",
                         column: x => x.ProductVariantId,
+                        principalTable: "ProductVariants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_ProductVariants_ProductVariantId1",
+                        column: x => x.ProductVariantId1,
                         principalTable: "ProductVariants",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -1613,9 +1605,7 @@ namespace SakuraHomeAPI.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
-                    CreatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UpdatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1624,18 +1614,6 @@ namespace SakuraHomeAPI.Migrations
                         name: "FK_ReviewImages_Reviews_ReviewId",
                         column: x => x.ReviewId,
                         principalTable: "Reviews",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ReviewImages_Users_CreatedByUserId",
-                        column: x => x.CreatedByUserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ReviewImages_Users_UpdatedByUserId",
-                        column: x => x.UpdatedByUserId,
-                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1816,11 +1794,6 @@ namespace SakuraHomeAPI.Migrations
                 filter: "[ProductVariantId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CartItems_CartItemId",
-                table: "CartItems",
-                column: "CartItemId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_CartItems_ProductId",
                 table: "CartItems",
                 column: "ProductId");
@@ -1831,10 +1804,14 @@ namespace SakuraHomeAPI.Migrations
                 column: "ProductVariantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CartItems_ProductVariantId1",
+                table: "CartItems",
+                column: "ProductVariantId1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserId",
                 table: "Carts",
-                column: "UserId",
-                unique: true);
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_DisplayOrder",
@@ -1964,6 +1941,11 @@ namespace SakuraHomeAPI.Migrations
                 column: "ProductVariantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_ProductVariantId1",
+                table: "OrderItems",
+                column: "ProductVariantId1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrderNotes_OrderId",
                 table: "OrderNotes",
                 column: "OrderId");
@@ -2015,19 +1997,14 @@ namespace SakuraHomeAPI.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderStatusHistory_CreatedByUserId",
-                table: "OrderStatusHistory",
-                column: "CreatedByUserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_OrderStatusHistory_OrderId",
                 table: "OrderStatusHistory",
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderStatusHistory_UpdatedByUserId",
+                name: "IX_OrderStatusHistory_OrderId1",
                 table: "OrderStatusHistory",
-                column: "UpdatedByUserId");
+                column: "OrderId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PaymentTransactions_CreatedAt",
@@ -2147,19 +2124,9 @@ namespace SakuraHomeAPI.Migrations
                 column: "Status");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductTags_CreatedByUserId",
-                table: "ProductTags",
-                column: "CreatedByUserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ProductTags_TagId",
                 table: "ProductTags",
                 column: "TagId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductTags_UpdatedByUserId",
-                table: "ProductTags",
-                column: "UpdatedByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductVariants_ProductId",
@@ -2187,19 +2154,9 @@ namespace SakuraHomeAPI.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ReviewImages_CreatedByUserId",
-                table: "ReviewImages",
-                column: "CreatedByUserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ReviewImages_ReviewId",
                 table: "ReviewImages",
                 column: "ReviewId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ReviewImages_UpdatedByUserId",
-                table: "ReviewImages",
-                column: "UpdatedByUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ReviewResponses_ReviewId",

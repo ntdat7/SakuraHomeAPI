@@ -8,8 +8,7 @@ namespace SakuraHomeAPI.Models.Entities.Products
     [Table("ProductViews")]
     public class ProductView : BaseEntity
     {
-        [Required]
-        public Guid UserId { get; set; }
+        public Guid? UserId { get; set; } // Changed from Required to nullable to support SetNull behavior
 
         [Required]
         public int ProductId { get; set; } // Changed from Guid to int to match Product.Id
@@ -28,7 +27,7 @@ namespace SakuraHomeAPI.Models.Entities.Products
         public string Referrer { get; set; }
 
         // Navigation Properties
-        public virtual User User { get; set; }
+        public virtual User? User { get; set; } // Also made nullable
         public virtual Product Product { get; set; }
     }
 }

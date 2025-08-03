@@ -90,10 +90,13 @@
     public enum AuthenticityLevel
     {
         Unknown = 0,        // Chưa xác định
-        Verified = 1,       // Đã xác thực
-        Certified = 2,      // Có chứng nhận
-        DirectImport = 3,   // Nhập khẩu trực tiếp
-        Authorized = 4      // Đại lý chính thức
+        NotVerified = 1,    // Chưa xác thực
+        Basic = 2,          // Cơ bản
+        Verified = 3,       // Đã xác thực
+        Premium = 4,        // Cao cấp
+        Certified = 5,      // Có chứng nhận
+        DirectImport = 6,   // Nhập khẩu trực tiếp
+        Authorized = 7      // Đại lý chính thức
     }
 
     /// <summary>
@@ -103,9 +106,11 @@
     {
         None = 0,           // Không giới hạn
         Under3 = 1,         // Dưới 3 tuổi không phù hợp
-        Over13 = 2,         // Trên 13 tuổi
-        Over18 = 3,         // Trên 18 tuổi
-        Adult = 4           // Người lớn
+        Teen = 13,          // Trên 13 tuổi
+        Over13 = 13,        // Trên 13 tuổi (alias)
+        Adult = 18,         // Trên 18 tuổi
+        Over18 = 18,        // Trên 18 tuổi (alias)
+        AdultPlus = 21      // Trên 21 tuổi
     }
 
     /// <summary>
@@ -123,6 +128,13 @@
         Nagoya = 8,
         Kobe = 9,
         Yokohama = 10,
+        Kanto = 20,         
+        Kansai = 21,        
+        Chubu = 22,         
+        Tohoku = 23,       
+        Chugoku = 24,       
+        Shikoku = 25,       
+        Kyushu = 26,        
         Other = 99
     }
 

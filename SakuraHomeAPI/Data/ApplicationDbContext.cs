@@ -28,8 +28,8 @@ namespace SakuraHomeAPI.Data
 
         #region DbSets
 
-        // Identity & User Management
-        public DbSet<User> Users { get; set; }
+        // Identity & User Management - override to avoid warning
+        public new DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }
 
         // Product Catalog
@@ -219,6 +219,13 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(o => o.CreatedAt);
             });
 
+            builder.Entity<OrderItem>(entity =>
+            {
+                entity.HasIndex(oi => oi.OrderId);
+                entity.HasIndex(oi => oi.ProductId);
+                entity.HasIndex(oi => oi.ProductVariantId);
+            });
+
             // Review indexes for product pages
             builder.Entity<Review>(entity =>
             {
@@ -386,9 +393,12 @@ namespace SakuraHomeAPI.Data
 
             builder.Entity<Cart>()
                 .HasOne(c => c.User)
-                .WithOne(u => u.Cart)
-                .HasForeignKey<Cart>(c => c.UserId)
+                .WithMany(u => u.Carts)
+                .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Cart>()
+                .HasIndex(c => c.UserId);
 
             builder.Entity<Wishlist>()
                 .HasOne(w => w.User)
@@ -407,7 +417,13 @@ namespace SakuraHomeAPI.Data
                 .HasOne(ci => ci.Product)
                 .WithMany(p => p.CartItems)
                 .HasForeignKey(ci => ci.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<CartItem>()
+                .HasOne(ci => ci.ProductVariant)
+                .WithMany()
+                .HasForeignKey(ci => ci.ProductVariantId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Wishlist relationships
             builder.Entity<WishlistItem>()
@@ -420,7 +436,7 @@ namespace SakuraHomeAPI.Data
                 .HasOne(wi => wi.Product)
                 .WithMany(p => p.WishlistItems)
                 .HasForeignKey(wi => wi.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Order relationships
             builder.Entity<Order>()
@@ -484,7 +500,7 @@ namespace SakuraHomeAPI.Data
                 .HasOne(il => il.Product)
                 .WithMany(p => p.InventoryLogs)
                 .HasForeignKey(il => il.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction); // Changed from Cascade to NoAction to avoid multiple cascade paths
 
             builder.Entity<InventoryLog>()
                 .HasOne(il => il.ProductVariant)
@@ -570,6 +586,25 @@ namespace SakuraHomeAPI.Data
                 .WithMany()
                 .HasForeignKey(osh => osh.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Additional missing relationships
+            builder.Entity<ReviewResponse>()
+                .HasOne(rr => rr.Review)
+                .WithMany(r => r.ReviewResponses)
+                .HasForeignKey(rr => rr.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ReviewSummary>()
+                .HasOne(rs => rs.Product)
+                .WithMany()
+                .HasForeignKey(rs => rs.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<OrderItem>()
+                .HasOne(oi => oi.ProductVariant)
+                .WithMany()
+                .HasForeignKey(oi => oi.ProductVariantId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
 
         /// <summary>
@@ -599,6 +634,9 @@ namespace SakuraHomeAPI.Data
 
             builder.Entity<OrderItem>()
                 .HasCheckConstraint("CK_OrderItem_UnitPrice", "UnitPrice >= 0");
+
+            builder.Entity<OrderItem>()
+                .HasCheckConstraint("CK_OrderItem_TotalPrice", "TotalPrice >= 0");
 
             // Review constraints
             builder.Entity<Review>()
@@ -641,6 +679,32 @@ namespace SakuraHomeAPI.Data
             // Shipping constraints
             builder.Entity<ShippingRate>()
                 .HasCheckConstraint("CK_ShippingRate_Rate", "Rate >= 0");
+
+            // ReviewSummary constraints and precision configuration
+            builder.Entity<ReviewSummary>(entity =>
+            {
+                entity.HasCheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5");
+                entity.HasCheckConstraint("CK_ReviewSummary_TotalReviews", "TotalReviews >= 0");
+                entity.HasCheckConstraint("CK_ReviewSummary_StarCounts", 
+                    "OneStar >= 0 AND TwoStar >= 0 AND ThreeStar >= 0 AND FourStar >= 0 AND FiveStar >= 0");
+                entity.HasCheckConstraint("CK_ReviewSummary_VerifiedPurchases", "VerifiedPurchases >= 0");
+                entity.HasCheckConstraint("CK_ReviewSummary_WithImages", "WithImages >= 0");
+                entity.HasCheckConstraint("CK_ReviewSummary_Recommended", "Recommended >= 0");
+                
+                // Configure decimal precision for AverageRating
+                entity.Property(rs => rs.AverageRating)
+                    .HasPrecision(3, 2); // 3 digits total, 2 after decimal (allows values like 5.00, 4.99, etc.)
+            });
+
+            // ProductAttribute decimal precision configuration
+            builder.Entity<ProductAttribute>(entity =>
+            {
+                entity.Property(pa => pa.MinValue)
+                    .HasPrecision(18, 4); // Allows values like 9999999999999.9999
+
+                entity.Property(pa => pa.MaxValue)
+                    .HasPrecision(18, 4); // Allows values like 9999999999999.9999
+            });
         }
 
         /// <summary>

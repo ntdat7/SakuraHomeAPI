@@ -2,22 +2,27 @@ using AutoMapper;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SakuraHomeAPI.Data;
-//using SakuraHomeAPI.Extensions;
-//using SakuraHomeAPI.Middlewares;
 using SakuraHomeAPI.Models.Entities.Identity;
-//using SakuraHomeAPI.Services.Implementations;
-//using SakuraHomeAPI.Services.Interfaces;
 using Serilog;
+using System;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -362,9 +367,6 @@ using (var scope = app.Services.CreateScope())
             Log.Error("Cannot connect to database. Please check your connection string.");
             throw new InvalidOperationException("Database connection failed");
         }
-
-        // Seed data
-        // await SeedData.Initialize(services, userManager, roleManager);
 
         Log.Information("Database migration and seeding completed successfully");
     }
