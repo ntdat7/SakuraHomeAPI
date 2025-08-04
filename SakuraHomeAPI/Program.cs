@@ -15,6 +15,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.Models.Entities.Identity;
+using SakuraHomeAPI.Services.Interfaces;
+using SakuraHomeAPI.Services.Implementations;
 using Serilog;
 using System;
 using System.IO;
@@ -243,7 +245,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Custom Services
-//builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 //builder.Services.AddScoped<IUserService, UserService>();
 //builder.Services.AddScoped<IProductService, ProductService>();
 //builder.Services.AddScoped<ICategoryService, CategoryService>();

@@ -1,0 +1,191 @@
+using SakuraHomeAPI.Models.Enums;
+using System.ComponentModel.DataAnnotations;
+
+namespace SakuraHomeAPI.Models.DTOs
+{
+    /// <summary>
+    /// DTO for user login request
+    /// </summary>
+    public class LoginRequestDto
+    {
+        [Required(ErrorMessage = "Email là b?t bu?c")]
+        [EmailAddress(ErrorMessage = "Email không h?p l?")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "M?t kh?u là b?t bu?c")]
+        [MinLength(6, ErrorMessage = "M?t kh?u ph?i có ít nh?t 6 ký t?")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; } = false;
+    }
+
+    /// <summary>
+    /// DTO for user registration request
+    /// </summary>
+    public class RegisterRequestDto
+    {
+        [Required(ErrorMessage = "Email là b?t bu?c")]
+        [EmailAddress(ErrorMessage = "Email không h?p l?")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "M?t kh?u là b?t bu?c")]
+        [MinLength(6, ErrorMessage = "M?t kh?u ph?i có ít nh?t 6 ký t?")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$", 
+            ErrorMessage = "M?t kh?u ph?i ch?a ít nh?t 1 ch? hoa, 1 ch? th??ng và 1 s?")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Xác nh?n m?t kh?u là b?t bu?c")]
+        [Compare("Password", ErrorMessage = "M?t kh?u xác nh?n không kh?p")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "H? là b?t bu?c")]
+        [MaxLength(100, ErrorMessage = "H? không ???c v??t quá 100 ký t?")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Tên là b?t bu?c")]
+        [MaxLength(100, ErrorMessage = "Tên không ???c v??t quá 100 ký t?")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Phone(ErrorMessage = "S? ?i?n tho?i không h?p l?")]
+        public string? PhoneNumber { get; set; }
+
+        public DateTime? DateOfBirth { get; set; }
+
+        public Gender? Gender { get; set; }
+
+        [MaxLength(5)]
+        public string PreferredLanguage { get; set; } = "vi";
+
+        public bool AcceptTerms { get; set; } = false;
+
+        public bool EmailNotifications { get; set; } = true;
+
+        public bool SmsNotifications { get; set; } = false;
+    }
+
+    /// <summary>
+    /// DTO for successful authentication response
+    /// </summary>
+    public class AuthResponseDto
+    {
+        public string Token { get; set; } = string.Empty;
+        public DateTime ExpiresAt { get; set; }
+        public string RefreshToken { get; set; } = string.Empty;
+        public UserDto User { get; set; } = new();
+    }
+
+    /// <summary>
+    /// DTO for user information
+    /// </summary>
+    public class UserDto
+    {
+        public Guid Id { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public Gender? Gender { get; set; }
+        public string? Avatar { get; set; }
+        public UserRole Role { get; set; }
+        public UserTier Tier { get; set; }
+        public int Points { get; set; }
+        public decimal TotalSpent { get; set; }
+        public AccountStatus Status { get; set; }
+        public bool EmailVerified { get; set; }
+        public bool PhoneVerified { get; set; }
+        public string PreferredLanguage { get; set; } = "vi";
+        public string PreferredCurrency { get; set; } = "VND";
+        public bool EmailNotifications { get; set; }
+        public bool SmsNotifications { get; set; }
+        public bool PushNotifications { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? LastLoginAt { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for password reset request
+    /// </summary>
+    public class ForgotPasswordRequestDto
+    {
+        [Required(ErrorMessage = "Email là b?t bu?c")]
+        [EmailAddress(ErrorMessage = "Email không h?p l?")]
+        public string Email { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO for password reset
+    /// </summary>
+    public class ResetPasswordRequestDto
+    {
+        [Required(ErrorMessage = "Email là b?t bu?c")]
+        [EmailAddress(ErrorMessage = "Email không h?p l?")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Token ??t l?i m?t kh?u là b?t bu?c")]
+        public string Token { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "M?t kh?u m?i là b?t bu?c")]
+        [MinLength(6, ErrorMessage = "M?t kh?u ph?i có ít nh?t 6 ký t?")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$", 
+            ErrorMessage = "M?t kh?u ph?i ch?a ít nh?t 1 ch? hoa, 1 ch? th??ng và 1 s?")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Xác nh?n m?t kh?u là b?t bu?c")]
+        [Compare("NewPassword", ErrorMessage = "M?t kh?u xác nh?n không kh?p")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO for change password request
+    /// </summary>
+    public class ChangePasswordRequestDto
+    {
+        [Required(ErrorMessage = "M?t kh?u hi?n t?i là b?t bu?c")]
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "M?t kh?u m?i là b?t bu?c")]
+        [MinLength(6, ErrorMessage = "M?t kh?u ph?i có ít nh?t 6 ký t?")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$", 
+            ErrorMessage = "M?t kh?u ph?i ch?a ít nh?t 1 ch? hoa, 1 ch? th??ng và 1 s?")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Xác nh?n m?t kh?u là b?t bu?c")]
+        [Compare("NewPassword", ErrorMessage = "M?t kh?u xác nh?n không kh?p")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO for email verification
+    /// </summary>
+    public class VerifyEmailRequestDto
+    {
+        [Required(ErrorMessage = "Email là b?t bu?c")]
+        [EmailAddress(ErrorMessage = "Email không h?p l?")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Token xác th?c là b?t bu?c")]
+        public string Token { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO for refreshing token
+    /// </summary>
+    public class RefreshTokenRequestDto
+    {
+        [Required(ErrorMessage = "Access token là b?t bu?c")]
+        public string AccessToken { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Refresh token là b?t bu?c")]
+        public string RefreshToken { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO for revoke token request
+    /// </summary>
+    public class RevokeTokenRequestDto
+    {
+        public string? RefreshToken { get; set; }
+    }
+}

@@ -1,0 +1,309 @@
+### SakuraHome API Authentication Endpoints Testing
+
+@baseUrl = http://localhost:5273
+
+### =================================================================
+### BASIC AUTHENTICATION FLOW
+### =================================================================
+
+### 1. ?? User Registration (??ng ký ng??i dùng)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!",
+  "firstName": "John",
+  "lastName": "Doe",
+  "phoneNumber": "+84123456789",
+  "dateOfBirth": "1990-01-01",
+  "gender": 1,
+  "preferredLanguage": "vi",
+  "acceptTerms": true,
+  "emailNotifications": true,
+  "smsNotifications": false
+}
+
+### 2. ?? User Login (??ng nh?p)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test123!",
+  "rememberMe": false
+}
+
+### ?? Store tokens from login response for subsequent requests
+@authToken = {{login.response.body.data.token}}
+@refreshToken = {{login.response.body.data.refreshToken}}
+
+### 3. ?? Get Current User Info (L?y thông tin user hi?n t?i)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{authToken}}
+
+### 4. ? Check Authentication Status (Ki?m tra tr?ng thái xác th?c)
+GET {{baseUrl}}/api/auth/check
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### TOKEN MANAGEMENT
+### =================================================================
+
+### 5. ?? Refresh Token (Làm m?i token)
+POST {{baseUrl}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "accessToken": "{{authToken}}",
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 6. ?? Revoke Specific Token (Thu h?i token c? th?)
+POST {{baseUrl}}/api/auth/revoke-token
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 7. ???? Revoke All Tokens (Thu h?i t?t c? token - logout t? t?t c? thi?t b?)
+POST {{baseUrl}}/api/auth/revoke-all-tokens
+Authorization: Bearer {{authToken}}
+
+### 8. ???? Logout (??ng xu?t)
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### =================================================================
+### PASSWORD MANAGEMENT
+### =================================================================
+
+### 9. ?? Change Password (??i m?t kh?u)
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Test123!",
+  "newPassword": "NewTest123!",
+  "confirmPassword": "NewTest123!"
+}
+
+### 10. ?? Forgot Password (Quên m?t kh?u)
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### 11. ?? Reset Password (??t l?i m?t kh?u - c?n token t? email)
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "token": "your-reset-token-here",
+  "newPassword": "ResetTest123!",
+  "confirmPassword": "ResetTest123!"
+}
+
+### =================================================================
+### EMAIL VERIFICATION
+### =================================================================
+
+### 12. ?? Verify Email (Xác th?c email - c?n token t? email)
+POST {{baseUrl}}/api/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "token": "your-verification-token-here"
+}
+
+### 13. ?? Resend Email Verification (G?i l?i email xác th?c)
+POST {{baseUrl}}/api/auth/resend-email-verification
+Content-Type: application/json
+
+"test@example.com"
+
+### =================================================================
+### ERROR TESTING (Test các tr??ng h?p l?i)
+### =================================================================
+
+### ? Test Invalid Authentication Token
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid-token-here
+
+### ? Test Registration with Existing Email
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!",
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "acceptTerms": true
+}
+
+### ? Test Login with Wrong Password
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "WrongPassword!",
+  "rememberMe": false
+}
+
+### ? Test Login with Non-existent Email
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "Test123!",
+  "rememberMe": false
+}
+
+### ? Test Registration with Invalid Data
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "password": "123",
+  "confirmPassword": "456",
+  "firstName": "",
+  "lastName": ""
+}
+
+### ? Test Change Password with Wrong Current Password
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "WrongCurrentPassword!",
+  "newPassword": "NewTest123!",
+  "confirmPassword": "NewTest123!"
+}
+
+### =================================================================
+### ADVANCED TESTING
+### =================================================================
+
+### ?? Test Multiple User Registration
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user2@example.com",
+  "password": "User2Pass123!",
+  "confirmPassword": "User2Pass123!",
+  "firstName": "Alice",
+  "lastName": "Smith",
+  "phoneNumber": "+84987654321",
+  "dateOfBirth": "1995-05-15",
+  "gender": 2,
+  "preferredLanguage": "en",
+  "acceptTerms": true,
+  "emailNotifications": false,
+  "smsNotifications": true
+}
+
+### ?? Test Admin User Registration (if allowed)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "AdminPass123!",
+  "confirmPassword": "AdminPass123!",
+  "firstName": "Admin",
+  "lastName": "User",
+  "phoneNumber": "+84111222333",
+  "acceptTerms": true
+}
+
+### =================================================================
+### PERFORMANCE TESTING
+### =================================================================
+
+### ?? Test Rapid Login Attempts (?? test rate limiting n?u có)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Test123!",
+  "rememberMe": false
+}
+
+### ?? Test Multiple Token Refresh
+POST {{baseUrl}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "accessToken": "{{authToken}}",
+  "refreshToken": "{{refreshToken}}"
+}
+
+### =================================================================
+### NOTES & INSTRUCTIONS
+### =================================================================
+
+###
+### ?? H??NG D?N S? D?NG:
+### 
+### 1. Kh?i ch?y ?ng d?ng: dotnet run
+### 2. ??m b?o database ?ã ???c t?o và migration ?ã ch?y
+### 3. Ch?y các test theo th? t?:
+###    - ??u tiên: Registration (Test #1)
+###    - Sau ?ó: Login (Test #2) 
+###    - R?i các test khác s? d?ng token t? login
+### 
+### ?? KI?M TRA K?T QU?:
+### 
+### ? Success Response (200):
+### {
+###   "success": true,
+###   "message": "...",
+###   "data": { ... },
+###   "timestamp": "..."
+### }
+### 
+### ? Error Response (400/401/404):
+### {
+###   "success": false,
+###   "message": "...",
+###   "errors": ["..."],
+###   "timestamp": "..."
+### }
+### 
+### ??? SECURITY FEATURES:
+### 
+### - JWT Token expires sau 60 phút
+### - Refresh Token expires sau 7 ngày
+### - Account lockout sau 5 l?n login sai
+### - Password ph?i có ít nh?t 6 ký t?, 1 hoa, 1 th??ng, 1 s?
+### - Email verification (ch?a g?i email th?c t?)
+### - IP tracking cho m?i login
+### 
+### ?? MONITORING:
+### 
+### - Check logs t?i: logs/sakura-home-{date}.txt
+### - User activities ???c log trong database
+### - Error tracking v?i Serilog
+###
