@@ -8,12 +8,13 @@
         Pending = 1,        // Đang chờ xử lý
         Confirmed = 2,      // Đã xác nhận
         Processing = 3,     // Đang chuẩn bị hàng
-        Shipped = 4,        // Đã giao cho vận chuyển
-        OutForDelivery = 5, // Đang giao hàng
-        Delivered = 6,      // Đã giao thành công
-        Cancelled = 7,      // Đã hủy
-        Returned = 8,       // Đã trả hàng
-        Refunded = 9        // Đã hoàn tiền
+        Packed = 4,         // Đã đóng gói
+        Shipped = 5,        // Đã giao cho vận chuyển
+        OutForDelivery = 6, // Đang giao hàng
+        Delivered = 7,      // Đã giao thành công
+        Cancelled = 8,      // Đã hủy
+        Returned = 9,       // Đã trả hàng
+        Refunded = 10       // Đã hoàn tiền
     }
 
     /// <summary>
@@ -28,7 +29,23 @@
         Cancelled = 5,         // Đã hủy
         Refunded = 6,          // Đã hoàn tiền
         PartiallyRefunded = 7, // Hoàn tiền một phần
-        Expired = 8            // Hết hạn thanh toán
+        Expired = 8,           // Hết hạn thanh toán
+        Confirmed = 9          // Đã xác nhận (for COD)
+    }
+
+    /// <summary>
+    /// Return status
+    /// </summary>
+    public enum ReturnStatus
+    {
+        Requested = 1,      // Yêu cầu trả hàng
+        Approved = 2,       // Chấp nhận trả hàng
+        Rejected = 3,       // Từ chối trả hàng
+        InTransit = 4,      // Đang vận chuyển về
+        Received = 5,       // Đã nhận hàng trả
+        Inspecting = 6,     // Đang kiểm tra
+        Completed = 7,      // Hoàn tất
+        RefundProcessed = 8 // Đã hoàn tiền
     }
 
     /// <summary>
@@ -54,6 +71,15 @@
         EWallet = 5,        // Ví điện tử (MoMo, ZaloPay)
         QRCode = 6,         // Quét mã QR
         Installment = 7     // Trả góp
+    }
+
+    /// <summary>
+    /// Discount types
+    /// </summary>
+    public enum DiscountType
+    {
+        Percentage = 1,     // Giảm theo phần trăm
+        FixedAmount = 2     // Giảm số tiền cố định
     }
 
     /// <summary>

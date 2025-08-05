@@ -7,31 +7,21 @@ Tài li?u này h??ng d?n chi ti?t cách test h? th?ng authentication c?a SakuraHome
 ## ?? Chu?n b?
 
 ### 1. Kh?i ch?y ?ng d?ng
-
-```bash
 cd SakuraHomeAPI
 dotnet run
-```
-
 ?ng d?ng s? ch?y trên:
 - HTTPS: `https://localhost:7240`
 - HTTP: `http://localhost:5273`
 
 ### 2. T?o và update database
-
-```bash
 # T?o migration cho RefreshToken (n?u ch?a có)
 dotnet ef migrations add AddRefreshTokenTable
 
 # Update database
 dotnet ef database update
-```
-
 ### 3. Ki?m tra c?u hình JWT
 
 ??m b?o `appsettings.json` có c?u hình JWT ?úng:
-
-```json
 {
   "JwtSettings": {
     "Key": "your-super-secret-key-here-make-it-long-and-complex",
@@ -40,11 +30,9 @@ dotnet ef database update
     "DurationInMinutes": 60
   }
 }
-```
+## ??? Ph??ng pháp Test
 
-## ?? Ph??ng pháp Test
-
-### Ph??ng pháp 1: S? d?ng HTTP Files (Khuyên dùng)
+### Ph??ng pháp 1: S? d?ng HTTP Files (Khuy?n dùng)
 
 #### A. VS Code v?i REST Client Extension
 
@@ -65,16 +53,12 @@ dotnet ef database update
 3. K?t qu? hi?n trong panel d??i
 
 ### Ph??ng pháp 2: PowerShell Script
-
-```powershell
 # Ch?y script t? ??ng test t?t c? endpoints
 cd SakuraHomeAPI/Tests
 .\Auth-Test.ps1
 
 # Ho?c v?i custom parameters
 .\Auth-Test.ps1 -BaseUrl "https://localhost:7240" -TestEmail "custom@test.com" -TestPassword "CustomPass123!"
-```
-
 ### Ph??ng pháp 3: Swagger UI
 
 1. Truy c?p `https://localhost:7240`
@@ -88,8 +72,6 @@ cd SakuraHomeAPI/Tests
 3. S? d?ng environment variables cho BaseURL và tokens
 
 ### Ph??ng pháp 5: cURL
-
-```bash
 # Registration
 curl -X POST "https://localhost:7240/api/auth/register" \
 -H "Content-Type: application/json" \
@@ -110,8 +92,6 @@ curl -X POST "https://localhost:7240/api/auth/login" \
   "password": "Test123!",
   "rememberMe": false
 }'
-```
-
 ## ?? Test Scenarios
 
 ### 1. Happy Path Testing
@@ -130,30 +110,18 @@ curl -X POST "https://localhost:7240/api/auth/login" \
 
 **Test các tr??ng h?p l?i:**
 
-1. **Invalid Email Format**
-   ```json
-   {
-     "email": "invalid-email",
-     "password": "Test123!"
+1. **Invalid Email Format**{
+  "email": "invalid-email",
+  "password": "Test123!"
    }
-   ```
-
-2. **Weak Password**
-   ```json
-   {
-     "email": "test@example.com",
-     "password": "123"
+2. **Weak Password**{
+  "email": "test@example.com",
+  "password": "123"
    }
-   ```
-
-3. **Password Mismatch**
-   ```json
-   {
-     "password": "Test123!",
-     "confirmPassword": "Different123!"
+3. **Password Mismatch**{
+  "password": "Test123!",
+  "confirmPassword": "Different123!"
    }
-   ```
-
 4. **Duplicate Email Registration**
 5. **Wrong Password Login**
 6. **Non-existent User Login**
@@ -179,8 +147,6 @@ curl -X POST "https://localhost:7240/api/auth/login" \
 ## ?? K?t qu? Expected
 
 ### ? Success Response Format
-
-```json
 {
   "success": true,
   "message": "??ng nh?p thành công",
@@ -203,11 +169,7 @@ curl -X POST "https://localhost:7240/api/auth/login" \
   },
   "timestamp": "2024-01-01T12:00:00Z"
 }
-```
-
 ### ? Error Response Format
-
-```json
 {
   "success": false,
   "message": "D? li?u không h?p l?",
@@ -217,44 +179,26 @@ curl -X POST "https://localhost:7240/api/auth/login" \
   ],
   "timestamp": "2024-01-01T12:00:00Z"
 }
-```
-
 ## ?? Monitoring & Debugging
 
 ### 1. Log Files
 
 Ki?m tra logs t?i: `logs/sakura-home-{date}.txt`
-
-```
 [12:00:00 INF] Attempting login for email: test@example.com
 [12:00:01 INF] Successful login for user: {UserId}
 [12:00:02 WRN] Failed login attempt for user: {UserId}
-```
-
 ### 2. Database Inspection
 
-**User Activities Table:**
-```sql
-SELECT * FROM UserActivities 
+**User Activities Table:**SELECT * FROM UserActivities 
 WHERE UserId = 'your-user-id' 
 ORDER BY CreatedAt DESC;
-```
-
-**Refresh Tokens Table:**
-```sql
-SELECT * FROM RefreshTokens 
+**Refresh Tokens Table:**SELECT * FROM RefreshTokens 
 WHERE UserId = 'your-user-id' 
 AND IsActive = 1;
-```
-
-**User Table:**
-```sql
-SELECT Id, Email, FirstName, LastName, Status, Role, 
+**User Table:**SELECT Id, Email, FirstName, LastName, Status, Role, 
        LastLoginAt, FailedLoginAttempts, LockoutEnd
 FROM Users 
 WHERE Email = 'test@example.com';
-```
-
 ### 3. Performance Monitoring
 
 **Response Times:**
@@ -274,15 +218,11 @@ WHERE Email = 'test@example.com';
 
 **Error:** `certificate not trusted`
 
-**Solution:**
-```bash
-# Trust development certificate
+**Solution:**# Trust development certificate
 dotnet dev-certs https --trust
 
 # Or use HTTP endpoint
 @baseUrl = http://localhost:5273
-```
-
 ### Issue 2: Database Connection Error
 
 **Error:** `Cannot connect to database`
@@ -307,7 +247,7 @@ Ensure `appsettings.json` has valid JWT configuration
 1. Change port in `launchSettings.json`
 2. Kill process using port: `netstat -ano | findstr :7240`
 
-## ?? Test Checklist
+## ? Test Checklist
 
 ### Basic Functionality
 - [ ] User can register with valid data

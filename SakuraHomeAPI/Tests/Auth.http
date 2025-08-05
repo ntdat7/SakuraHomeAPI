@@ -1,7 +1,7 @@
 ﻿### =================================================================
 ### QUICK TEST - START HERE
 ### =================================================================
-
+@baseUrl = http://localhost:5273
 ### ✅ Test Simple Registration (Chỉ 4 trường bắt buộc)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json

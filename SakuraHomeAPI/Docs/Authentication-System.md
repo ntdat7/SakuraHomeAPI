@@ -16,8 +16,6 @@ H? th?ng xác th?c SakuraHome API cung c?p ??y ?? các ch?c n?ng ??ng ký, ??ng nh?
 ## C?u trúc D? án
 
 ### 1. Models và DTOs
-
-```
 Models/
 ??? Entities/Identity/
 ?   ??? User.cs                     # Entity ng??i dùng chính
@@ -29,11 +27,7 @@ Models/
 ??? Enums/
     ??? UserEnums.cs                # Enums liên quan user
     ??? SystemEnums.cs              # Enums h? th?ng
-```
-
 ### 2. Services
-
-```
 Services/
 ??? Interfaces/
 ?   ??? IAuthService.cs             # Interface d?ch v? xác th?c
@@ -41,29 +35,17 @@ Services/
 ??? Implementations/
     ??? AuthService.cs              # Tri?n khai d?ch v? xác th?c
     ??? TokenService.cs             # Tri?n khai d?ch v? JWT
-```
-
 ### 3. Controllers
-
-```
 Controllers/
 ??? AuthController.cs               # Controller x? lý các API xác th?c
-```
-
 ### 4. Mappings
-
-```
 Mappings/
 ??? AuthMappingProfile.cs           # AutoMapper profile cho auth
-```
-
 ## Endpoints API
 
 ### ??ng ký và ??ng nh?p
 
-#### 1. ??ng ký ng??i dùng
-```http
-POST /api/auth/register
+#### 1. ??ng ký ng??i dùngPOST /api/auth/register
 Content-Type: application/json
 
 {
@@ -80,10 +62,7 @@ Content-Type: application/json
   "emailNotifications": true,
   "smsNotifications": false
 }
-```
-
 **Response:**
-```json
 {
   "success": true,
   "message": "??ng ký thành công",
@@ -103,11 +82,7 @@ Content-Type: application/json
     }
   }
 }
-```
-
-#### 2. ??ng nh?p
-```http
-POST /api/auth/login
+#### 2. ??ng nh?pPOST /api/auth/login
 Content-Type: application/json
 
 {
@@ -115,53 +90,33 @@ Content-Type: application/json
   "password": "StrongPassword123!",
   "rememberMe": false
 }
-```
-
 ### Qu?n lý Token
 
-#### 3. Làm m?i token
-```http
-POST /api/auth/refresh-token
+#### 3. Làm m?i tokenPOST /api/auth/refresh-token
 Content-Type: application/json
 
 {
   "accessToken": "current-access-token",
   "refreshToken": "current-refresh-token"
 }
-```
-
-#### 4. Thu h?i token
-```http
-POST /api/auth/revoke-token
+#### 4. Thu h?i tokenPOST /api/auth/revoke-token
 Authorization: Bearer your-token
 Content-Type: application/json
 
 {
   "refreshToken": "token-to-revoke"
 }
-```
-
-#### 5. Thu h?i t?t c? token
-```http
-POST /api/auth/revoke-all-tokens
+#### 5. Thu h?i t?t c? tokenPOST /api/auth/revoke-all-tokens
 Authorization: Bearer your-token
-```
-
 ### Qu?n lý M?t kh?u
 
-#### 6. Quên m?t kh?u
-```http
-POST /api/auth/forgot-password
+#### 6. Quên m?t kh?uPOST /api/auth/forgot-password
 Content-Type: application/json
 
 {
   "email": "user@example.com"
 }
-```
-
-#### 7. ??t l?i m?t kh?u
-```http
-POST /api/auth/reset-password
+#### 7. ??t l?i m?t kh?uPOST /api/auth/reset-password
 Content-Type: application/json
 
 {
@@ -170,11 +125,7 @@ Content-Type: application/json
   "newPassword": "NewStrongPassword123!",
   "confirmPassword": "NewStrongPassword123!"
 }
-```
-
-#### 8. ??i m?t kh?u
-```http
-POST /api/auth/change-password
+#### 8. ??i m?t kh?uPOST /api/auth/change-password
 Authorization: Bearer your-token
 Content-Type: application/json
 
@@ -183,59 +134,35 @@ Content-Type: application/json
   "newPassword": "NewPassword123!",
   "confirmPassword": "NewPassword123!"
 }
-```
-
 ### Xác th?c Email
 
-#### 9. Xác th?c email
-```http
-POST /api/auth/verify-email
+#### 9. Xác th?c emailPOST /api/auth/verify-email
 Content-Type: application/json
 
 {
   "email": "user@example.com",
   "token": "verification-token-from-email"
 }
-```
-
-#### 10. G?i l?i email xác th?c
-```http
-POST /api/auth/resend-email-verification
+#### 10. G?i l?i email xác th?cPOST /api/auth/resend-email-verification
 Content-Type: application/json
 
 "user@example.com"
-```
-
 ### Thông tin Ng??i dùng
 
-#### 11. L?y thông tin ng??i dùng hi?n t?i
-```http
-GET /api/auth/me
+#### 11. L?y thông tin ng??i dùng hi?n t?iGET /api/auth/me
 Authorization: Bearer your-token
-```
-
-#### 12. Ki?m tra tr?ng thái xác th?c
-```http
-GET /api/auth/check
+#### 12. Ki?m tra tr?ng thái xác th?cGET /api/auth/check
 Authorization: Bearer your-token
-```
-
-#### 13. ??ng xu?t
-```http
-POST /api/auth/logout
+#### 13. ??ng xu?tPOST /api/auth/logout
 Authorization: Bearer your-token
 Content-Type: application/json
 
 {
   "refreshToken": "optional-refresh-token"
 }
-```
-
 ## C?u hình B?o m?t
 
-### 1. JWT Settings (appsettings.json)
-```json
-{
+### 1. JWT Settings (appsettings.json){
   "JwtSettings": {
     "Key": "your-super-secret-key-here-make-it-long-and-complex",
     "Issuer": "SakuraHomeAPI",
@@ -243,8 +170,6 @@ Content-Type: application/json
     "DurationInMinutes": 60
   }
 }
-```
-
 ### 2. Password Policy
 - T?i thi?u 6 ký t?
 - Yêu c?u ít nh?t 1 ch? hoa
@@ -273,20 +198,14 @@ H? th?ng t? ??ng ghi l?i các ho?t ??ng:
 - ??t l?i m?t kh?u
 - IP address và timestamp
 
-### 2. User Roles và Permissions
-```csharp
-public enum UserRole
+### 2. User Roles và Permissionspublic enum UserRole
 {
     Customer = 1,      // Khách hàng
     Staff = 2,         // Nhân viên
     Admin = 3,         // Qu?n tr? viên
     SuperAdmin = 4     // Qu?n tr? viên c?p cao
 }
-```
-
-### 3. User Tiers (Loyalty System)
-```csharp
-public enum UserTier
+### 3. User Tiers (Loyalty System)public enum UserTier
 {
     Bronze = 1,     // 0 - 1M VND
     Silver = 2,     // 1M - 5M VND
@@ -294,11 +213,7 @@ public enum UserTier
     Platinum = 4,   // 10M - 20M VND
     Diamond = 5     // 20M+ VND
 }
-```
-
-### 4. Account Status
-```csharp
-public enum AccountStatus
+### 4. Account Statuspublic enum AccountStatus
 {
     Pending = 1,        // Ch? xác th?c email
     Active = 2,         // Ho?t ??ng bình th??ng
@@ -306,22 +221,12 @@ public enum AccountStatus
     Banned = 4,         // B? c?m v?nh vi?n
     Inactive = 5        // Không ho?t ??ng
 }
-```
-
 ## Cách S? d?ng
 
-### 1. Kh?i ch?y ?ng d?ng
-```bash
-cd SakuraHomeAPI
+### 1. Kh?i ch?y ?ng d?ngcd SakuraHomeAPI
 dotnet run
-```
-
-### 2. T?o Migration cho RefreshToken
-```bash
-dotnet ef migrations add AddRefreshTokenTable
+### 2. T?o Migration cho RefreshTokendotnet ef migrations add AddRefreshTokenTable
 dotnet ef database update
-```
-
 ### 3. Test API b?ng file HTTP
 S? d?ng file `Tests/Auth.http` ?? test các endpoint
 
@@ -337,16 +242,12 @@ H? th?ng tr? v? các mã l?i chu?n:
 - **404**: Không tìm th?y
 - **500**: L?i server
 
-Format response l?i:
-```json
-{
+Format response l?i:{
   "success": false,
   "message": "Thông báo l?i",
   "errors": ["Chi ti?t l?i 1", "Chi ti?t l?i 2"],
   "timestamp": "2024-01-01T12:00:00Z"
 }
-```
-
 ## B?o m?t
 
 ### 1. Password Hashing

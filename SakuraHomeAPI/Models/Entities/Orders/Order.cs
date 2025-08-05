@@ -94,6 +94,8 @@ namespace SakuraHomeAPI.Models.Entities.Orders
         [Column(TypeName = "decimal(18,2)")]
         public decimal CouponDiscount { get; set; } = 0;
 
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.COD;
+
         public int? PaymentMethodId { get; set; }
         public int? ShippingZoneId { get; set; }
 
@@ -104,6 +106,7 @@ namespace SakuraHomeAPI.Models.Entities.Orders
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public DateTime? ConfirmedDate { get; set; }
         public DateTime? ProcessingDate { get; set; }
+        public DateTime? PackedDate { get; set; }
         public DateTime? ShippedDate { get; set; }
         public DateTime? DeliveredDate { get; set; }
         public DateTime? CancelledDate { get; set; }
@@ -237,6 +240,7 @@ namespace SakuraHomeAPI.Models.Entities.Orders
             {
                 case OrderStatus.Confirmed: ConfirmedDate = now; break;
                 case OrderStatus.Processing: ProcessingDate = now; break;
+                case OrderStatus.Packed: PackedDate = now; break;
                 case OrderStatus.Shipped: ShippedDate = now; break;
                 case OrderStatus.Delivered: DeliveredDate = now; break;
                 case OrderStatus.Cancelled: CancelledDate = now; break;
@@ -263,7 +267,8 @@ namespace SakuraHomeAPI.Models.Entities.Orders
             {
                 OrderStatus.Confirmed => Status == OrderStatus.Pending,
                 OrderStatus.Processing => Status == OrderStatus.Confirmed,
-                OrderStatus.Shipped => Status == OrderStatus.Processing,
+                OrderStatus.Packed => Status == OrderStatus.Processing,
+                OrderStatus.Shipped => Status == OrderStatus.Packed,
                 OrderStatus.OutForDelivery => Status == OrderStatus.Shipped,
                 OrderStatus.Delivered => Status == OrderStatus.OutForDelivery || Status == OrderStatus.Shipped,
                 OrderStatus.Cancelled => Status == OrderStatus.Pending || Status == OrderStatus.Confirmed,

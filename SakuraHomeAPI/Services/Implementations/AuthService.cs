@@ -258,7 +258,7 @@ namespace SakuraHomeAPI.Services.Implementations
                     await RevokeRefreshTokenAsync(refreshToken, "Logout");
                 }
 
-                return ApiResponse.SuccessResult("??ng xu?t thành công");
+                return ApiResponse.SuccessResult("Đăng xuất thành công");
             }
             catch (Exception ex)
             {
@@ -356,7 +356,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 var user = await _userManager.FindByEmailAsync(request.Email);
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
-                    return ApiResponse.ErrorResult("Yêu cầu đặt lại mật khẩu không hựp lệ");
+                    return ApiResponse.ErrorResult("Yêu cầu đặt lại mật khẩu không hợp lệ");
                 }
 
                 if (!user.CanResetPassword || user.PasswordResetToken != request.Token)
@@ -371,7 +371,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ApiResponse.ErrorResult("đặt lại mật khẩu không thành công", errors);
+                    return ApiResponse.ErrorResult("Đặt lại mật khẩu không thành công", errors);
                 }
 
                 // Clear reset token
@@ -410,7 +410,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ApiResponse.ErrorResult("đổi mật khẩu không thành công", errors);
+                    return ApiResponse.ErrorResult("Đổi mật khẩu không thành công", errors);
                 }
 
                 // Log activity
@@ -438,7 +438,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
                 if (user.EmailVerified)
                 {
-                    return ApiResponse.SuccessResult("Email dã được xác thực trước đó");
+                    return ApiResponse.SuccessResult("Email đã được xác thực trước đó");
                 }
 
                 if (user.EmailVerificationToken != request.Token)
@@ -534,7 +534,7 @@ namespace SakuraHomeAPI.Services.Implementations
             try
             {
                 await RevokeAllUserTokensAsync(userId);
-                return ApiResponse.SuccessResult("tất cả token đã được thu hồi");
+                return ApiResponse.SuccessResult("Tất cả token đã được thu hồi");
             }
             catch (Exception ex)
             {

@@ -1,0 +1,358 @@
+﻿### =================================================================
+### CART API TESTING
+### =================================================================
+@baseUrl = http://localhost:5273
+
+### Prerequisites: Login first to get auth token
+# @name cartLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com",
+  "password": "Quick123!",
+  "rememberMe": false
+}
+
+### Store auth token for cart operations
+@cartAuthToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJiZTlhZTY4Yy0xZWE1LTQzYTktYjcwZC0zZDMwMmM2MjAxMWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6IjE2YTZjYWJhLTQ2YzYtNGVjYi05MWY3LWNmMDRlNmMxMDkwNCIsImlhdCI6MTc1NDM4NDQ0NiwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NDM4NDQ0NiwiZXhwIjoxNzU0Mzg4MDQ2LCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.j9MGhyjCB7YZNfZIZfT-a_Cr6lGBZP8pY9kX1sKDQv8
+
+### =================================================================
+### CART MANAGEMENT
+### =================================================================
+
+### 1. Get Cart (Empty)
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### 2. Get Cart Summary (Empty)
+GET {{baseUrl}}/api/cart/summary
+Authorization: Bearer {{cartAuthToken}}
+
+### 3. Add Item to Cart (First Product)
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2,
+  "customOptions": "Color: Red, Size: Large",
+  "giftMessage": "Happy Birthday!",
+  "isGift": true
+}
+
+### 4. Add Another Item to Cart (Different Product)
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 2,
+  "quantity": 1,
+  "isGift": false
+}
+
+### 5. Add Same Item Again (Should increase quantity)
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1
+}
+
+### 6. Get Cart (Should have items now)
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### 7. Get Cart Summary (Should show totals)
+GET {{baseUrl}}/api/cart/summary
+Authorization: Bearer {{cartAuthToken}}
+
+### 8. Update Cart Item Quantity
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 5,
+  "customOptions": "Color: Blue, Size: Large",
+  "giftMessage": "Updated gift message",
+  "isGift": false
+}
+
+### 9. Update Cart Item to Zero (Should remove)
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 2,
+  "quantity": 0
+}
+
+### 10. Remove Specific Item from Cart
+DELETE {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1
+}
+
+### 11. Add Multiple Items for Bulk Testing
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+###
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 2,
+  "quantity": 3
+}
+
+###
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 3,
+  "quantity": 1
+}
+
+### 12. Bulk Update Cart Items
+PUT {{baseUrl}}/api/cart/bulk
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 4,
+      "customOptions": "Bulk updated",
+      "isGift": true
+    },
+    {
+      "productId": 2,
+      "quantity": 1,
+      "isGift": false
+    },
+    {
+      "productId": 3,
+      "quantity": 0
+    }
+  ]
+}
+
+### 13. Validate Cart
+POST {{baseUrl}}/api/cart/validate
+Authorization: Bearer {{cartAuthToken}}
+
+### 14. Apply Coupon (Will show not implemented)
+POST {{baseUrl}}/api/cart/coupon/SAVE10
+Authorization: Bearer {{cartAuthToken}}
+
+### 15. Remove Coupon (Will show not implemented)
+DELETE {{baseUrl}}/api/cart/coupon
+Authorization: Bearer {{cartAuthToken}}
+
+### 16. Clear Cart
+DELETE {{baseUrl}}/api/cart/clear
+Authorization: Bearer {{cartAuthToken}}
+
+### =================================================================
+### GUEST CART TESTING (No Authentication)
+### =================================================================
+
+### 17. Add Item to Guest Cart
+POST {{baseUrl}}/api/cart/items?sessionId=guest-session-123
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+### 18. Get Guest Cart
+GET {{baseUrl}}/api/cart?sessionId=guest-session-123
+
+### 19. Update Guest Cart Item
+PUT {{baseUrl}}/api/cart/items?sessionId=guest-session-123
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 5
+}
+
+### 20. Merge Guest Cart with User Cart (After Login)
+POST {{baseUrl}}/api/cart/merge?sessionId=guest-session-123
+Authorization: Bearer {{cartAuthToken}}
+
+### 21. Get Cart After Merge
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### =================================================================
+### ERROR TESTING
+### =================================================================
+
+### 22. Add Non-existent Product
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 99999,
+  "quantity": 1
+}
+
+### 23. Add Item with Invalid Quantity
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": -1
+}
+
+### 24. Update Non-existent Item
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 99999,
+  "quantity": 1
+}
+
+### 25. Remove Non-existent Item
+DELETE {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 99999
+}
+
+### 26. Test Without Authentication
+GET {{baseUrl}}/api/cart
+
+### =================================================================
+### PERFORMANCE TESTING
+### =================================================================
+
+### 27. Rapid Cart Operations
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1
+}
+
+###
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+###
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 3
+}
+
+###
+DELETE {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1
+}
+
+### =================================================================
+### CLEANUP
+### =================================================================
+
+### 28. Final Cleanup - Clear Cart
+DELETE {{baseUrl}}/api/cart/clear
+Authorization: Bearer {{cartAuthToken}}
+
+### 29. Verify Empty Cart
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### =================================================================
+### NOTES & INSTRUCTIONS
+### =================================================================
+
+###
+### ?? CART API TESTING GUIDE:
+### 
+### 1. Run the login request first to get authentication token
+### 2. The token will be automatically captured for subsequent requests
+### 3. Test each endpoint sequentially for best results
+### 
+### ?? EXPECTED BEHAVIORS:
+### 
+### ? Adding items increases cart quantity and total
+### ? Updating quantity to 0 removes the item
+### ? Guest carts work with sessionId parameter
+### ? Merging guest cart with user cart after login
+### ? Bulk operations update multiple items at once
+### ? Cart validation checks stock and availability
+### ? Error handling for invalid products/quantities
+### 
+### ?? TESTING CHECKLIST:
+### 
+### ? Empty cart returns correct structure
+### ? Adding items updates totals correctly
+### ? Quantity updates work properly
+### ? Removing items works
+### ? Bulk updates handle multiple items
+### ? Guest cart functionality works
+### ? Cart merge works after login
+### ? Error cases return appropriate messages
+### ? Performance under rapid operations
+### 
+### ?? COMMON ISSUES:
+### 
+### - Make sure products exist in database (ProductId 1, 2, 3, etc.)
+### - Ensure authentication token is valid (not expired)
+### - Check that cart items reference valid products
+### - Verify product stock levels for testing
+### 
+### ?? TIPS:
+### 
+### - Use different productId values for varied testing
+### - Test with both authenticated and guest users
+### - Verify cart persistence across requests
+### - Check that totals calculate correctly
+### - Test edge cases like high quantities
+######

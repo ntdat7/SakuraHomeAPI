@@ -1,0 +1,314 @@
+### Sakura Home API - Payment System Tests
+### Make sure to run the application first: dotnet run
+### Base URL: https://localhost:7240
+
+@baseUrl = https://localhost:7240
+@contentType = application/json
+
+# Variables for testing
+@userToken = your-user-token-here
+@staffToken = your-staff-token-here
+@orderId = 1
+@transactionId = your-transaction-id-here
+
+### ==========================================
+### PAYMENT METHODS & CALCULATION
+### ==========================================
+
+### 1. Get available payment methods
+POST {{baseUrl}}/api/payment/methods
+Content-Type: {{contentType}}
+
+{
+  "amount": 500000,
+  "currency": "VND",
+  "activeOnly": true
+}
+
+### 2. Calculate payment fee
+POST {{baseUrl}}/api/payment/calculate-fee
+Content-Type: {{contentType}}
+
+{
+  "paymentMethod": 1,
+  "amount": 500000
+}
+
+### ==========================================
+### PAYMENT CREATION & MANAGEMENT
+### ==========================================
+
+### 3. Create payment (Authenticated)
+POST {{baseUrl}}/api/payment
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "paymentMethod": 1,
+  "description": "Payment for order #{{orderId}}",
+  "returnUrl": "https://yourapp.com/payment/success",
+  "cancelUrl": "https://yourapp.com/payment/cancel"
+}
+
+### 4. Get payment by transaction ID
+GET {{baseUrl}}/api/payment/{{transactionId}}
+Authorization: Bearer {{userToken}}
+
+### 5. Get my payments (with pagination)
+GET {{baseUrl}}/api/payment/my-payments?page=1&pageSize=10
+Authorization: Bearer {{userToken}}
+
+### 6. Get payments for specific order
+GET {{baseUrl}}/api/payment/order/{{orderId}}
+Authorization: Bearer {{userToken}}
+
+### 7. Cancel payment
+DELETE {{baseUrl}}/api/payment/{{transactionId}}
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "reason": "User requested cancellation"
+}
+
+### 8. Create COD Payment for Order
+POST {{baseUrl}}/api/payment
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "paymentMethod": 1,
+  "description": "COD payment for order",
+  "returnUrl": "https://example.com/return",
+  "cancelUrl": "https://example.com/cancel"
+}
+
+### ==========================================
+### VNPAY INTEGRATION
+### ==========================================
+
+### 9. Create VNPay payment
+POST {{baseUrl}}/api/payment/vnpay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Payment for Sakura Home order #{{orderId}}",
+  "returnUrl": "https://yourapp.com/payment/vnpay/return",
+  "bankCode": "NCB",
+  "language": "vn"
+}
+
+### 10. VNPay callback (simulated - normally called by VNPay)
+POST {{baseUrl}}/api/payment/vnpay/callback
+Content-Type: application/x-www-form-urlencoded
+
+vnp_Amount=50000000&vnp_BankCode=NCB&vnp_BankTranNo=VNP14238575&vnp_CardType=ATM&vnp_OrderInfo=Payment+for+order&vnp_PayDate=20240801103000&vnp_ResponseCode=00&vnp_TmnCode=DEMOTEST&vnp_TransactionNo=14238575&vnp_TransactionStatus=00&vnp_TxnRef={{transactionId}}&vnp_SecureHash=test
+
+### ==========================================
+### MOMO INTEGRATION
+### ==========================================
+
+### 11. Create MoMo payment
+POST {{baseUrl}}/api/payment/momo
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderInfo": "Payment for Sakura Home order #{{orderId}}",
+  "returnUrl": "https://yourapp.com/payment/momo/return",
+  "notifyUrl": "https://yourapi.com/api/payment/momo/callback",
+  "extraData": ""
+}
+
+### 12. MoMo callback (simulated - normally called by MoMo)
+POST {{baseUrl}}/api/payment/momo/callback
+Content-Type: {{contentType}}
+
+{
+  "partnerCode": "MOMO",
+  "orderId": "{{transactionId}}",
+  "requestId": "{{transactionId}}",
+  "amount": 500000,
+  "orderInfo": "Payment for order",
+  "orderType": "momo_wallet",
+  "transId": 123456789,
+  "resultCode": 0,
+  "message": "Successful.",
+  "payType": "app",
+  "responseTime": 1691749800000,
+  "extraData": "",
+  "signature": "test_signature"
+}
+
+### ==========================================
+### BANK TRANSFER
+### ==========================================
+
+### 13. Create bank transfer instructions
+POST {{baseUrl}}/api/payment/bank-transfer
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "bankCode": "VCB",
+  "bankAccountNumber": "1234567890",
+  "bankAccountName": "NGUYEN VAN A",
+  "amount": 500000,
+  "transferNote": "Payment for order #{{orderId}}"
+}
+
+### ==========================================
+### STAFF ONLY OPERATIONS
+### ==========================================
+
+### 14. Update payment status (Staff only)
+PATCH {{baseUrl}}/api/payment/{{transactionId}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "status": 2,
+  "notes": "Payment confirmed by bank transfer verification",
+  "responseData": "{\"verifiedBy\": \"staff\", \"verificationDate\": \"2024-08-01\"}"
+}
+
+### 15. Process refund (Staff only)
+POST {{baseUrl}}/api/payment/{{transactionId}}/refund
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "refundAmount": 250000,
+  "reason": "Product defect - partial refund",
+  "notes": "Customer requested partial refund due to damaged item"
+}
+
+### 16. Confirm bank transfer (Staff only)
+POST {{baseUrl}}/api/payment/{{transactionId}}/confirm-transfer
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "bankCode": "VCB",
+  "bankAccountNumber": "1234567890",
+  "bankAccountName": "NGUYEN VAN A",
+  "amount": 500000,
+  "transferNote": "SAKURA {{orderId}} {{transactionId}}",
+  "transferDate": "2024-08-01T10:30:00Z",
+  "proofImageUrl": "https://example.com/transfer-proof.jpg"
+}
+
+### 17. Get payment statistics (Staff only)
+GET {{baseUrl}}/api/payment/stats?fromDate=2024-07-01&toDate=2024-08-01&method=1
+Authorization: Bearer {{staffToken}}
+
+### 18. Get payment statistics (all methods, last 30 days)
+GET {{baseUrl}}/api/payment/stats
+Authorization: Bearer {{staffToken}}
+
+### ==========================================
+### ERROR TESTING SCENARIOS
+### ==========================================
+
+### 19. Create payment for non-existent order (should fail)
+POST {{baseUrl}}/api/payment
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": 99999,
+  "paymentMethod": 1,
+  "description": "Payment for non-existent order"
+}
+
+### 20. Access payment without authentication (should fail)
+GET {{baseUrl}}/api/payment/{{transactionId}}
+
+### 21. Access other user's payment (should fail)
+GET {{baseUrl}}/api/payment/OTHER_USER_TRANSACTION_ID
+Authorization: Bearer {{userToken}}
+
+### 22. Update payment status without staff permission (should fail)
+PATCH {{baseUrl}}/api/payment/{{transactionId}}/status
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "status": 2,
+  "notes": "Unauthorized status update"
+}
+
+### 23. Calculate fee for invalid payment method (should fail)
+POST {{baseUrl}}/api/payment/calculate-fee
+Content-Type: {{contentType}}
+
+{
+  "paymentMethod": 999,
+  "amount": 500000
+}
+
+### 24. Create payment with invalid amount (should fail)
+POST {{baseUrl}}/api/payment
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "paymentMethod": 1,
+  "amount": -100
+}
+
+### 25. Test with Invalid Payment Method (should fail)
+POST {{baseUrl}}/payment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "paymentMethod": 2,
+  "description": "Bank transfer payment - should fail"
+}
+
+### ==========================================
+### TESTING NOTES
+### ==========================================
+
+# Before running tests:
+# 1. Start the application: dotnet run
+# 2. Login to get user and staff tokens
+# 3. Create an order to get orderId
+# 4. Replace variables with actual values
+
+# Test scenarios covered:
+# 1. Payment method discovery
+# 2. Payment creation and management
+# 3. Gateway-specific integrations (VNPay, MoMo)
+# 4. Bank transfer processing
+# 5. Staff operations (status updates, refunds)
+# 6. Error handling and validation
+# 7. Authentication and authorization
+
+# Expected behaviors:
+# - Users can only access their own payments
+# - Staff can access all payments and perform admin operations
+# - Payment gateways return appropriate URLs/instructions
+# - Proper error messages for invalid requests
+# - Payment status tracking and updates
+
+# Payment workflow:
+# 1. Get available payment methods
+# 2. Calculate fees if needed
+# 3. Create payment transaction
+# 4. Process payment through gateway
+# 5. Handle gateway callback
+# 6. Update payment and order status
+# 7. Handle refunds if needed

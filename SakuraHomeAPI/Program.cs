@@ -247,16 +247,17 @@ builder.Services.AddSwaggerGen(c =>
 // Custom Services
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-//builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 //builder.Services.AddScoped<IProductService, ProductService>();
 //builder.Services.AddScoped<ICategoryService, CategoryService>();
 //builder.Services.AddScoped<IBrandService, BrandService>();
-//builder.Services.AddScoped<IOrderService, OrderService>();
-//builder.Services.AddScoped<ICartService, CartService>();
-//builder.Services.AddScoped<IWishlistService, WishlistService>();
 //builder.Services.AddScoped<IReviewService, ReviewService>();
-//builder.Services.AddScoped<INotificationService, NotificationService>();
-//builder.Services.AddScoped<IEmailService, EmailService>();
 //builder.Services.AddScoped<IFileService, FileService>();
 //builder.Services.AddScoped<ITranslationService, TranslationService>();
 //builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
