@@ -46,6 +46,7 @@ namespace SakuraHomeAPI.Models.DTOs
         [MaxLength(100, ErrorMessage = "Tên không ???c v??t quá 100 ký t?")]
         public string LastName { get; set; } = string.Empty;
 
+        // Optional fields with default values - these will be set automatically
         [Phone(ErrorMessage = "S? ?i?n tho?i không h?p l?")]
         public string? PhoneNumber { get; set; }
 
@@ -56,7 +57,8 @@ namespace SakuraHomeAPI.Models.DTOs
         [MaxLength(5)]
         public string PreferredLanguage { get; set; } = "vi";
 
-        public bool AcceptTerms { get; set; } = false;
+        // Auto-accept terms for simplified registration
+        public bool AcceptTerms { get; set; } = true;
 
         public bool EmailNotifications { get; set; } = true;
 

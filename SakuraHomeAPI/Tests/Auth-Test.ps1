@@ -86,32 +86,44 @@ Write-Host "`n" + "="*60
 Write-Host "?? AUTHENTICATION FLOW TESTING" -ForegroundColor Magenta
 Write-Host "="*60
 
-# 1. Test Registration
+# 1. Test Simplified Registration (Only 4 required fields)
 $registerData = @{
     email = $TestEmail
     password = $TestPassword
     confirmPassword = $TestPassword
     firstName = "John"
     lastName = "Doe"
-    phoneNumber = "+84123456789"
-    dateOfBirth = "1990-01-01"
-    gender = 1
-    preferredLanguage = "vi"
-    acceptTerms = $true
-    emailNotifications = $true
-    smsNotifications = $false
 }
 
-$registerResponse = Invoke-ApiRequest -Method "POST" -Endpoint "/api/auth/register" -Body $registerData -Description "User Registration"
+$registerResponse = Invoke-ApiRequest -Method "POST" -Endpoint "/api/auth/register" -Body $registerData -Description "User Registration (Simplified - 4 fields only)"
 
 if ($registerResponse -and $registerResponse.success) {
     $authToken = $registerResponse.data.token
     $refreshToken = $registerResponse.data.refreshToken
     $userId = $registerResponse.data.user.id
     
+    Write-Host "   ? Registration successful with minimal data!" -ForegroundColor Green
     Write-Host "   Token: $($authToken.Substring(0, 20))..." -ForegroundColor Cyan
     Write-Host "   User ID: $userId" -ForegroundColor Cyan
+    Write-Host "   Default Gender: $($registerResponse.data.user.gender)" -ForegroundColor Cyan
+    Write-Host "   Default Tier: $($registerResponse.data.user.tier)" -ForegroundColor Cyan
+    Write-Host "   Default Language: $($registerResponse.data.user.preferredLanguage)" -ForegroundColor Cyan
 }
+
+# 1b. Test Full Registration (with optional fields)
+$fullRegisterData = @{
+    email = "full.test@example.com"
+    password = $TestPassword
+    confirmPassword = $TestPassword
+    firstName = "Jane"
+    lastName = "Smith"
+    phoneNumber = "+84123456789"
+    dateOfBirth = "1990-01-01"
+    gender = 1
+    preferredLanguage = "en"
+}
+
+$fullRegisterResponse = Invoke-ApiRequest -Method "POST" -Endpoint "/api/auth/register" -Body $fullRegisterData -Description "User Registration (Full - with optional fields)"
 
 # 2. Test Login (with different user to avoid duplicate email)
 $loginData = @{

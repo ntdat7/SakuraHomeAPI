@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
@@ -54,21 +54,21 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (user == null)
                 {
                     _logger.LogWarning("Login attempt with non-existent email: {Email}", request.Email);
-                    return ApiResponse.ErrorResult<AuthResponseDto>("Email ho?c m?t kh?u kh�ng ?�ng");
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Email hoặc mật khẩu không đúng");
                 }
 
                 // Check if user is deleted or inactive
                 if (user.IsDeleted || !user.IsActive)
                 {
                     _logger.LogWarning("Login attempt for inactive/deleted user: {UserId}", user.Id);
-                    return ApiResponse.ErrorResult<AuthResponseDto>("T�i kho?n ?� b? v� hi?u h�a");
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Tài khoản đã bị vô hiệu hóa");
                 }
 
                 // Check if user is locked out
                 if (user.IsLocked)
                 {
                     _logger.LogWarning("Login attempt for locked user: {UserId}", user.Id);
-                    return ApiResponse.ErrorResult<AuthResponseDto>("T�i kho?n ?� b? kh�a. Vui l�ng th? l?i sau");
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Tài khoản đã bị khóa. Vui lòng thử lại sau");
                 }
 
                 // Check password
@@ -79,10 +79,10 @@ namespace SakuraHomeAPI.Services.Implementations
 
                     if (result.IsLockedOut)
                     {
-                        return ApiResponse.ErrorResult<AuthResponseDto>("T�i kho?n ?� b? kh�a do qu� nhi?u l?n ??ng nh?p sai");
+                        return ApiResponse.ErrorResult<AuthResponseDto>("Tài khoản đã bị khóa do quá nhiều lần đăng nhập sai");
                     }
 
-                    return ApiResponse.ErrorResult<AuthResponseDto>("Email ho?c m?t kh?u kh�ng ?�ng");
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Email hoặc mật khẩu không đúng");
                 }
 
                 // Update user login information
@@ -111,12 +111,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 };
 
                 _logger.LogInformation("Successful login for user: {UserId}", user.Id);
-                return ApiResponse.SuccessResult(authResponse, "??ng nh?p th�nh c�ng");
+                return ApiResponse.SuccessResult(authResponse, "đăng nhập thành công");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during login for email: {Email}", request.Email);
-                return ApiResponse.ErrorResult<AuthResponseDto>("C� l?i x?y ra trong qu� tr�nh ??ng nh?p");
+                return ApiResponse.ErrorResult<AuthResponseDto>("Có lỗi xảy ra trong quá trình đăng nhập");
             }
         }
 
@@ -126,39 +126,61 @@ namespace SakuraHomeAPI.Services.Implementations
             {
                 _logger.LogInformation("Attempting registration for email: {Email}", request.Email);
 
+                // Additional validation for AcceptTerms at service level
+                if (!request.AcceptTerms)
+                {
+                    _logger.LogWarning("Registration attempt without accepting terms for email: {Email}", request.Email);
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Bạn phải chấp nhận điều khoản sử dụng để tiếp tục đăng ký");
+                }
+
                 // Check if registration is enabled
                 var registrationEnabled = await GetSystemSetting("EnableRegistration", "true");
                 if (registrationEnabled.ToLower() != "true")
                 {
-                    return ApiResponse.ErrorResult<AuthResponseDto>("??ng k� t�i kho?n hi?n kh�ng ???c ph�p");
+                    _logger.LogWarning("Registration attempt when registration is disabled for email: {Email}", request.Email);
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Đăng ký tài khoản hiện không được phép");
                 }
 
                 // Check if user already exists
                 var existingUser = await _userManager.FindByEmailAsync(request.Email);
                 if (existingUser != null)
                 {
-                    return ApiResponse.ErrorResult<AuthResponseDto>("Email n�y ?� ???c s? d?ng");
+                    _logger.LogWarning("Registration attempt with existing email: {Email}", request.Email);
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Email này đã được sử dụng");
                 }
 
-                // Create new user
+                // Create new user với default values cho các field optional
                 var user = new User
                 {
                     Email = request.Email,
                     UserName = request.Email,
                     FirstName = request.FirstName,
                     LastName = request.LastName,
-                    PhoneNumber = request.PhoneNumber,
-                    DateOfBirth = request.DateOfBirth,
-                    Gender = request.Gender,
-                    PreferredLanguage = request.PreferredLanguage,
-                    EmailNotifications = request.EmailNotifications,
-                    SmsNotifications = request.SmsNotifications,
-                    Status = AccountStatus.Active, // Can be changed to Pending if email verification is required
+                    PhoneNumber = request.PhoneNumber, // có thể null
+                    DateOfBirth = request.DateOfBirth, // có thể null
+                    Gender = request.Gender ?? Gender.Unknown, // default là Unknown
+                    PreferredLanguage = !string.IsNullOrEmpty(request.PreferredLanguage) ? request.PreferredLanguage : "vi",
+                    EmailNotifications = request.EmailNotifications, // default true
+                    SmsNotifications = request.SmsNotifications, // default false
+                    Status = AccountStatus.Active,
                     Role = UserRole.Customer,
                     Provider = LoginProvider.Local,
                     CreatedAt = DateTime.UtcNow,
-                    LastLoginIp = ipAddress
+                    LastLoginIp = ipAddress,
+                    // Set default values for other optional fields
+                    PreferredCurrency = "VND",
+                    Points = 0,
+                    TotalSpent = 0,
+                    TotalOrders = 0,
+                    Tier = UserTier.Bronze,
+                    IsActive = true,
+                    IsDeleted = false,
+                    EmailVerified = false,
+                    PhoneVerified = false,
+                    PushNotifications = true
                 };
+
+                _logger.LogInformation("Creating user for email: {Email}", request.Email);
 
                 // Create user with password
                 var result = await _userManager.CreateAsync(user, request.Password);
@@ -167,24 +189,32 @@ namespace SakuraHomeAPI.Services.Implementations
                     var errors = result.Errors.Select(e => e.Description).ToList();
                     _logger.LogWarning("Registration failed for email: {Email}. Errors: {Errors}", 
                         request.Email, string.Join(", ", errors));
-                    return ApiResponse.ErrorResult<AuthResponseDto>("??ng k� kh�ng th�nh c�ng", errors);
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Đăng ký không thành công", errors);
                 }
+
+                _logger.LogInformation("User created successfully for email: {Email}, UserId: {UserId}", request.Email, user.Id);
 
                 // Generate email verification token if needed
                 user.GenerateEmailVerificationToken();
                 await _userManager.UpdateAsync(user);
 
+                _logger.LogInformation("Creating wishlist for user: {UserId}", user.Id);
+
                 // Create wishlist for new user
                 var wishlist = new Wishlist
                 {
                     UserId = user.Id,
-                    Name = "Danh s�ch y�u th�ch c?a t�i"
+                    Name = "Danh sách yêu thích của tôi"
                 };
                 _context.Wishlists.Add(wishlist);
                 await _context.SaveChangesAsync();
 
+                _logger.LogInformation("Wishlist created for user: {UserId}", user.Id);
+
                 // Log user activity
                 await LogUserActivity(user.Id, ActivityType.Register, ipAddress);
+
+                _logger.LogInformation("Generating tokens for user: {UserId}", user.Id);
 
                 // Generate tokens
                 var accessToken = _tokenService.GenerateAccessToken(user);
@@ -204,12 +234,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 };
 
                 _logger.LogInformation("Successful registration for user: {UserId}", user.Id);
-                return ApiResponse.SuccessResult(authResponse, "??ng k� th�nh c�ng");
+                return ApiResponse.SuccessResult(authResponse, "Đăng ký thành công");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during registration for email: {Email}", request.Email);
-                return ApiResponse.ErrorResult<AuthResponseDto>("C� l?i x?y ra trong qu� tr�nh ??ng k�");
+                return ApiResponse.ErrorResult<AuthResponseDto>("Có lỗi xảy ra trong quá trình đăng ký");
             }
         }
 
@@ -228,12 +258,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     await RevokeRefreshTokenAsync(refreshToken, "Logout");
                 }
 
-                return ApiResponse.SuccessResult("??ng xu?t th�nh c�ng");
+                return ApiResponse.SuccessResult("??ng xu?t thành công");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during logout for user: {UserId}", userId);
-                return ApiResponse.ErrorResult("C� l?i x?y ra trong qu� tr�nh ??ng xu?t");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra trong quá trình đăng xuất");
             }
         }
 
@@ -245,13 +275,13 @@ namespace SakuraHomeAPI.Services.Implementations
                 var userId = _tokenService.GetUserIdFromToken(request.AccessToken);
                 if (userId == null)
                 {
-                    return ApiResponse.ErrorResult<AuthResponseDto>("Token kh�ng h?p l?");
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Token không hợp lệ");
                 }
 
                 var user = await _userManager.FindByIdAsync(userId.ToString());
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
-                    return ApiResponse.ErrorResult<AuthResponseDto>("Ng??i d�ng kh�ng t?n t?i ho?c ?� b? v� hi?u h�a");
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Người dùng không tồn tại hoặc đã bị vô hiệu hóa");
                 }
 
                 // Validate refresh token
@@ -260,7 +290,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
                 if (storedRefreshToken == null || !storedRefreshToken.IsActive)
                 {
-                    return ApiResponse.ErrorResult<AuthResponseDto>("Refresh token kh�ng h?p l? ho?c ?� h?t h?n");
+                    return ApiResponse.ErrorResult<AuthResponseDto>("Refresh token không hợp lệ hoặc đã hết hạn");
                 }
 
                 // Generate new tokens
@@ -282,12 +312,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     User = userDto
                 };
 
-                return ApiResponse.SuccessResult(authResponse, "Token ?� ???c l�m m?i");
+                return ApiResponse.SuccessResult(authResponse, "Token đã được làm mới");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error refreshing token");
-                return ApiResponse.ErrorResult<AuthResponseDto>("C� l?i x?y ra khi l�m m?i token");
+                return ApiResponse.ErrorResult<AuthResponseDto>("Có lỗi xảy ra khi làm mới token");
             }
         }
 
@@ -299,7 +329,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
                     // Don't reveal that the user doesn't exist for security
-                    return ApiResponse.SuccessResult("N?u email t?n t?i, link ??t l?i m?t kh?u ?� ???c g?i");
+                    return ApiResponse.SuccessResult("Nếu email tồn tại, link đặt lại mật khẩu đã được gửi");
                 }
 
                 // Generate password reset token
@@ -310,12 +340,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 // await _emailService.SendPasswordResetEmailAsync(user.Email, user.PasswordResetToken);
 
                 _logger.LogInformation("Password reset requested for user: {UserId}", user.Id);
-                return ApiResponse.SuccessResult("Link ??t l?i m?t kh?u ?� ???c g?i ??n email c?a b?n");
+                return ApiResponse.SuccessResult("Link đặt lại mật khẩu đã được gửi đến email của bạn");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing forgot password request for email: {Email}", request.Email);
-                return ApiResponse.ErrorResult("C� l?i x?y ra khi x? l� y�u c?u ??t l?i m?t kh?u");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra khi xử lý yêu cầu đặt lại mật khẩu");
             }
         }
 
@@ -326,12 +356,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 var user = await _userManager.FindByEmailAsync(request.Email);
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
-                    return ApiResponse.ErrorResult("Y�u c?u ??t l?i m?t kh?u kh�ng h?p l?");
+                    return ApiResponse.ErrorResult("Yêu cầu đặt lại mật khẩu không hựp lệ");
                 }
 
                 if (!user.CanResetPassword || user.PasswordResetToken != request.Token)
                 {
-                    return ApiResponse.ErrorResult("Token ??t l?i m?t kh?u kh�ng h?p l? ho?c ?� h?t h?n");
+                    return ApiResponse.ErrorResult("Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn");
                 }
 
                 // Reset password
@@ -341,7 +371,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ApiResponse.ErrorResult("??t l?i m?t kh?u kh�ng th�nh c�ng", errors);
+                    return ApiResponse.ErrorResult("đặt lại mật khẩu không thành công", errors);
                 }
 
                 // Clear reset token
@@ -357,12 +387,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 await LogUserActivity(user.Id, ActivityType.ResetPassword);
 
                 _logger.LogInformation("Password reset successful for user: {UserId}", user.Id);
-                return ApiResponse.SuccessResult("M?t kh?u ?� ???c ??t l?i th�nh c�ng");
+                return ApiResponse.SuccessResult("Mật khẩu đã được đặt lại thành công");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error resetting password for email: {Email}", request.Email);
-                return ApiResponse.ErrorResult("C� l?i x?y ra khi ??t l?i m?t kh?u");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra khi đặt lại mật khẩu");
             }
         }
 
@@ -373,26 +403,26 @@ namespace SakuraHomeAPI.Services.Implementations
                 var user = await _userManager.FindByIdAsync(userId.ToString());
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
-                    return ApiResponse.ErrorResult("Ng??i d�ng kh�ng t?n t?i");
+                    return ApiResponse.ErrorResult("Người dùng không tồn tại");
                 }
 
                 var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
-                    return ApiResponse.ErrorResult("??i m?t kh?u kh�ng th�nh c�ng", errors);
+                    return ApiResponse.ErrorResult("đổi mật khẩu không thành công", errors);
                 }
 
                 // Log activity
                 await LogUserActivity(userId, ActivityType.ChangePassword);
 
                 _logger.LogInformation("Password changed successfully for user: {UserId}", userId);
-                return ApiResponse.SuccessResult("M?t kh?u ?� ???c thay ??i th�nh c�ng");
+                return ApiResponse.SuccessResult("Mật khẩu đã được thay đổi thành công");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error changing password for user: {UserId}", userId);
-                return ApiResponse.ErrorResult("C� l?i x?y ra khi ??i m?t kh?u");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra khi đổi mật khẩu");
             }
         }
 
@@ -403,17 +433,17 @@ namespace SakuraHomeAPI.Services.Implementations
                 var user = await _userManager.FindByEmailAsync(request.Email);
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
-                    return ApiResponse.ErrorResult("Y�u c?u x�c th?c kh�ng h?p l?");
+                    return ApiResponse.ErrorResult("Yêu cầu xác thực không hợp lệ");
                 }
 
                 if (user.EmailVerified)
                 {
-                    return ApiResponse.SuccessResult("Email ?� ???c x�c th?c tr??c ?�");
+                    return ApiResponse.SuccessResult("Email dã được xác thực trước đó");
                 }
 
                 if (user.EmailVerificationToken != request.Token)
                 {
-                    return ApiResponse.ErrorResult("Token x�c th?c kh�ng h?p l?");
+                    return ApiResponse.ErrorResult("Token xác thực không hợp lệ");
                 }
 
                 // Verify email
@@ -424,12 +454,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 await _userManager.UpdateAsync(user);
 
                 _logger.LogInformation("Email verified successfully for user: {UserId}", user.Id);
-                return ApiResponse.SuccessResult("Email ?� ???c x�c th?c th�nh c�ng");
+                return ApiResponse.SuccessResult("Email đã được xác thực thành công");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error verifying email for: {Email}", request.Email);
-                return ApiResponse.ErrorResult("C� l?i x?y ra khi x�c th?c email");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra khi xác thực email");
             }
         }
 
@@ -441,12 +471,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
                     // Don't reveal that the user doesn't exist
-                    return ApiResponse.SuccessResult("N?u email t?n t?i, email x�c th?c ?� ???c g?i l?i");
+                    return ApiResponse.SuccessResult("Nếu email tồn tại, email xác thực đã được gửi lại");
                 }
 
                 if (user.EmailVerified)
                 {
-                    return ApiResponse.ErrorResult("Email ?� ???c x�c th?c");
+                    return ApiResponse.ErrorResult("Email đã được xác thực");
                 }
 
                 // Generate new verification token
@@ -456,12 +486,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 // TODO: Send verification email
                 // await _emailService.SendEmailVerificationAsync(user.Email, user.EmailVerificationToken);
 
-                return ApiResponse.SuccessResult("Email x�c th?c ?� ???c g?i l?i");
+                return ApiResponse.SuccessResult("Email xác thực đã được gửi lại");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error resending email verification for: {Email}", email);
-                return ApiResponse.ErrorResult("C� l?i x?y ra khi g?i l?i email x�c th?c");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra khi gửi lại email xác thực");
             }
         }
 
@@ -472,7 +502,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 var user = await _userManager.FindByIdAsync(userId.ToString());
                 if (user == null || user.IsDeleted || !user.IsActive)
                 {
-                    return ApiResponse.ErrorResult<UserDto>("Ng??i d�ng kh�ng t?n t?i");
+                    return ApiResponse.ErrorResult<UserDto>("Người dùng không tồn tại");
                 }
 
                 var userDto = _mapper.Map<UserDto>(user);
@@ -481,7 +511,7 @@ namespace SakuraHomeAPI.Services.Implementations
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting current user: {UserId}", userId);
-                return ApiResponse.ErrorResult<UserDto>("C� l?i x?y ra khi l?y th�ng tin ng??i d�ng");
+                return ApiResponse.ErrorResult<UserDto>("Có lỗi xảy ra khi lấy thông tin người dùng");
             }
         }
 
@@ -490,12 +520,12 @@ namespace SakuraHomeAPI.Services.Implementations
             try
             {
                 await RevokeRefreshTokenAsync(token, "Revoked by user");
-                return ApiResponse.SuccessResult("Token ?� ???c thu h?i");
+                return ApiResponse.SuccessResult("Token đã được thu hồi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error revoking token for user: {UserId}", userId);
-                return ApiResponse.ErrorResult("C� l?i x?y ra khi thu h?i token");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra khi thu hồi token");
             }
         }
 
@@ -504,12 +534,12 @@ namespace SakuraHomeAPI.Services.Implementations
             try
             {
                 await RevokeAllUserTokensAsync(userId);
-                return ApiResponse.SuccessResult("T?t c? token ?� ???c thu h?i");
+                return ApiResponse.SuccessResult("tất cả token đã được thu hồi");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error revoking all tokens for user: {UserId}", userId);
-                return ApiResponse.ErrorResult("C� l?i x?y ra khi thu h?i t?t c? token");
+                return ApiResponse.ErrorResult("Có lỗi xảy ra khi thu hồi tất cả token");
             }
         }
 
@@ -563,9 +593,12 @@ namespace SakuraHomeAPI.Services.Implementations
                 {
                     UserId = userId,
                     ActivityType = activityType.ToString(),
-                    IpAddress = ipAddress,
+                    Description = GetActivityDescription(activityType),
+                    IpAddress = ipAddress ?? "Unknown",
                     UserAgent = "", // Can be populated from HttpContext
-                    Details = details,
+                    Details = details ?? "",
+                    RelatedEntityType = "User", // Set default value for RelatedEntityType
+                    RelatedEntityId = null, // This can be null since it's nullable
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -579,16 +612,37 @@ namespace SakuraHomeAPI.Services.Implementations
             }
         }
 
+        private string GetActivityDescription(ActivityType activityType)
+        {
+            return activityType switch
+            {
+                ActivityType.Login => "Người dùng đăng nhập hệ thống",
+                ActivityType.Logout => "Người dùng đăng xuất khỏi hệ thống", 
+                ActivityType.Register => "Người dùng đăng ký tài khoản mới",
+                ActivityType.ChangePassword => "Người dùng thay đổi mật khẩu",
+                ActivityType.ResetPassword => "Người dùng đặt lại mật khẩu",
+                _ => $"Hoạt động: {activityType}"
+            };
+        }
+
         private async Task<string> GetSystemSetting(string key, string defaultValue = "")
         {
             try
             {
+                // Check if SystemSettings table exists and has data
+                if (!_context.SystemSettings.Any())
+                {
+                    _logger.LogWarning("SystemSettings table is empty, using default value for key: {Key}", key);
+                    return defaultValue;
+                }
+
                 var setting = await _context.SystemSettings
                     .FirstOrDefaultAsync(s => s.Key == key);
                 return setting?.Value ?? defaultValue;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Error accessing SystemSettings for key: {Key}, using default value", key);
                 return defaultValue;
             }
         }

@@ -67,6 +67,9 @@ namespace SakuraHomeAPI.Controllers
                 return BadRequest(ApiResponse.ErrorResult<AuthResponseDto>("D? li?u không h?p l?", errors));
             }
 
+            // Set AcceptTerms to true automatically for simplified registration
+            request.AcceptTerms = true;
+
             var ipAddress = GetIpAddress();
             var result = await _authService.RegisterAsync(request, ipAddress);
 
