@@ -16,6 +16,7 @@
     /// </summary>
     public enum Gender
     {
+        Unknown = 0,        // Không xác định (mặc định)
         Male = 1,
         Female = 2,
         Other = 3,

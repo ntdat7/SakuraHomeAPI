@@ -1,0 +1,422 @@
+﻿### =================================================================
+### QUICK TEST - START HERE
+### =================================================================
+
+### ✅ Test Simple Registration (Chỉ 4 trường bắt buộc)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com",
+  "password": "Quick123!",
+  "confirmPassword": "Quick123!",
+  "firstName": "Quick",
+  "lastName": "Test"
+}
+
+### ✅ Test Simple Login
+# @name quickLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com", 
+  "password": "Quick123!",
+  "rememberMe": false
+}
+
+### 📝 Quick Test Tokens (for testing immediately after quick login)
+@quickAuthToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxYTVhZTk5MS0wOTQwLTRlY2UtYjY0My03ZTkxMzI0NWFlYWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6IjEzZGJlZDMxLTZjYWUtNDkwNS1iODRlLTI3ZjRmZWRjOGZlNCIsImlhdCI6MTc1NDMyNTE5NywiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NDMyNTE5NywiZXhwIjoxNzU0MzI4Nzk3LCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.e_bgXvnUjM1pO4pbObSjxWesPRxVWo3hQdhVyCSbTc0
+@quickRefreshToken = yDGLhVzCyG1eZYEMKinRAvFQTddxdkSLJtPBJ5l3ebI=
+
+### ✅ Quick Test - Get User Info
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{quickAuthToken}}
+
+### ✅ Quick Test - Check Auth Status
+GET {{baseUrl}}/api/auth/check
+Authorization: Bearer {{quickAuthToken}}
+
+### ✅ Quick Test - Refresh Token
+POST {{baseUrl}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "accessToken": "{{quickAuthToken}}",
+  "refreshToken": "{{quickRefreshToken}}"
+}
+
+### ✅ Quick Test - Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{quickAuthToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{quickRefreshToken}}"
+}
+
+### =================================================================
+### BASIC AUTHENTICATION FLOW
+### =================================================================
+
+### 1. 🔑 User Registration (Đăng ký người dùng) - Simplified
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### 1b. 🔑 User Registration with Optional Fields
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test2@example.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!",
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "phoneNumber": "+84123456789",
+  "dateOfBirth": "1990-01-01",
+  "gender": 1,
+  "preferredLanguage": "vi"
+}
+
+### 2. 🔑 User Login (Đăng nhập)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "Test123!",
+  "rememberMe": false
+}
+
+### 📝 Store tokens from login response for subsequent requests
+@authToken = {{login.response.body.data.token}}
+@refreshToken = {{login.response.body.data.refreshToken}}
+
+### 3. ?? Get Current User Info (L?y thông tin user hi?n t?i)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{authToken}}
+
+### 4. ? Check Authentication Status (Ki?m tra tr?ng thái xác th?c)
+GET {{baseUrl}}/api/auth/check
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### TOKEN MANAGEMENT
+### =================================================================
+
+### 5. ?? Refresh Token (Làm m?i token)
+POST {{baseUrl}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "accessToken": "{{authToken}}",
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 6. ?? Revoke Specific Token (Thu h?i token c? th?)
+POST {{baseUrl}}/api/auth/revoke-token
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 7. 🔄 Revoke All Tokens (Thu hồi tất cả token - logout từ tất cả thiết bị)
+POST {{baseUrl}}/api/auth/revoke-all-tokens
+Authorization: Bearer {{authToken}}
+
+### 8. ???? Logout (??ng xu?t)
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### =================================================================
+### PASSWORD MANAGEMENT
+### =================================================================
+
+### 9. ?? Change Password (??i m?t kh?u)
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Test123!",
+  "newPassword": "NewTest123!",
+  "confirmPassword": "NewTest123!"
+}
+
+### 10. 🔑 Forgot Password (Quên mật khẩu)
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "test1@example.com"
+}
+
+### 11. 🔑 Reset Password (Đặt lại mật khẩu - cần token từ email)
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "token": "your-reset-token-here",
+  "newPassword": "ResetTest123!",
+  "confirmPassword": "ResetTest123!"
+}
+
+### =================================================================
+### EMAIL VERIFICATION
+### =================================================================
+
+### 12. 🔑 Verify Email (Xác thực email - cần token từ email)
+POST {{baseUrl}}/api/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "token": "your-verification-token-here"
+}
+
+### 13. 🔑 Resend Email Verification (Gửi lại email xác thực)
+POST {{baseUrl}}/api/auth/resend-email-verification
+Content-Type: application/json
+
+"test1@example.com"
+
+### =================================================================
+### ERROR TESTING (Test các tr??ng h?p l?i)
+### =================================================================
+
+### ? Test Invalid Authentication Token
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid-token-here
+
+### 🔺 Test Registration with Existing Email
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!",
+  "firstName": "Jane",
+  "lastName": "Smith"
+}
+
+### 🔺 Test Login with Wrong Password
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "WrongPassword!",
+  "rememberMe": false
+}
+
+### ? Test Login with Non-existent Email
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "Test123!",
+  "rememberMe": false
+}
+
+### 🔺 Test Registration with Invalid Data
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "password": "123",
+  "confirmPassword": "456",
+  "firstName": "",
+  "lastName": "",
+  "acceptTerms": false
+}
+
+### 🔺 Test Registration without Accepting Terms
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test2@example.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "acceptTerms": false,
+  "emailNotifications": true,
+  "smsNotifications": false
+}
+
+### ? Test Change Password with Wrong Current Password
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "WrongCurrentPassword!",
+  "newPassword": "NewTest123!",
+  "confirmPassword": "NewTest123!"
+}
+
+### =================================================================
+### ADVANCED TESTING
+### =================================================================
+
+### ?? Test Multiple User Registration
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user2@example.com",
+  "password": "User2Pass123!",
+  "confirmPassword": "User2Pass123!",
+  "firstName": "Alice",
+  "lastName": "Smith",
+  "phoneNumber": "+84987654321",
+  "dateOfBirth": "1995-05-15",
+  "gender": 2,
+  "preferredLanguage": "en",
+  "acceptTerms": true,
+  "emailNotifications": false,
+  "smsNotifications": true
+}
+
+### ?? Test Admin User Registration (if allowed)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "AdminPass123!",
+  "confirmPassword": "AdminPass123!",
+  "firstName": "Admin",
+  "lastName": "User",
+  "phoneNumber": "+84111222333",
+  "acceptTerms": true
+}
+
+### =================================================================
+### PERFORMANCE TESTING
+### =================================================================
+
+### ?? Test Rapid Login Attempts (để test rate limiting nếu có)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test1@example.com",
+  "password": "Test123!",
+  "rememberMe": false
+}
+
+### ?? Test Multiple Token Refresh
+POST {{baseUrl}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "accessToken": "{{authToken}}",
+  "refreshToken": "{{refreshToken}}"
+}
+
+### =================================================================
+### NOTES & INSTRUCTIONS
+### =================================================================
+
+###
+### 🔧 HƯỚNG DẪN SỬ DỤNG:
+### 
+### 1. Khởi chạy ứng dụng: dotnet run
+### 2. Đảm bảo database đã được tạo và migration đã chạy
+### 3. CÁCH TEST ĐÚNG:
+###    
+###    🚀 QUICK TEST (Khuyến nghị):
+###    - Chạy "✅ Test Simple Registration" đầu tiên
+###    - Sau đó chạy "✅ Test Simple Login" (có @name quickLogin)
+###    - Rồi test các endpoints khác với {{quickAuthToken}}
+###    
+###    📋 FULL TEST FLOW:
+###    - Chạy "Registration (Test #1)" 
+###    - Sau đó "Login (Test #2)" (có @name login)
+###    - Rồi các test khác sử dụng {{authToken}} và {{refreshToken}}
+### 
+### ⚠️ LƯU Ý QUAN TRỌNG:
+### 
+### - Token sẽ hết hạn sau 60 phút
+### - PHẢI chạy Login trước khi test các endpoint cần Authentication
+### - Biến {{authToken}} chỉ hoạt động sau khi login thành công
+### - Nếu token hết hạn, chạy lại Login để lấy token mới
+### - Không sử dụng token hardcoded (sẽ lỗi HTTP0012)
+### 
+### 🆕 SIMPLIFIED REGISTRATION:
+### 
+### Bây giờ đăng ký chỉ cần 4 trường bắt buộc:
+### - email: Email của người dùng
+### - password: Mật khẩu (ít nhất 6 ký tự, 1 hoa, 1 thường, 1 số)
+### - confirmPassword: Xác nhận mật khẩu
+### - firstName: Họ
+### - lastName: Tên
+### 
+### Các trường khác sẽ có giá trị mặc định:
+### - acceptTerms: true (tự động chấp nhận)
+### - preferredLanguage: "vi"
+### - emailNotifications: true
+### - smsNotifications: false
+### - gender: Unknown (nếu không chỉ định)
+### - tier: Bronze
+### - role: Customer
+### - status: Active
+### 
+### 📋 KIỂM TRA KẾT QUẢ:
+### 
+### ✅ Success Response (200):
+### {
+###   "success": true,
+###   "message": "...",
+###   "data": { ... },
+###   "timestamp": "..."
+### }
+### 
+### ❌ Error Response (400/401/404):
+### {
+###   "success": false,
+###   "message": "...",
+###   "errors": ["..."],
+###   "timestamp": "..."
+### }
+### 
+### 🔒 SECURITY FEATURES:
+### 
+### - JWT Token expires sau 60 phút
+### - Refresh Token expires sau 7 ngày
+### - Account lockout sau 5 lần login sai
+### - Password phải có ít nhất 6 ký tự, 1 hoa, 1 thường, 1 số
+### - Email verification (chưa gửi email thực tế)
+### - IP tracking cho mỗi login
+### - Tự động log user activities với description đầy đủ
+### 
+### 📊 MONITORING:
+### 
+### - Check logs tại: logs/sakura-home-{date}.txt
+### - User activities được log trong database với description chi tiết
+### - Error tracking với Serilog
+### - Tất cả các field nullable đều có giá trị mặc định
+######

@@ -31,6 +31,7 @@ namespace SakuraHomeAPI.Data
         // Identity & User Management - override to avoid warning
         public new DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         // Product Catalog
         public DbSet<Brand> Brands { get; set; }
@@ -389,6 +390,12 @@ namespace SakuraHomeAPI.Data
                 .HasOne(a => a.User)
                 .WithMany(u => u.Addresses)
                 .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)
+                .WithMany()
+                .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Cart>()
