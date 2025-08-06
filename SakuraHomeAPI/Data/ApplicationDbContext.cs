@@ -10,6 +10,7 @@ using SakuraHomeAPI.Models.Entities.Products;
 using SakuraHomeAPI.Models.Entities.Reviews;
 using SakuraHomeAPI.Models.Entities.UserCart;
 using SakuraHomeAPI.Models.Entities.UserWishlist;
+using SakuraHomeAPI.Models.Entities.Shipping;
 using SakuraHomeAPI.Data;
 using System.Reflection;
 
@@ -88,6 +89,8 @@ namespace SakuraHomeAPI.Data
         // Shipping & Delivery
         public DbSet<ShippingZone> ShippingZones { get; set; }
         public DbSet<ShippingRate> ShippingRates { get; set; }
+        public DbSet<ShippingOrder> ShippingOrders { get; set; }
+        public DbSet<ShippingTracking> ShippingTrackings { get; set; }
 
         // Marketing
         public DbSet<Banner> Banners { get; set; }
@@ -221,6 +224,27 @@ namespace SakuraHomeAPI.Data
             builder.Entity<InventoryLog>()
                 .Property(il => il.TotalValue)
                 .HasPrecision(18, 2);
+
+            // Configure ShippingOrder decimal properties
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.ShippingFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.CODFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.TotalFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.Weight)
+                .HasPrecision(8, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.CODAmount)
+                .HasPrecision(18, 2);
         }
 
         /// <summary>
@@ -278,6 +302,30 @@ namespace SakuraHomeAPI.Data
                 // Explicitly configure the foreign key
                 entity.Property(ci => ci.ProductVariantId)
                     .HasColumnName("ProductVariantId");
+            });
+
+            // Configure ShippingOrder relationships
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.HasOne(so => so.Order)
+                    .WithMany()
+                    .HasForeignKey(so => so.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(so => so.OrderId)
+                    .HasColumnName("OrderId");
+            });
+
+            // Configure ShippingTracking relationships
+            builder.Entity<ShippingTracking>(entity =>
+            {
+                entity.HasOne(st => st.ShippingOrder)
+                    .WithMany(so => so.ShippingTrackings)
+                    .HasForeignKey(st => st.ShippingOrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(st => st.ShippingOrderId)
+                    .HasColumnName("ShippingOrderId");
             });
         }
 
@@ -488,6 +536,22 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(c => c.Code).IsUnique();
                 entity.HasIndex(c => c.IsActive);
                 entity.HasIndex(c => new { c.StartDate, c.EndDate });
+            });
+
+            // Shipping indexes
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.HasIndex(so => so.TrackingNumber).IsUnique();
+                entity.HasIndex(so => so.OrderId);
+                entity.HasIndex(so => so.Status);
+                entity.HasIndex(so => so.CreatedAt);
+            });
+
+            builder.Entity<ShippingTracking>(entity =>
+            {
+                entity.HasIndex(st => st.ShippingOrderId);
+                entity.HasIndex(st => st.Status);
+                entity.HasIndex(st => st.UpdatedAt);
             });
         }
 
@@ -706,6 +770,23 @@ namespace SakuraHomeAPI.Data
                 .HasForeignKey(sr => sr.ShippingZoneId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // New shipping relationships
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.HasOne(so => so.Order)
+                    .WithMany()
+                    .HasForeignKey(so => so.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ShippingTracking>(entity =>
+            {
+                entity.HasOne(st => st.ShippingOrder)
+                    .WithMany(so => so.ShippingTrackings)
+                    .HasForeignKey(st => st.ShippingOrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // Many-to-many relationships
             builder.Entity<ProductTag>()
                 .HasKey(pt => new { pt.ProductId, pt.TagId });
@@ -843,6 +924,13 @@ namespace SakuraHomeAPI.Data
             // Shipping constraints
             builder.Entity<ShippingRate>()
                 .ToTable(t => t.HasCheckConstraint("CK_ShippingRate_Rate", "Rate >= 0"));
+
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.ToTable(t => t.HasCheckConstraint("CK_ShippingOrder_Fees", "ShippingFee >= 0 AND CODFee >= 0 AND TotalFee >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ShippingOrder_Weight", "Weight >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ShippingOrder_CODAmount", "CODAmount >= 0"));
+            });
 
             // ReviewSummary constraints and precision configuration
             builder.Entity<ReviewSummary>(entity =>
@@ -1036,12 +1124,36 @@ namespace SakuraHomeAPI.Data
                 entity.Ignore(ca => ca.DeletedByUser);
             });
 
-            // Configure other entities that inherit from FullEntity -> AuditableEntity
+            // Configure entities that inherit from FullEntity -> AuditableEntity
             builder.Entity<ProductVariant>(entity =>
             {
                 entity.Ignore(pv => pv.CreatedByUser);
                 entity.Ignore(pv => pv.UpdatedByUser);
                 entity.Ignore(pv => pv.DeletedByUser);
+            });
+
+            // Configure ShippingOrder entity to ignore audit navigation properties
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                // Ignore the audit navigation properties since they're incompatible with int audit fields
+                entity.Ignore(so => so.CreatedByUser);
+                entity.Ignore(so => so.UpdatedByUser);
+                
+                // Configure the main relationship
+                entity.HasOne(so => so.Order)
+                    .WithMany()
+                    .HasForeignKey(so => so.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ShippingTracking entity (inherits from BaseEntity, so no audit properties to ignore)
+            // ShippingTracking doesn't have audit issues since it inherits from BaseEntity
+
+            // Configure Coupon entity to ignore audit navigation properties
+            builder.Entity<Coupon>(entity =>
+            {
+                entity.Ignore(c => c.CreatedByUser);
+                entity.Ignore(c => c.UpdatedByUser);
             });
 
             // Configure entities that have shadow properties being created by EF
@@ -1057,11 +1169,7 @@ namespace SakuraHomeAPI.Data
                 entity.Ignore(osh => osh.UpdatedByUser);
             });
 
-            builder.Entity<ReviewImage>(entity =>
-            {
-                entity.Ignore(ri => ri.CreatedByUser);
-                entity.Ignore(ri => ri.UpdatedByUser);
-            });
+            // Note: ReviewImage now inherits from BaseEntity, so no audit properties to ignore
 
             // Note: For entities that properly need audit tracking with User references,
             // they should inherit from AuditableGuidEntity instead of AuditableEntity

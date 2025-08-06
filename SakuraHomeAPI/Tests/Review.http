@@ -1,0 +1,540 @@
+﻿### =================================================================
+### REVIEW API TESTS - SakuraHome API
+### =================================================================
+@baseUrl = http://localhost:5273
+
+### ✅ Quick Setup - Login để lấy token
+# @name quickLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com",
+  "password": "Quick123!",
+  "rememberMe": false
+}
+
+### 📝 Store tokens
+@authToken = {{quickLogin.response.body.data.token}}
+
+### =================================================================
+### REVIEW MANAGEMENT
+### =================================================================
+
+### 1. ⭐ Create Product Review
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "orderId": 1,
+  "rating": 5,
+  "title": "Sản phẩm tuyệt vời!",
+  "comment": "Chất lượng rất tốt, đúng như mô tả. Giao hàng nhanh, đóng gói cẩn thận. Tôi rất hài lòng với sản phẩm này.",
+  "pros": "Chất lượng tốt, giá cả hợp lý, giao hàng nhanh",
+  "cons": "Không có gì để phàn nàn",
+  "recommendProduct": true,
+  "attributes": "{\"size\": \"M\", \"color\": \"Đỏ\"}"
+}
+
+### 2. 📋 Get Product Reviews
+GET {{baseUrl}}/api/reviews/product/1?page=1&pageSize=10&sortBy=CreatedAt&sortOrder=desc
+Authorization: Bearer {{authToken}}
+
+### 3. 📋 Get Product Reviews with Filters
+GET {{baseUrl}}/api/reviews/product/1?rating=5&verified=true&withImages=true&page=1&pageSize=5
+Authorization: Bearer {{authToken}}
+
+### 4. ⭐ Get Review by ID
+GET {{baseUrl}}/api/reviews/1
+Authorization: Bearer {{authToken}}
+
+### 5. ✏️ Update Review
+PUT {{baseUrl}}/api/reviews/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "title": "Sản phẩm khá tốt (Updated)",
+  "comment": "Sau khi sử dụng thêm, tôi thấy sản phẩm vẫn tốt nhưng có một vài điểm cần cải thiện.",
+  "pros": "Chất lượng tốt, giá cả hợp lý",
+  "cons": "Màu sắc hơi khác so với hình ảnh",
+  "recommendProduct": true
+}
+
+### 6. 🗑️ Delete Review
+DELETE {{baseUrl}}/api/reviews/1
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### USER REVIEWS
+### =================================================================
+
+### 7. 📋 Get My Reviews
+GET {{baseUrl}}/api/reviews/my-reviews?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### 8. 📋 Get User Reviews (Public)
+GET {{baseUrl}}/api/reviews/user/{userId}?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### REVIEW INTERACTIONS
+### =================================================================
+
+### 9. 👍 Vote Review as Helpful
+POST {{baseUrl}}/api/reviews/1/vote
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "isHelpful": true
+}
+
+### 10. 👎 Vote Review as Not Helpful
+POST {{baseUrl}}/api/reviews/1/vote
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "isHelpful": false
+}
+
+### 11. 🚩 Report Review
+POST {{baseUrl}}/api/reviews/1/report
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "reason": "Spam",
+  "description": "This review looks like spam content"
+}
+
+### =================================================================
+### REVIEW RESPONSES (Staff/Admin)
+### =================================================================
+
+### 12. 💬 Add Staff Response to Review
+POST {{baseUrl}}/api/reviews/1/response
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "response": "Cảm ơn bạn đã đánh giá sản phẩm. Chúng tôi rất vui khi biết bạn hài lòng với chất lượng sản phẩm."
+}
+
+### 13. ✏️ Update Staff Response
+PUT {{baseUrl}}/api/reviews/responses/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "response": "Cảm ơn bạn đã đánh giá sản phẩm. Về vấn đề màu sắc, chúng tôi sẽ cải thiện hình ảnh để phản ánh đúng hơn sản phẩm thực tế."
+}
+
+### 14. 🗑️ Delete Staff Response
+DELETE {{baseUrl}}/api/reviews/responses/1
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### REVIEW IMAGES
+### =================================================================
+
+### 15. 📸 Add Review Images (Multipart form)
+POST {{baseUrl}}/api/reviews/1/images
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data
+
+--boundary
+Content-Disposition: form-data; name="images"; filename="review1.jpg"
+Content-Type: image/jpeg
+
+< ./test-images/review1.jpg
+--boundary
+Content-Disposition: form-data; name="images"; filename="review2.jpg"
+Content-Type: image/jpeg
+
+< ./test-images/review2.jpg
+--boundary--
+
+### 16. 🗑️ Delete Review Image
+DELETE {{baseUrl}}/api/reviews/images/1
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### REVIEW MODERATION (Admin/Staff)
+### =================================================================
+
+### 17. ✅ Approve Review
+POST {{baseUrl}}/api/reviews/1/approve
+Authorization: Bearer {{authToken}}
+
+### 18. ❌ Reject Review
+POST {{baseUrl}}/api/reviews/1/reject
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "reason": "Review contains inappropriate content"
+}
+
+### 19. ⭐ Set Review as Featured
+POST {{baseUrl}}/api/reviews/1/featured
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "featured": true
+}
+
+### 20. 📋 Get Pending Reviews (Admin)
+GET {{baseUrl}}/api/reviews/pending?page=1&pageSize=20
+Authorization: Bearer {{authToken}}
+
+### 21. 📋 Get Reported Reviews (Admin)
+GET {{baseUrl}}/api/reviews/reported?page=1&pageSize=20
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### REVIEW STATISTICS
+### =================================================================
+
+### 22. 📊 Get Product Review Summary
+GET {{baseUrl}}/api/reviews/product/1/summary
+Authorization: Bearer {{authToken}}
+
+### 23. 📊 Get Review Statistics (Admin)
+GET {{baseUrl}}/api/reviews/stats
+Authorization: Bearer {{authToken}}
+
+### 24. 📊 Get Review Statistics with Date Range
+GET {{baseUrl}}/api/reviews/stats?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### ADVANCED REVIEW QUERIES
+### =================================================================
+
+### 25. 🔍 Search Reviews
+GET {{baseUrl}}/api/reviews/search?query=tuyệt vời&page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### 26. 📋 Get Featured Reviews
+GET {{baseUrl}}/api/reviews/featured?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### 27. 📋 Get Reviews by Rating
+GET {{baseUrl}}/api/reviews/by-rating/5?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### 28. 📋 Get Verified Purchase Reviews
+GET {{baseUrl}}/api/reviews/verified?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### 29. 📋 Get Reviews with Images
+GET {{baseUrl}}/api/reviews/with-images?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### BULK OPERATIONS (Admin)
+### =================================================================
+
+### 30. ✅ Bulk Approve Reviews
+POST {{baseUrl}}/api/reviews/bulk-approve
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "reviewIds": [1, 2, 3, 4, 5]
+}
+
+### 31. ❌ Bulk Reject Reviews
+POST {{baseUrl}}/api/reviews/bulk-reject
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "reviewIds": [6, 7, 8],
+  "reason": "Inappropriate content"
+}
+
+### 32. 🗑️ Bulk Delete Reviews
+DELETE {{baseUrl}}/api/reviews/bulk-delete
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "reviewIds": [9, 10, 11]
+}
+
+### =================================================================
+### REVIEW EXPORTS (Admin)
+### =================================================================
+
+### 33. 📄 Export Reviews to Excel
+POST {{baseUrl}}/api/reviews/export
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "fromDate": "2024-01-01",
+  "toDate": "2024-12-31",
+  "format": "excel",
+  "includeImages": true
+}
+
+### 34. 📄 Export Review Statistics
+POST {{baseUrl}}/api/reviews/export-stats
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromDate": "2024-01-01",
+  "toDate": "2024-12-31",
+  "format": "pdf"
+}
+
+### =================================================================
+### ERROR TESTING
+### =================================================================
+
+### 🔺 Test Review Non-existent Product
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 99999,
+  "rating": 5,
+  "title": "Test Review",
+  "comment": "Test comment"
+}
+
+### 🔺 Test Invalid Rating (Outside 1-5 range)
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "rating": 10,
+  "title": "Invalid Rating",
+  "comment": "This should fail"
+}
+
+### 🔺 Test Duplicate Review (Same user, same product)
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "rating": 4,
+  "title": "Another Review",
+  "comment": "Trying to review same product again"
+}
+
+### 🔺 Test Vote Own Review
+POST {{baseUrl}}/api/reviews/1/vote
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "isHelpful": true
+}
+
+### 🔺 Test Update Other User's Review
+PUT {{baseUrl}}/api/reviews/999
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "rating": 1,
+  "title": "Hacked Review",
+  "comment": "Trying to update someone else's review"
+}
+
+### 🔺 Test Access Without Authentication
+GET {{baseUrl}}/api/reviews/my-reviews
+
+### =================================================================
+### EDGE CASE TESTING
+### =================================================================
+
+### 🎯 Test Very Long Review
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 2,
+  "rating": 3,
+  "title": "Very Long Title That Exceeds Normal Length Limits To Test Validation",
+  "comment": "This is a very long review comment that contains a lot of text to test the maximum length validation. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  "pros": "Long pros description with many details about what I liked about this product including quality, shipping, packaging, customer service, and overall experience",
+  "cons": "Long cons description with many details about what could be improved including minor issues I encountered during usage"
+}
+
+### 🎯 Test Review with Special Characters
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 3,
+  "rating": 4,
+  "title": "Review with émojis 😍🔥⭐",
+  "comment": "Sản phẩm này rất tốt! Tôi đã mua và sử dụng được 2 tuần. Quality is 💯% great! Highly recommend 👍",
+  "attributes": "{\"special\": \"test with 'quotes' and \\\"escapes\\\"\"}"
+}
+
+### 🎯 Test Review Without Optional Fields
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 4,
+  "rating": 5,
+  "comment": "Minimal review with only required fields"
+}
+
+### =================================================================
+### PERFORMANCE TESTING
+### =================================================================
+
+### ⚡ Rapid Review Creation
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 5,
+  "rating": 4,
+  "title": "Performance Test Review",
+  "comment": "Testing rapid review creation"
+}
+
+### ⚡ Large Page Size Request
+GET {{baseUrl}}/api/reviews/product/1?page=1&pageSize=100
+Authorization: Bearer {{authToken}}
+
+### ⚡ Complex Filter Query
+GET {{baseUrl}}/api/reviews/product/1?rating=4&verified=true&withImages=true&sortBy=HelpfulCount&sortOrder=desc&page=1&pageSize=50
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### NOTES & INSTRUCTIONS
+### =================================================================
+
+###
+### 🔧 HƯỚNG DẪN SỬ DỤNG REVIEW API TESTS:
+### 
+### 1. Khởi chạy ứng dụng: dotnet run
+### 2. Chạy "Quick Setup - Login" để lấy authentication token
+### 3. Cần có Product và Order data trước khi test review creation
+### 4. Test moderation features cần Admin/Staff role
+### 
+### 📋 REVIEW WORKFLOW:
+### 
+### 1. Customer tạo review cho product đã mua
+### 2. Review có thể include images và detailed feedback
+### 3. Other customers có thể vote helpful/unhelpful
+### 4. Staff có thể respond to reviews
+### 5. Admin moderate reviews (approve/reject/feature)
+### 6. Review statistics help track product satisfaction
+### 
+### 🎯 KEY FEATURES TESTED:
+### 
+### ✅ Review Management:
+### - Create, Read, Update, Delete reviews
+### - Image attachments
+### - Detailed attributes (pros/cons/attributes)
+### - Verified purchase validation
+### 
+### ✅ Social Features:
+### - Helpful voting system
+### - Review responses from staff
+### - Report inappropriate content
+### - Featured reviews showcase
+### 
+### ✅ Moderation:
+### - Approve/reject reviews
+### - Bulk operations for efficiency
+### - Report handling
+### - Content filtering
+### 
+### ✅ Analytics:
+### - Review statistics and summaries
+### - Rating distributions
+### - Trend analysis
+### - Export capabilities
+### 
+### 📊 EXPECTED RESPONSES:
+### 
+### ✅ Review Response:
+### {
+###   "id": 1,
+###   "productId": 1,
+###   "userId": "guid",
+###   "rating": 5,
+###   "title": "Great Product!",
+###   "comment": "Detailed review...",
+###   "isApproved": true,
+###   "isVerifiedPurchase": true,
+###   "helpfulCount": 15,
+###   "createdAt": "2024-01-15T10:00:00Z"
+### }
+### 
+### ✅ Review Summary Response:
+### {
+###   "productId": 1,
+###   "averageRating": 4.2,
+###   "totalReviews": 156,
+###   "ratingDistribution": {
+###     "5": 65,
+###     "4": 45,
+###     "3": 25,
+###     "2": 15,
+###     "1": 6
+###   },
+###   "verifiedPurchases": 142,
+###   "withImages": 38
+### }
+### 
+### ⚠️ BUSINESS RULES:
+### 
+### - Chỉ customer đã mua product mới có thể review
+### - Mỗi user chỉ có thể review 1 lần cho 1 product
+### - Rating phải từ 1-5 stars
+### - Reviews cần approve trước khi hiển thị public
+### - Users không thể vote cho review của chính mình
+### - Staff responses chỉ từ Staff/Admin accounts
+### 
+### 🔒 PERMISSIONS:
+### 
+### - Create/Update/Delete: Review owner hoặc Admin
+### - Approve/Reject/Feature: Admin/Staff only
+### - Bulk operations: Admin only
+### - Statistics/Reports: Admin/Staff only
+### - Vote/Report: Any authenticated user
+### 
+### 📈 QUALITY METRICS:
+### 
+### - Average response time < 200ms for reads
+### - Image upload < 5MB per image
+### - Review text limits: Title 255 chars, Comment 2000 chars
+### - Bulk operations max 100 items per request
+### 
+### 🎨 UI/UX INTEGRATION:
+### 
+### - Star rating displays with hover effects
+### - Image galleries for review photos
+### - Helpful vote counters with user feedback
+### - Pagination for large review lists
+### - Sort/filter options for user preferences
+### - Moderation queue for staff workflows
+###

@@ -1,0 +1,485 @@
+﻿### =================================================================
+### SAKURA HOME API - COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = http://localhost:5273
+
+### 🚀 QUICK START - Complete E-commerce Flow Test
+### =================================================================
+
+### STEP 1: 👤 User Registration & Authentication
+# @name userRegister
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@sakurahome.com",
+  "password": "Test123!",
+  "confirmPassword": "Test123!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### STEP 2: 🔑 User Login
+# @name userLogin  
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@sakurahome.com",
+  "password": "Test123!",
+  "rememberMe": false
+}
+
+### 📝 Store Authentication Token
+@authToken = {{userLogin.response.body.data.token}}
+
+### STEP 3: 🛍️ Browse Products
+GET {{baseUrl}}/api/products?page=1&pageSize=10&sortBy=CreatedAt&sortOrder=desc
+Authorization: Bearer {{authToken}}
+
+### STEP 4: 📦 Get Product Details
+GET {{baseUrl}}/api/products/1
+Authorization: Bearer {{authToken}}
+
+### STEP 5: 🛒 Add Product to Cart
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "productVariantId": 1,
+  "quantity": 2
+}
+
+### STEP 6: 💝 Add Product to Wishlist
+POST {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1
+}
+
+### STEP 7: 🎫 Check Available Coupons
+GET {{baseUrl}}/api/coupons/available
+Authorization: Bearer {{authToken}}
+
+### STEP 8: 🎫 Apply Coupon to Cart
+POST {{baseUrl}}/api/coupons/apply
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": 1,
+  "couponCode": "WELCOME15"
+}
+
+### STEP 9: 💰 Calculate Shipping
+POST {{baseUrl}}/api/shipping/calculate-rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "HCM",
+  "toProvinceCode": "HN",
+  "weight": 1.5,
+  "orderValue": 500000
+}
+
+### STEP 10: 📋 Create Order
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "COD",
+  "shippingMethod": "STANDARD",
+  "customerNotes": "Please handle with care"
+}
+
+### STEP 11: 💳 Process Payment
+POST {{baseUrl}}/api/payments
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "paymentMethod": "COD",
+  "amount": 500000
+}
+
+### STEP 12: 🚚 Create Shipping Order
+POST {{baseUrl}}/api/shipping/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "serviceType": "STANDARD",
+  "isCOD": true,
+  "codAmount": 500000
+}
+
+### STEP 13: 📍 Track Order
+GET {{baseUrl}}/api/orders/1
+Authorization: Bearer {{authToken}}
+
+### STEP 14: ⭐ Write Product Review
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "orderId": 1,
+  "rating": 5,
+  "title": "Excellent Product!",
+  "comment": "Great quality, fast shipping, highly recommended!"
+}
+
+### =================================================================
+### 🔧 ADMIN WORKFLOW TESTS
+### =================================================================
+
+### Admin Login (You need to create admin user first)
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": false
+}
+
+@adminToken = {{adminLogin.response.body.data.token}}
+
+### 📊 Get Order Statistics
+GET {{baseUrl}}/api/orders/stats
+Authorization: Bearer {{adminToken}}
+
+### 📊 Get User Statistics  
+GET {{baseUrl}}/api/users/stats
+Authorization: Bearer {{adminToken}}
+
+### 📊 Get Product Performance
+GET {{baseUrl}}/api/products/stats
+Authorization: Bearer {{adminToken}}
+
+### 📊 Get Shipping Statistics
+GET {{baseUrl}}/api/shipping/stats
+Authorization: Bearer {{adminToken}}
+
+### 📊 Get Review Statistics
+GET {{baseUrl}}/api/reviews/stats
+Authorization: Bearer {{adminToken}}
+
+### 📊 Get Coupon Performance
+GET {{baseUrl}}/api/coupons/stats
+Authorization: Bearer {{adminToken}}
+
+### ✅ Approve Pending Reviews
+GET {{baseUrl}}/api/reviews/pending
+Authorization: Bearer {{adminToken}}
+
+### 📦 Manage Orders
+GET {{baseUrl}}/api/orders?status=Pending&page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 🎫 Manage Coupons
+GET {{baseUrl}}/api/coupons?page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### 🧪 API HEALTH & PERFORMANCE TESTS
+### =================================================================
+
+### Health Check Endpoint
+GET {{baseUrl}}/api/health
+
+### System Information
+GET {{baseUrl}}/api/system/info
+Authorization: Bearer {{authToken}}
+
+### Database Connectivity Test
+GET {{baseUrl}}/api/system/db-check
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### 🔍 SEARCH & FILTER TESTS
+### =================================================================
+
+### Product Search
+GET {{baseUrl}}/api/products/search?query=áo&page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### Advanced Product Filtering
+GET {{baseUrl}}/api/products?categoryId=1&brandId=2&minPrice=100000&maxPrice=500000&inStock=true
+Authorization: Bearer {{authToken}}
+
+### User Search (Admin)
+GET {{baseUrl}}/api/users/search?query=test&page=1&pageSize=10
+Authorization: Bearer {{adminToken}}
+
+### Order Search
+GET {{baseUrl}}/api/orders/search?orderNumber=ORD&page=1&pageSize=10
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### 📊 ANALYTICS & REPORTING TESTS
+### =================================================================
+
+### Sales Report
+GET {{baseUrl}}/api/analytics/sales?fromDate=2024-01-01&toDate=2024-01-31
+Authorization: Bearer {{adminToken}}
+
+### Customer Behavior Report
+GET {{baseUrl}}/api/analytics/customers?fromDate=2024-01-01&toDate=2024-01-31
+Authorization: Bearer {{adminToken}}
+
+### Product Performance Report
+GET {{baseUrl}}/api/analytics/products?fromDate=2024-01-01&toDate=2024-01-31
+Authorization: Bearer {{adminToken}}
+
+### Revenue Analytics
+GET {{baseUrl}}/api/analytics/revenue?groupBy=month&year=2024
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### 🔒 SECURITY & VALIDATION TESTS
+### =================================================================
+
+### Test Invalid Token
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer invalid-token-123
+
+### Test Expired Token (if you have one)
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer expired-token-here
+
+### Test Rate Limiting (Multiple rapid requests)
+GET {{baseUrl}}/api/products
+GET {{baseUrl}}/api/products
+GET {{baseUrl}}/api/products
+GET {{baseUrl}}/api/products
+GET {{baseUrl}}/api/products
+
+### Test SQL Injection Attempts
+GET {{baseUrl}}/api/products/search?query=' OR 1=1--
+Authorization: Bearer {{authToken}}
+
+### Test XSS Attempts
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "rating": 5,
+  "title": "<script>alert('xss')</script>",
+  "comment": "Normal comment"
+}
+
+### =================================================================
+### 💾 DATA CONSISTENCY TESTS
+### =================================================================
+
+### Test Cart-Order Consistency
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{authToken}}
+
+### Test Inventory Updates
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 999999
+}
+
+### Test Concurrent Order Creation
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "COD"
+}
+
+### =================================================================
+### 🌍 INTERNATIONALIZATION TESTS
+### =================================================================
+
+### Test Vietnamese Content
+POST {{baseUrl}}/api/products/search
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+Accept-Language: vi
+
+{
+  "query": "áo sơ mi",
+  "page": 1,
+  "pageSize": 10
+}
+
+### Test English Content
+POST {{baseUrl}}/api/products/search
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+Accept-Language: en
+
+{
+  "query": "shirt",
+  "page": 1,
+  "pageSize": 10
+}
+
+### =================================================================
+### 📱 MOBILE API TESTS
+### =================================================================
+
+### Mobile App Version Check
+GET {{baseUrl}}/api/mobile/version-check
+Authorization: Bearer {{authToken}}
+
+### Mobile Optimized Product List
+GET {{baseUrl}}/api/mobile/products?page=1&pageSize=20
+Authorization: Bearer {{authToken}}
+
+### Mobile Push Notification Token
+POST {{baseUrl}}/api/mobile/push-token
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "token": "mobile-push-token-here",
+  "platform": "android"
+}
+
+### =================================================================
+### 🎯 LOAD TESTING SCENARIOS
+### =================================================================
+
+### Simulate Black Friday Traffic
+GET {{baseUrl}}/api/products?featured=true&page=1&pageSize=50
+Authorization: Bearer {{authToken}}
+
+### Stress Test Cart Operations
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1
+}
+
+### High Volume Order Processing
+GET {{baseUrl}}/api/orders?page=1&pageSize=100
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### 🔧 MAINTENANCE & MONITORING
+### =================================================================
+
+### System Health Dashboard
+GET {{baseUrl}}/api/admin/dashboard
+Authorization: Bearer {{adminToken}}
+
+### Error Log Monitoring
+GET {{baseUrl}}/api/admin/logs?level=Error&page=1&pageSize=50
+Authorization: Bearer {{adminToken}}
+
+### Performance Metrics
+GET {{baseUrl}}/api/admin/metrics
+Authorization: Bearer {{adminToken}}
+
+### Database Statistics
+GET {{baseUrl}}/api/admin/db-stats
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### 📄 DOCUMENTATION & METADATA
+### =================================================================
+
+### API Documentation
+GET {{baseUrl}}/swagger/v1/swagger.json
+
+### API Endpoints List
+GET {{baseUrl}}/api/meta/endpoints
+Authorization: Bearer {{adminToken}}
+
+### Feature Flags
+GET {{baseUrl}}/api/meta/features
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### NOTES & BEST PRACTICES
+### =================================================================
+
+###
+### 🎯 TEST EXECUTION ORDER:
+### 
+### 1. Run QUICK START section để test complete flow
+### 2. Run specific API tests từ dedicated files:
+###    - Auth.http - Authentication tests
+###    - Shipping.http - Shipping API tests  
+###    - Review.http - Review API tests
+###    - Coupon.http - Coupon API tests
+###    - User.http - User management tests
+###    - Cart.http - Shopping cart tests
+###    - Order.http - Order management tests
+###    - Payment.http - Payment processing tests
+### 
+### 📋 PREREQUISITES:
+### 
+### 1. Database đã được tạo và migration đã chạy
+### 2. Có sample data (products, categories, brands)
+### 3. Admin user đã được tạo
+### 4. HTTPS certificate đã được trust (nếu dùng HTTPS)
+### 
+### 🔍 MONITORING CHECKLIST:
+### 
+### ✅ Functional Testing:
+### - All endpoints return expected status codes
+### - Response data matches expected schemas
+### - Business logic works correctly
+### - Error handling is proper
+### 
+### ✅ Performance Testing:
+### - Response times under thresholds
+### - No memory leaks during tests
+### - Database connections properly managed
+### - Concurrent request handling
+### 
+### ✅ Security Testing:
+### - Authentication properly enforced
+### - Authorization rules respected
+### - Input validation prevents attacks
+### - Sensitive data not exposed
+### 
+### ✅ Data Integrity:
+### - Database constraints enforced
+### - Transactions properly handled
+### - No orphaned records created
+### - Audit trails properly maintained
+### 
+### 🚀 AUTOMATION INTEGRATION:
+### 
+### - Tests có thể chạy trong CI/CD pipeline
+### - Environment variables cho different stages
+### - Automated test reporting
+### - Integration với monitoring tools
+### 
+### 📊 SUCCESS METRICS:
+### 
+### - API response time < 200ms (95th percentile)
+### - Error rate < 1%
+### - Test coverage > 80%
+### - Security scan pass rate 100%
+### - Performance degradation < 5% between releases
+###

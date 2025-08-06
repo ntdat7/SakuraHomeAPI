@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -244,7 +244,7 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// Custom Services
+// Custom Services - Updated với các services mới
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICartService, CartService>();
@@ -254,10 +254,15 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// New services được thêm
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<ICouponService, CouponService>();
+builder.Services.AddScoped<IShippingService, ShippingService>();
+
 //builder.Services.AddScoped<IProductService, ProductService>();
 //builder.Services.AddScoped<ICategoryService, CategoryService>();
 //builder.Services.AddScoped<IBrandService, BrandService>();
-//builder.Services.AddScoped<IReviewService, ReviewService>();
 //builder.Services.AddScoped<IFileService, FileService>();
 //builder.Services.AddScoped<ITranslationService, TranslationService>();
 //builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
