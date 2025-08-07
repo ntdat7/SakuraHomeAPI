@@ -287,6 +287,10 @@ builder.Services.AddResponseCompression(options =>
 
 var app = builder.Build();
 
+// Kestrel configuration: chỉ lắng nghe HTTPS trên port 8080
+app.Urls.Clear();
+app.Urls.Add("https://localhost:8080");
+
 // Configure the HTTP request pipeline.
 
 // Exception Handling

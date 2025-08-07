@@ -1,7 +1,7 @@
 ﻿### =================================================================
 ### SHIPPING API TESTS - SakuraHome API
 ### =================================================================
-@baseUrl = http://localhost:5273
+@baseUrl = https://localhost:8080
 
 ### ✅ Quick Setup - Login để lấy token
 # @name quickLogin

@@ -1,7 +1,7 @@
 ﻿### =================================================================
 ### SAKURA HOME API - COMPREHENSIVE TEST SUITE
 ### =================================================================
-@baseUrl = http://localhost:5273
+@baseUrl = https://localhost:8080
 
 ### 🚀 QUICK START - Complete E-commerce Flow Test
 ### =================================================================

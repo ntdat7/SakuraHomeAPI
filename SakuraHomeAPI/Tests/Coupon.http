@@ -1,9 +1,9 @@
 ﻿### =================================================================
 ### COUPON API TESTS - SakuraHome API
 ### =================================================================
-@baseUrl = http://localhost:5273
+@baseUrl = https://localhost:8080
 
-### ✅ Quick Setup - Login để lấy token
+### ? Quick Setup - Login d? l?y token
 # @name quickLogin
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -14,14 +14,14 @@ Content-Type: application/json
   "rememberMe": false
 }
 
-### 📝 Store tokens
-@authToken = {{quickLogin.response.body.data.token}}
+### ?? Store tokens
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJiZTlhZTY4Yy0xZWE1LTQzYTktYjcwZC0zZDMwMmM2MjAxMWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6IjU5YTI0NzdhLThhN2ItNGQ4My1hYmNlLTM4NzBhMjNlOGVjOSIsImlhdCI6MTc1NDUzNDk4MSwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NDUzNDk4MSwiZXhwIjoxNzU0NTM4NTgxLCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.dV_gJffWhJJwRESDvpEQHJvIiZVHh46Fk46knp4qYhI
 
 ### =================================================================
 ### COUPON MANAGEMENT (Admin/Staff)
 ### =================================================================
 
-### 1. 🎫 Create Percentage Discount Coupon
+### 1. ?? Create Percentage Discount Coupon
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -29,7 +29,7 @@ Content-Type: application/json
 {
   "name": "New Year Sale",
   "code": "NEWYEAR2024",
-  "description": "Giảm 20% cho đơn hàng từ 500k",
+  "description": "Gi?m 20% cho don hàng từ 500k",
   "type": "Percentage",
   "value": 20,
   "minOrderAmount": 500000,
@@ -43,7 +43,7 @@ Content-Type: application/json
   "firstTimeCustomerOnly": false
 }
 
-### 2. 🎫 Create Fixed Amount Discount Coupon
+### 2. ?? Create Fixed Amount Discount Coupon
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -51,7 +51,7 @@ Content-Type: application/json
 {
   "name": "Free Shipping",
   "code": "FREESHIP50",
-  "description": "Miễn phí vận chuyển cho đơn hàng từ 300k",
+  "description": "Mi?n phí v?n chuy?n cho don hàng t? 300k",
   "type": "FixedAmount",
   "value": 50000,
   "minOrderAmount": 300000,
@@ -62,7 +62,7 @@ Content-Type: application/json
   "firstTimeCustomerOnly": false
 }
 
-### 3. 🎫 Create First-Time Customer Coupon
+### 3. ?? Create First-Time Customer Coupon
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -70,7 +70,7 @@ Content-Type: application/json
 {
   "name": "Welcome Discount",
   "code": "WELCOME15",
-  "description": "Giảm 15% cho khách hàng mới",
+  "description": "Gi?m 15% cho khách hàng m?i",
   "type": "Percentage",
   "value": 15,
   "minOrderAmount": 200000,
@@ -82,15 +82,15 @@ Content-Type: application/json
   "firstTimeCustomerOnly": true
 }
 
-### 4. 📋 Get All Coupons (Admin)
+### 4. ?? Get All Coupons (Admin)
 GET {{baseUrl}}/api/coupons?page=1&pageSize=20&isActive=true
 Authorization: Bearer {{authToken}}
 
-### 5. 🎫 Get Coupon by ID
+### 5. ?? Get Coupon by ID
 GET {{baseUrl}}/api/coupons/1
 Authorization: Bearer {{authToken}}
 
-### 6. ✏️ Update Coupon
+### 6. ?? Update Coupon
 PUT {{baseUrl}}/api/coupons/1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -98,7 +98,7 @@ Content-Type: application/json
 {
   "name": "New Year Sale (Updated)",
   "code": "NEWYEAR2024",
-  "description": "Giảm 25% cho đơn hàng từ 500k - Khuyến mãi đặc biệt",
+  "description": "Gi?m 25% cho don hàng t? 500k - Khuy?n mãi d?c bi?t",
   "type": "Percentage",
   "value": 25,
   "minOrderAmount": 500000,
@@ -109,15 +109,15 @@ Content-Type: application/json
   "isActive": true
 }
 
-### 7. ❌ Deactivate Coupon
+### 7. ? Deactivate Coupon
 POST {{baseUrl}}/api/coupons/1/deactivate
 Authorization: Bearer {{authToken}}
 
-### 8. ✅ Activate Coupon
+### 8. ? Activate Coupon
 POST {{baseUrl}}/api/coupons/1/activate
 Authorization: Bearer {{authToken}}
 
-### 9. 🗑️ Delete Coupon
+### 9. ??? Delete Coupon
 DELETE {{baseUrl}}/api/coupons/1
 Authorization: Bearer {{authToken}}
 
@@ -125,7 +125,7 @@ Authorization: Bearer {{authToken}}
 ### COUPON VALIDATION & APPLICATION
 ### =================================================================
 
-### 10. ✅ Validate Coupon Code
+### 10. ? Validate Coupon Code
 POST {{baseUrl}}/api/coupons/validate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -137,7 +137,7 @@ Content-Type: application/json
   "userId": "user-guid-here"
 }
 
-### 11. 💰 Calculate Discount Amount
+### 11. ?? Calculate Discount Amount
 POST {{baseUrl}}/api/coupons/calculate-discount
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -150,7 +150,7 @@ Content-Type: application/json
   "categoryIds": [1, 2]
 }
 
-### 12. 🛒 Apply Coupon to Cart
+### 12. ?? Apply Coupon to Cart
 POST {{baseUrl}}/api/coupons/apply
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -160,7 +160,7 @@ Content-Type: application/json
   "couponCode": "NEWYEAR2024"
 }
 
-### 13. 🚫 Remove Coupon from Cart
+### 13. ?? Remove Coupon from Cart
 DELETE {{baseUrl}}/api/coupons/remove
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -173,19 +173,19 @@ Content-Type: application/json
 ### PUBLIC COUPON DISCOVERY
 ### =================================================================
 
-### 14. 🌟 Get Available Coupons for User
+### 14. ?? Get Available Coupons for User
 GET {{baseUrl}}/api/coupons/available
 Authorization: Bearer {{authToken}}
 
-### 15. 🌟 Get Available Coupons for Product
+### 15. ?? Get Available Coupons for Product
 GET {{baseUrl}}/api/coupons/available/product/1
 Authorization: Bearer {{authToken}}
 
-### 16. 🌟 Get Available Coupons for Category
+### 16. ?? Get Available Coupons for Category
 GET {{baseUrl}}/api/coupons/available/category/1
 Authorization: Bearer {{authToken}}
 
-### 17. 🔍 Search Coupons by Code Pattern
+### 17. ?? Search Coupons by Code Pattern
 GET {{baseUrl}}/api/coupons/search?pattern=NEW&page=1&pageSize=10
 Authorization: Bearer {{authToken}}
 
@@ -193,23 +193,23 @@ Authorization: Bearer {{authToken}}
 ### COUPON USAGE TRACKING
 ### =================================================================
 
-### 18. 📊 Get Coupon Usage Statistics
+### 18. ?? Get Coupon Usage Statistics
 GET {{baseUrl}}/api/coupons/1/usage-stats
 Authorization: Bearer {{authToken}}
 
-### 19. 📋 Get Coupon Usage History
+### 19. ?? Get Coupon Usage History
 GET {{baseUrl}}/api/coupons/1/usage-history?page=1&pageSize=20
 Authorization: Bearer {{authToken}}
 
-### 20. 📋 Get User's Coupon Usage History
+### 20. ?? Get User's Coupon Usage History
 GET {{baseUrl}}/api/coupons/my-usage?page=1&pageSize=10
 Authorization: Bearer {{authToken}}
 
-### 21. 📊 Get Overall Coupon Statistics (Admin)
+### 21. ?? Get Overall Coupon Statistics (Admin)
 GET {{baseUrl}}/api/coupons/stats
 Authorization: Bearer {{authToken}}
 
-### 22. 📊 Get Coupon Performance Report
+### 22. ?? Get Coupon Performance Report
 GET {{baseUrl}}/api/coupons/performance-report?fromDate=2024-01-01&toDate=2024-01-31
 Authorization: Bearer {{authToken}}
 
@@ -217,7 +217,7 @@ Authorization: Bearer {{authToken}}
 ### BULK OPERATIONS (Admin)
 ### =================================================================
 
-### 23. ✅ Bulk Activate Coupons
+### 23. ? Bulk Activate Coupons
 POST {{baseUrl}}/api/coupons/bulk-activate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -226,7 +226,7 @@ Content-Type: application/json
   "couponIds": [1, 2, 3, 4, 5]
 }
 
-### 24. ❌ Bulk Deactivate Coupons
+### 24. ? Bulk Deactivate Coupons
 POST {{baseUrl}}/api/coupons/bulk-deactivate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -235,11 +235,11 @@ Content-Type: application/json
   "couponIds": [6, 7, 8]
 }
 
-### 25. 🗑️ Bulk Delete Expired Coupons
+### 25. ??? Bulk Delete Expired Coupons
 DELETE {{baseUrl}}/api/coupons/bulk-delete-expired
 Authorization: Bearer {{authToken}}
 
-### 26. 📅 Extend Coupon Expiry (Bulk)
+### 26. ?? Extend Coupon Expiry (Bulk)
 POST {{baseUrl}}/api/coupons/bulk-extend
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -253,7 +253,7 @@ Content-Type: application/json
 ### COUPON TEMPLATES & GENERATION
 ### =================================================================
 
-### 27. 🎯 Generate Random Coupon Codes
+### 27. ?? Generate Random Coupon Codes
 POST {{baseUrl}}/api/coupons/generate-codes
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -270,7 +270,7 @@ Content-Type: application/json
   "endDate": "2024-08-31T23:59:59Z"
 }
 
-### 28. 📋 Create Coupon Template
+### 28. ?? Create Coupon Template
 POST {{baseUrl}}/api/coupons/templates
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -286,7 +286,7 @@ Content-Type: application/json
   "durationDays": 30
 }
 
-### 29. 🎯 Create Coupons from Template
+### 29. ?? Create Coupons from Template
 POST {{baseUrl}}/api/coupons/from-template/1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -302,7 +302,7 @@ Content-Type: application/json
 ### ADVANCED FEATURES
 ### =================================================================
 
-### 30. 🎯 Create Limited-Time Flash Coupon
+### 30. ?? Create Limited-Time Flash Coupon
 POST {{baseUrl}}/api/coupons/flash
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -318,7 +318,7 @@ Content-Type: application/json
   "isActive": true
 }
 
-### 31. 🎁 Create Gift Coupon for User
+### 31. ?? Create Gift Coupon for User
 POST {{baseUrl}}/api/coupons/gift
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -333,7 +333,7 @@ Content-Type: application/json
   "validDays": 30
 }
 
-### 32. 🏆 Create Loyalty Tier Exclusive Coupon
+### 32. ?? Create Loyalty Tier Exclusive Coupon
 POST {{baseUrl}}/api/coupons/tier-exclusive
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -355,11 +355,11 @@ Content-Type: application/json
 ### COUPON EXPORTS & REPORTS
 ### =================================================================
 
-### 33. 📄 Export Active Coupons
+### 33. ?? Export Active Coupons
 GET {{baseUrl}}/api/coupons/export?format=excel&status=active
 Authorization: Bearer {{authToken}}
 
-### 34. 📄 Export Coupon Usage Report
+### 34. ?? Export Coupon Usage Report
 POST {{baseUrl}}/api/coupons/export-usage
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -371,7 +371,7 @@ Content-Type: application/json
   "includeDetails": true
 }
 
-### 35. 📊 Generate Coupon ROI Report
+### 35. ?? Generate Coupon ROI Report
 POST {{baseUrl}}/api/coupons/roi-report
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -386,7 +386,7 @@ Content-Type: application/json
 ### ERROR TESTING
 ### =================================================================
 
-### 🔺 Test Invalid Coupon Code
+### ?? Test Invalid Coupon Code
 POST {{baseUrl}}/api/coupons/validate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -396,7 +396,7 @@ Content-Type: application/json
   "orderAmount": 500000
 }
 
-### 🔺 Test Expired Coupon
+### ?? Test Expired Coupon
 POST {{baseUrl}}/api/coupons/validate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -406,7 +406,7 @@ Content-Type: application/json
   "orderAmount": 500000
 }
 
-### 🔺 Test Order Below Minimum Amount
+### ?? Test Order Below Minimum Amount
 POST {{baseUrl}}/api/coupons/validate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -416,7 +416,7 @@ Content-Type: application/json
   "orderAmount": 100000
 }
 
-### 🔺 Test Exceeded Usage Limit
+### ?? Test Exceeded Usage Limit
 POST {{baseUrl}}/api/coupons/validate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -426,7 +426,7 @@ Content-Type: application/json
   "orderAmount": 500000
 }
 
-### 🔺 Test Duplicate Coupon Code Creation
+### ?? Test Duplicate Coupon Code Creation
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -440,7 +440,7 @@ Content-Type: application/json
   "endDate": "2024-01-31T23:59:59Z"
 }
 
-### 🔺 Test Non-First-Time Customer Using First-Time Coupon
+### ?? Test Non-First-Time Customer Using First-Time Coupon
 POST {{baseUrl}}/api/coupons/validate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -451,10 +451,10 @@ Content-Type: application/json
   "userId": "existing-customer-guid"
 }
 
-### 🔺 Test Unauthorized Access (No Token)
+### ?? Test Unauthorized Access (No Token)
 GET {{baseUrl}}/api/coupons
 
-### 🔺 Test Invalid Percentage (Over 100%)
+### ?? Test Invalid Percentage (Over 100%)
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -472,7 +472,7 @@ Content-Type: application/json
 ### EDGE CASE TESTING
 ### =================================================================
 
-### 🎯 Test Zero Value Coupon (Free Gift)
+### ?? Test Zero Value Coupon (Free Gift)
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -489,7 +489,7 @@ Content-Type: application/json
   "endDate": "2024-01-31T23:59:59Z"
 }
 
-### 🎯 Test Coupon with Very Long Code
+### ?? Test Coupon with Very Long Code
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -503,7 +503,7 @@ Content-Type: application/json
   "endDate": "2024-01-31T23:59:59Z"
 }
 
-### 🎯 Test Coupon with Special Characters in Code
+### ?? Test Coupon with Special Characters in Code
 POST {{baseUrl}}/api/coupons
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -521,7 +521,7 @@ Content-Type: application/json
 ### PERFORMANCE TESTING
 ### =================================================================
 
-### ⚡ Rapid Coupon Validation
+### ? Rapid Coupon Validation
 POST {{baseUrl}}/api/coupons/validate
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -531,11 +531,11 @@ Content-Type: application/json
   "orderAmount": 500000
 }
 
-### ⚡ Large Page Size Request
+### ? Large Page Size Request
 GET {{baseUrl}}/api/coupons?page=1&pageSize=100
 Authorization: Bearer {{authToken}}
 
-### ⚡ Complex Search Query
+### ? Complex Search Query
 GET {{baseUrl}}/api/coupons/search?pattern=NEW&type=Percentage&isActive=true&minValue=10&maxValue=50
 Authorization: Bearer {{authToken}}
 
@@ -544,51 +544,51 @@ Authorization: Bearer {{authToken}}
 ### =================================================================
 
 ###
-### 🔧 HƯỚNG DẪN SỬ DỤNG COUPON API TESTS:
+### ?? HU?NG D?N S? D?NG COUPON API TESTS:
 ### 
-### 1. Khởi chạy ứng dụng: dotnet run
-### 2. Chạy "Quick Setup - Login" để lấy authentication token
+### 1. Kh?i ch?y ?ng d?ng: dotnet run
+### 2. Ch?y "Quick Setup - Login" d? l?y authentication token
 ### 3. Admin/Staff role required cho management operations
-### 4. Customer role có thể validate và apply coupons
+### 4. Customer role có th? validate và apply coupons
 ### 
-### 📋 COUPON WORKFLOW:
+### ?? COUPON WORKFLOW:
 ### 
-### 1. Admin tạo coupons với rules và restrictions
+### 1. Admin t?o coupons v?i rules và restrictions
 ### 2. Customers discover available coupons
 ### 3. Validate coupon before applying to cart
 ### 4. Apply coupon và calculate discount
 ### 5. Track usage và performance analytics
 ### 6. Generate reports cho business insights
 ### 
-### 🎯 KEY FEATURES TESTED:
+### ?? KEY FEATURES TESTED:
 ### 
-### ✅ Coupon Management:
+### ? Coupon Management:
 ### - Create different types (Percentage/FixedAmount)
 ### - Set restrictions (min order, user tier, products)
 ### - Manage lifecycle (activate/deactivate/extend)
 ### - Bulk operations for efficiency
 ### 
-### ✅ Discount Calculation:
+### ? Discount Calculation:
 ### - Percentage discounts with max caps
 ### - Fixed amount discounts
 ### - Minimum order requirements
 ### - Product/category specific discounts
 ### 
-### ✅ Usage Control:
+### ? Usage Control:
 ### - Usage limits per coupon
 ### - First-time customer restrictions
 ### - User tier exclusive coupons
 ### - Time-based validity
 ### 
-### ✅ Analytics & Reporting:
+### ? Analytics & Reporting:
 ### - Usage statistics and trends
 ### - Performance metrics (ROI)
 ### - Export capabilities
 ### - Detailed usage history
 ### 
-### 📊 EXPECTED RESPONSES:
+### ?? EXPECTED RESPONSES:
 ### 
-### ✅ Coupon Response:
+### ? Coupon Response:
 ### {
 ###   "id": 1,
 ###   "name": "New Year Sale",
@@ -602,7 +602,7 @@ Authorization: Bearer {{authToken}}
 ###   "endDate": "2024-01-31T23:59:59Z"
 ### }
 ### 
-### ✅ Validation Response:
+### ? Validation Response:
 ### {
 ###   "isValid": true,
 ###   "discountAmount": 120000,
@@ -610,7 +610,7 @@ Authorization: Bearer {{authToken}}
 ###   "message": "Coupon applied successfully"
 ### }
 ### 
-### ⚠️ BUSINESS RULES:
+### ?? BUSINESS RULES:
 ### 
 ### - Coupon codes must be unique
 ### - Percentage discounts: 0-100%
@@ -620,7 +620,7 @@ Authorization: Bearer {{authToken}}
 ### - Deactivated coupons cannot be used
 ### - Expired coupons are automatically invalid
 ### 
-### 🔒 PERMISSIONS:
+### ?? PERMISSIONS:
 ### 
 ### - Create/Update/Delete: Admin/Staff only
 ### - Bulk operations: Admin only
@@ -628,7 +628,7 @@ Authorization: Bearer {{authToken}}
 ### - Validate/Apply: Any authenticated user
 ### - Public discovery: Authenticated users
 ### 
-### 📈 PERFORMANCE TARGETS:
+### ?? PERFORMANCE TARGETS:
 ### 
 ### - Validation response < 100ms
 ### - Discount calculation < 50ms
@@ -636,7 +636,7 @@ Authorization: Bearer {{authToken}}
 ### - Bulk operations < 5 seconds
 ### - Report generation < 10 seconds
 ### 
-### 🎨 FRONTEND INTEGRATION:
+### ?? FRONTEND INTEGRATION:
 ### 
 ### - Coupon code input with real-time validation
 ### - Available coupons display in cart

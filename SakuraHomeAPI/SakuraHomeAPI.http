@@ -1,4 +1,4 @@
-@SakuraHomeAPI_HostAddress = http://localhost:5273
+﻿@SakuraHomeAPI_HostAddress = https://localhost:8080
 
 GET {{SakuraHomeAPI_HostAddress}}/weatherforecast/
 Accept: application/json

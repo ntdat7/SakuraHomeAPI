@@ -1,4 +1,4 @@
-using SakuraHomeAPI.Models.DTOs;
+﻿using SakuraHomeAPI.Models.DTOs;
 using SakuraHomeAPI.DTOs.Users.Requests;
 using SakuraHomeAPI.DTOs.Users.Responses;
 
@@ -23,5 +23,7 @@ namespace SakuraHomeAPI.Services.Interfaces
         
         // User Stats & Analytics
         Task<ApiResponse<UserStatsDto>> GetUserStatsAsync(Guid userId);
+        // Admin: User List
+       // Task<ApiResponse<UserListResponseDto>> GetUserListAsync(UserFilterRequestDto filter);
     }
 }

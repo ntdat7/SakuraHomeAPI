@@ -1,0 +1,236 @@
+﻿@baseUrl = https://localhost:8080/api
+
+### =============================================================
+### SAKURA HOME API - ADMIN TEST SUITE (INTEGRATION & PROFESSIONAL)
+### =============================================================
+#
+# HƯỚNG DẪN SỬ DỤNG:
+# 1. Đảm bảo API chạy ở {{baseUrl}}
+# 2. Chạy "Tạo tài khoản admin" nếu chưa có (chỉ chạy 1 lần)
+# 3. Đăng nhập admin, kiểm tra kỹ response:
+#    - Nếu thành công, copy token vào biến @adminToken bên dưới
+#    - Nếu lỗi, kiểm tra message, traceId, status code để debug
+# 4. Sử dụng token cho các request quản trị. Nếu gặp lỗi 401/403, kiểm tra lại quyền hoặc token.
+# 5. Ghi chú lại mọi bất thường, log lại traceId để hỗ trợ dev fix bug.
+#
+# Lưu ý:
+# - KHÔNG để lộ token ra ngoài, không commit token lên git.
+# - Đổi email nếu đã tồn tại, đổi password nếu cần test case bảo mật.
+# - Test kỹ các trường hợp: đăng ký trùng email, sai password, tài khoản bị khóa, thiếu quyền, v.v.
+#
+### =============================================================
+
+### 1. TẠO TÀI KHOẢN ADMIN (Chạy 1 lần nếu chưa có)
+# @name adminRegister
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin2@sakurahome.com",
+  "password": "Admin123!",
+  "confirmPassword": "Admin123!",
+  "firstName": "Admin",
+  "lastName": "User",
+  "acceptTerms": true,
+  "role": "Admin"
+}
+
+### 2. ĐĂNG NHẬP ADMIN
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+### 3. REFRESH TOKEN (nếu cần)
+# @name adminRefreshToken
+POST {{baseUrl}}/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 4. DÁN TOKEN ADMIN ĐÃ ĐĂNG NHẬP THÀNH CÔNG VÀO ĐÂY
+# Lưu ý: Token phải là token mới nhất, copy từ response login thành công
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzODU5MWYwOC1jZWRjLTQ3MjctYTZkNC1iYmFlMTY5YjljZGIiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBVc2VyIiwicm9sZSI6IkN1c3RvbWVyIiwiZmlyc3ROYW1lIjoiQWRtaW4iLCJsYXN0TmFtZSI6IlVzZXIiLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IkZhbHNlIiwicGhvbmVWZXJpZmllZCI6IkZhbHNlIiwicG9pbnRzIjoiMCIsInRvdGFsU3BlbnQiOiIwLjAwIiwicHJlZmVycmVkTGFuZ3VhZ2UiOiJ2aSIsInByZWZlcnJlZEN1cnJlbmN5IjoiVk5EIiwianRpIjoiYjdiNDE2NzEtZTU4OS00NDE3LTlhMGItM2EyOGJhYjdjZWJmIiwiaWF0IjoxNzU0NTM1ODc0LCJnZW5kZXIiOiJVbmtub3duIiwibmJmIjoxNzU0NTM1ODc0LCJleHAiOjE3NTQ1Mzk0NzQsImlzcyI6IlNha3VyYUhvbWVBUEkiLCJhdWQiOiJTYWt1cmFIb21lVXNlcnMifQ.HAVZtpUKml6J8SGxiwjCRoHX_J4DQwDDjbfi-s8Lycg
+
+### =============================================================
+### 5. USER MANAGEMENT
+### =============================================================
+# Lấy danh sách user (có filter, phân trang)
+GET {{baseUrl}}/user?page=1&pageSize=20&role=Customer
+Authorization: Bearer {{adminToken}}
+
+# Lấy chi tiết user
+GET {{baseUrl}}/user/{{userId}}
+Authorization: Bearer {{adminToken}}
+
+# Cập nhật user
+PUT {{baseUrl}}/user/{{userId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User",
+  "status": "Active"
+}
+
+# Khóa user
+PATCH {{baseUrl}}/user/{{userId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "Locked"
+}
+
+# Thống kê user
+GET {{baseUrl}}/user/stats
+Authorization: Bearer {{adminToken}}
+
+### =============================================================
+### 6. PRODUCT MANAGEMENT
+### =============================================================
+# Lấy danh sách sản phẩm
+GET {{baseUrl}}/product?page=1&pageSize=20&status=Active
+Authorization: Bearer {{adminToken}}
+
+# Tạo sản phẩm mới
+POST {{baseUrl}}/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "iPhone 15 Pro Max",
+  "price": 29990000,
+  "categoryId": "category-id",
+  "brandId": "brand-id",
+  "stockQuantity": 50,
+  "isActive": true
+}
+
+# Cập nhật sản phẩm
+PUT {{baseUrl}}/product/{{productId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "iPhone 15 Pro Max (Updated)",
+  "price": 28990000
+}
+
+# Xóa sản phẩm
+DELETE {{baseUrl}}/product/{{productId}}
+Authorization: Bearer {{adminToken}}
+
+### =============================================================
+### 7. ORDER MANAGEMENT
+### =============================================================
+# Lấy danh sách đơn hàng
+GET {{baseUrl}}/order?page=1&pageSize=20&status=Pending
+Authorization: Bearer {{adminToken}}
+
+# Lấy chi tiết đơn hàng
+GET {{baseUrl}}/order/{{orderId}}
+Authorization: Bearer {{adminToken}}
+
+# Cập nhật trạng thái đơn hàng
+PATCH {{baseUrl}}/order/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "Processing",
+  "notes": "Đã xác nhận thanh toán"
+}
+
+# Thống kê đơn hàng
+GET {{baseUrl}}/order/stats
+Authorization: Bearer {{adminToken}}
+
+### =============================================================
+### 8. BRAND & CATEGORY MANAGEMENT
+### =============================================================
+# Lấy danh sách brand
+GET {{baseUrl}}/brand?page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+# Tạo brand mới
+POST {{baseUrl}}/brand
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Apple",
+  "isActive": true
+}
+
+# Lấy danh sách category
+GET {{baseUrl}}/category
+Authorization: Bearer {{adminToken}}
+
+# Tạo category mới
+POST {{baseUrl}}/category
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Smartphones",
+  "isActive": true
+}
+
+### =============================================================
+### 9. PAYMENT, NOTIFICATION, ANALYTICS
+### =============================================================
+# Lấy thống kê payment
+GET {{baseUrl}}/payment/stats
+Authorization: Bearer {{adminToken}}
+
+# Lấy danh sách payment transaction
+GET {{baseUrl}}/payment/transactions?page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+# Gửi notification cá nhân
+POST {{baseUrl}}/notification/send
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "userId": "user-id",
+  "title": "Thông báo mới",
+  "message": "Bạn có đơn hàng mới!",
+  "type": "Info"
+}
+
+# Lấy dashboard overview
+GET {{baseUrl}}/dashboard/overview
+Authorization: Bearer {{adminToken}}
+
+# Lấy analytics sales
+GET {{baseUrl}}/analytics/sales?period=30d
+Authorization: Bearer {{adminToken}}
+
+### =============================================================
+### 10. NEGATIVE & SECURITY TESTS
+### =============================================================
+# Test truy cập API admin với token user thường (bạn cần đăng nhập user thường để lấy token)
+# GET {{baseUrl}}/user?page=1&pageSize=20
+# Authorization: Bearer {{userToken}}
+
+# Test truy cập API admin với token hết hạn
+# GET {{baseUrl}}/user?page=1&pageSize=20
+# Authorization: Bearer {{expiredToken}}
+
+# Test truy cập API admin với token sai
+# GET {{baseUrl}}/user?page=1&pageSize=20
+# Authorization: Bearer sai_token
+
+### =============================================================
+### KẾT THÚC - END OF ADMIN TEST SUITE (INTEGRATION & PROFESSIONAL)
+### =============================================================

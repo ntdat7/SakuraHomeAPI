@@ -1,9 +1,10 @@
-﻿using SakuraHomeAPI.Models.Base;
-using SakuraHomeAPI.Models.Entities.Catalog;
+﻿using Microsoft.EntityFrameworkCore;
+using SakuraHomeAPI.Models.Base;
 using SakuraHomeAPI.Models.Entities;
+using SakuraHomeAPI.Models.Entities.Catalog;
+using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Entities.Products;
 using SakuraHomeAPI.Models.Enums;
-using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace SakuraHomeAPI.Data
@@ -21,6 +22,7 @@ namespace SakuraHomeAPI.Data
             SeedNotificationTemplates(builder);
             SeedPaymentMethods(builder);
             SeedProducts(builder);
+            SeedSuperAdminUser(builder);
         }
 
         /// <summary>
@@ -1256,6 +1258,29 @@ namespace SakuraHomeAPI.Data
         };
 
             builder.Entity<Product>().HasData(products);
+        }
+
+
+        private static void SeedSuperAdminUser(ModelBuilder builder)
+        {
+            var superAdminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+            builder.Entity<User>().HasData(new User
+            {
+                Id = superAdminId,
+                Email = "superadmin@sakurahome.com",
+                UserName = "superadmin",
+                EmailConfirmed = true,
+                FirstName = "Super",
+                LastName = "Admin",
+                Role = UserRole.SuperAdmin,
+                Status = AccountStatus.Active,
+                PasswordHash = "AQAAAAIAAYagAAAAEEV7OG+DPOtR9KwqdzspiSFEm2Q00X7fYjWfn7fhRI0+8R/F1rFeEV1+CLyGtmKtxw==",
+                SecurityStamp = "b1e2c3d4-5678-1234-9876-abcdefabcdef",
+                IsActive = true,
+                IsDeleted = false,
+                CreatedAt = new DateTime(2024, 1, 1),
+                UpdatedAt = new DateTime(2024, 1, 1)
+            });
         }
     }
 }

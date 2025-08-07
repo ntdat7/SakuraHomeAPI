@@ -206,7 +206,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Banners");
+                    b.ToTable("Banners", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Catalog.Brand", b =>
@@ -357,7 +357,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("IsActive", "IsDeleted");
 
-                    b.ToTable("Brands");
+                    b.ToTable("Brands", (string)null);
 
                     b.HasData(
                         new
@@ -712,7 +712,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("IsActive", "IsDeleted");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
 
                     b.HasData(
                         new
@@ -901,7 +901,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("CategoryAttributes");
+                    b.ToTable("CategoryAttributes", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Catalog.Translation", b =>
@@ -992,7 +992,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("EntityType", "EntityId", "FieldName", "Language")
                         .IsUnique();
 
-                    b.ToTable("Translations");
+                    b.ToTable("Translations", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.ContactMessage", b =>
@@ -1076,7 +1076,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ContactMessages");
+                    b.ToTable("ContactMessages", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Coupon", b =>
@@ -1161,7 +1161,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("StartDate", "EndDate");
 
-                    b.ToTable("Coupons", t =>
+                    b.ToTable("Coupons", null, t =>
                         {
                             t.HasCheckConstraint("CK_Coupon_UsageLimit", "UsageLimit IS NULL OR UsageLimit >= 0");
 
@@ -1239,7 +1239,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmailQueue");
+                    b.ToTable("EmailQueue", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.Address", b =>
@@ -1329,7 +1329,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Addresses", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.RefreshToken", b =>
@@ -1374,7 +1374,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.User", b =>
@@ -1675,7 +1675,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.NotificationTemplate", b =>
@@ -1715,7 +1715,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NotificationTemplates");
+                    b.ToTable("NotificationTemplates", (string)null);
 
                     b.HasData(
                         new
@@ -1949,7 +1949,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", t =>
+                    b.ToTable("Orders", null, t =>
                         {
                             t.HasCheckConstraint("CK_Order_TotalAmount", "TotalAmount >= 0");
                         });
@@ -2027,7 +2027,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductVariantId1");
 
-                    b.ToTable("OrderItems", t =>
+                    b.ToTable("OrderItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_OrderItem_Quantity", "Quantity > 0");
 
@@ -2074,7 +2074,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderNotes");
+                    b.ToTable("OrderNotes", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Orders.OrderStatusHistory", b =>
@@ -2120,7 +2120,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("OrderId1");
 
-                    b.ToTable("OrderStatusHistory");
+                    b.ToTable("OrderStatusHistory", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.PaymentMethodInfo", b =>
@@ -2175,7 +2175,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PaymentMethods");
+                    b.ToTable("PaymentMethods", (string)null);
 
                     b.HasData(
                         new
@@ -2340,7 +2340,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PaymentTransactions", t =>
+                    b.ToTable("PaymentTransactions", null, t =>
                         {
                             t.HasCheckConstraint("CK_PaymentTransaction_Amount", "Amount >= 0");
 
@@ -2626,7 +2626,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("CategoryId", "IsActive", "IsDeleted");
 
-                    b.ToTable("Products", t =>
+                    b.ToTable("Products", null, t =>
                         {
                             t.HasCheckConstraint("CK_Product_Price", "Price >= 0");
 
@@ -3261,7 +3261,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ReferenceType", "ReferenceId");
 
-                    b.ToTable("InventoryLogs");
+                    b.ToTable("InventoryLogs", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductAttribute", b =>
@@ -3354,7 +3354,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductAttributes");
+                    b.ToTable("ProductAttributes", (string)null);
 
                     b.HasData(
                         new
@@ -3468,7 +3468,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductAttributeValues");
+                    b.ToTable("ProductAttributeValues", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductImage", b =>
@@ -3536,7 +3536,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductTag", b =>
@@ -3566,7 +3566,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("ProductTags");
+                    b.ToTable("ProductTags", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductVariant", b =>
@@ -3652,7 +3652,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductVariants");
+                    b.ToTable("ProductVariants", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductView", b =>
@@ -3700,7 +3700,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProductViews");
+                    b.ToTable("ProductViews", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.Tag", b =>
@@ -3760,7 +3760,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
 
                     b.HasData(
                         new
@@ -3933,7 +3933,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId", "IsApproved", "IsActive", "IsDeleted");
 
-                    b.ToTable("Reviews", t =>
+                    b.ToTable("Reviews", null, t =>
                         {
                             t.HasCheckConstraint("CK_Review_Rating", "Rating >= 1 AND Rating <= 5");
                         });
@@ -3992,7 +3992,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ReviewId");
 
-                    b.ToTable("ReviewImages");
+                    b.ToTable("ReviewImages", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Reviews.ReviewResponse", b =>
@@ -4032,7 +4032,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ReviewId");
 
-                    b.ToTable("ReviewResponses");
+                    b.ToTable("ReviewResponses", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Reviews.ReviewSummary", b =>
@@ -4084,7 +4084,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ReviewSummaries", t =>
+                    b.ToTable("ReviewSummaries", null, t =>
                         {
                             t.HasCheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5");
 
@@ -4121,7 +4121,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ReviewVotes");
+                    b.ToTable("ReviewVotes", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.SearchLog", b =>
@@ -4179,7 +4179,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SearchLogs");
+                    b.ToTable("SearchLogs", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Shipping.ShippingOrder", b =>
@@ -4311,7 +4311,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("TrackingNumber")
                         .IsUnique();
 
-                    b.ToTable("ShippingOrders", t =>
+                    b.ToTable("ShippingOrders", null, t =>
                         {
                             t.HasCheckConstraint("CK_ShippingOrder_CODAmount", "CODAmount >= 0");
 
@@ -4367,7 +4367,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UpdatedAt");
 
-                    b.ToTable("ShippingTrackings");
+                    b.ToTable("ShippingTrackings", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.ShippingRate", b =>
@@ -4419,7 +4419,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ShippingZoneId");
 
-                    b.ToTable("ShippingRates", t =>
+                    b.ToTable("ShippingRates", null, t =>
                         {
                             t.HasCheckConstraint("CK_ShippingRate_Rate", "Rate >= 0");
                         });
@@ -4456,7 +4456,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ShippingZones");
+                    b.ToTable("ShippingZones", (string)null);
 
                     b.HasData(
                         new
@@ -4543,7 +4543,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("SystemSettings");
+                    b.ToTable("SystemSettings", (string)null);
 
                     b.HasData(
                         new
@@ -4701,7 +4701,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId");
 
-                    b.ToTable("UserActivities");
+                    b.ToTable("UserActivities", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserCart.Cart", b =>
@@ -4735,7 +4735,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserCart.CartItem", b =>
@@ -4805,7 +4805,7 @@ namespace SakuraHomeAPI.Migrations
                         .IsUnique()
                         .HasFilter("[ProductVariantId] IS NOT NULL");
 
-                    b.ToTable("CartItems", t =>
+                    b.ToTable("CartItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_CartItem_Quantity", "Quantity > 0");
                         });
@@ -4854,7 +4854,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Wishlists");
+                    b.ToTable("Wishlists", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserWishlist.WishlistItem", b =>
@@ -4912,7 +4912,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("WishlistId", "ProductId")
                         .IsUnique();
 
-                    b.ToTable("WishlistItems");
+                    b.ToTable("WishlistItems", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

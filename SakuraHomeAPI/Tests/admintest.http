@@ -1,0 +1,696 @@
+﻿### SakuraHome API - Admin Panel Tests
+### Base URL
+@baseUrl = https://localhost:8080/api
+@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzODU5MWYwOC1jZWRjLTQ3MjctYTZkNC1iYmFlMTY5YjljZGIiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBVc2VyIiwicm9sZSI6IkN1c3RvbWVyIiwiZmlyc3ROYW1lIjoiQWRtaW4iLCJsYXN0TmFtZSI6IlVzZXIiLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IkZhbHNlIiwicGhvbmVWZXJpZmllZCI6IkZhbHNlIiwicG9pbnRzIjoiMCIsInRvdGFsU3BlbnQiOiIwLjAwIiwicHJlZmVycmVkTGFuZ3VhZ2UiOiJ2aSIsInByZWZlcnJlZEN1cnJlbmN5IjoiVk5EIiwianRpIjoiOGM4NjdiMWQtMmU5Yi00OWM5LTkwNDMtZTBkOWRhYzM0ZDIwIiwiaWF0IjoxNzU0NTM2OTY4LCJnZW5kZXIiOiJVbmtub3duIiwibmJmIjoxNzU0NTM2OTY4LCJleHAiOjE3NTQ1NDA1NjgsImlzcyI6IlNha3VyYUhvbWVBUEkiLCJhdWQiOiJTYWt1cmFIb21lVXNlcnMifQ.enoIFEEeQXsQMlgPqO-qurHEALxW-gwzLHP6rv15zq8
+
+#####################################
+# 1. AUTHENTICATION - ADMIN
+#####################################
+
+### Admin Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+### Get Current Admin Info
+GET {{baseUrl}}/auth/me
+Authorization: {{token}}
+
+### Refresh Token
+POST {{baseUrl}}/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "your_refresh_token_here"
+}
+
+### Change Admin Password
+POST {{baseUrl}}/auth/change-password
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Admin@123456",
+  "newPassword": "NewAdmin@123456",
+  "confirmPassword": "NewAdmin@123456"
+}
+
+### Admin Logout
+POST {{baseUrl}}/auth/logout
+Authorization: {{token}}
+
+#####################################
+# 2. USER MANAGEMENT
+#####################################
+
+### Get User Statistics (Dashboard)
+GET {{baseUrl}}/user/stats
+Authorization: {{token}}
+
+### Get Users List (with filters)
+GET {{baseUrl}}/user?page=1&pageSize=20&role=Customer&status=Active&tier=Gold
+Authorization: {{token}}
+
+### Search Users
+GET {{baseUrl}}/user?search=john@email.com&page=1&pageSize=10
+Authorization: {{token}}
+
+### Get User by ID
+GET {{baseUrl}}/user/550e8400-e29b-41d4-a716-446655440000
+Authorization: {{token}}
+
+### Update User (Admin only)
+PUT {{baseUrl}}/user/550e8400-e29b-41d4-a716-446655440000
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "John Updated",
+  "lastName": "Doe Updated",
+  "phoneNumber": "+84987654321",
+  "dateOfBirth": "1990-01-01",
+  "tier": "Platinum",
+  "isActive": true,
+  "emailVerified": true
+}
+
+### Lock/Unlock User Account
+PATCH {{baseUrl}}/user/550e8400-e29b-41d4-a716-446655440000/status
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "status": "Locked"
+}
+
+### Get User's Order History
+GET {{baseUrl}}/user/550e8400-e29b-41d4-a716-446655440000/orders?page=1&pageSize=10
+Authorization: {{token}}
+
+### Get User's Addresses
+GET {{baseUrl}}/user/550e8400-e29b-41d4-a716-446655440000/addresses
+Authorization: {{token}}
+
+#####################################
+# 3. PRODUCT MANAGEMENT
+#####################################
+
+### Get Products (with filters)
+GET {{baseUrl}}/product?page=1&pageSize=20&categoryId=123&status=Active&featured=true
+Authorization: {{token}}
+
+### Search Products
+GET {{baseUrl}}/product?search=iPhone&minPrice=1000000&maxPrice=50000000&sortBy=price&sortOrder=desc
+Authorization: {{token}}
+
+### Get Product by ID
+GET {{baseUrl}}/product/550e8400-e29b-41d4-a716-446655440001
+Authorization: {{token}}
+
+### Get Product by SKU
+GET {{baseUrl}}/product/sku/IP15PM256
+Authorization: {{token}}
+
+### Create New Product (Staff)
+POST {{baseUrl}}/product
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "iPhone 15 Pro Max",
+  "description": "Latest iPhone with advanced features and powerful A17 Pro chip",
+  "shortDescription": "iPhone 15 Pro Max 256GB Space Black",
+  "sku": "IP15PM256SB",
+  "price": 29990000,
+  "originalPrice": 32990000,
+  "categoryId": "550e8400-e29b-41d4-a716-446655440010",
+  "brandId": "550e8400-e29b-41d4-a716-446655440020",
+  "weight": 221,
+  "dimensions": "159.9 x 76.7 x 8.25 mm",
+  "stockQuantity": 50,
+  "minStockLevel": 5,
+  "maxStockLevel": 200,
+  "isActive": true,
+  "isFeatured": true,
+  "tags": ["smartphone", "apple", "5g", "premium"],
+  "images": [
+    {
+      "url": "https://example.com/iphone15pro-front.jpg",
+      "altText": "iPhone 15 Pro Max front view",
+      "isPrimary": true,
+      "sortOrder": 1
+    },
+    {
+      "url": "https://example.com/iphone15pro-back.jpg",
+      "altText": "iPhone 15 Pro Max back view",
+      "isPrimary": false,
+      "sortOrder": 2
+    }
+  ],
+  "attributes": [
+    {
+      "name": "Color",
+      "value": "Space Black",
+      "sortOrder": 1
+    },
+    {
+      "name": "Storage",
+      "value": "256GB",
+      "sortOrder": 2
+    },
+    {
+      "name": "Display",
+      "value": "6.7-inch Super Retina XDR",
+      "sortOrder": 3
+    }
+  ],
+  "variants": [
+    {
+      "name": "iPhone 15 Pro Max 512GB Space Black",
+      "sku": "IP15PM512SB",
+      "price": 35990000,
+      "stockQuantity": 30,
+      "attributes": [
+        { "name": "Storage", "value": "512GB" },
+        { "name": "Color", "value": "Space Black" }
+      ]
+    }
+  ]
+}
+
+### Update Product (Staff)
+PUT {{baseUrl}}/product/550e8400-e29b-41d4-a716-446655440001
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "iPhone 15 Pro Max Updated",
+  "description": "Updated description with new features",
+  "price": 28990000,
+  "stockQuantity": 75,
+  "isActive": true,
+  "isFeatured": true
+}
+
+### Update Product Stock (Staff)
+PATCH {{baseUrl}}/product/550e8400-e29b-41d4-a716-446655440001/stock
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "stockQuantity": 100,
+  "minStockLevel": 10,
+  "maxStockLevel": 500,
+  "reason": "New inventory shipment",
+  "notes": "Received new stock from supplier"
+}
+
+### Delete Product (Staff - Soft delete)
+DELETE {{baseUrl}}/product/550e8400-e29b-41d4-a716-446655440001
+Authorization: {{token}}
+
+### Get Product Debug Info
+GET {{baseUrl}}/product/debug
+Authorization: {{token}}
+
+#####################################
+# 4. BRAND MANAGEMENT
+#####################################
+
+### Get All Brands
+GET {{baseUrl}}/brand?page=1&pageSize=20
+Authorization: {{token}}
+
+### Get Featured Brands
+GET {{baseUrl}}/brand?featured=true
+Authorization: {{token}}
+
+### Get Brand by ID
+GET {{baseUrl}}/brand/550e8400-e29b-41d4-a716-446655440020
+Authorization: {{token}}
+
+### Create New Brand (Staff)
+POST {{baseUrl}}/brand
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "Apple",
+  "description": "Technology company known for innovative consumer electronics and software",
+  "logoUrl": "https://example.com/apple-logo.png",
+  "websiteUrl": "https://apple.com",
+  "isActive": true,
+  "isFeatured": true,
+  "seoTitle": "Apple Products - Official Store | SakuraHome",
+  "seoDescription": "Shop original Apple products including iPhone, iPad, MacBook with official warranty",
+  "seoKeywords": "apple, iphone, ipad, macbook, airpods, official"
+}
+
+### Update Brand (Staff) - TODO: Not implemented yet
+# PUT {{baseUrl}}/brand/550e8400-e29b-41d4-a716-446655440020
+# Authorization: {{token}}
+# Content-Type: application/json
+# 
+# {
+#   "name": "Apple Inc.",
+#   "description": "Updated description",
+#   "isActive": true,
+#   "isFeatured": true
+# }
+
+### Delete Brand (Staff)
+DELETE {{baseUrl}}/brand/550e8400-e29b-41d4-a716-446655440020
+Authorization: {{token}}
+
+### Get Products by Brand
+GET {{baseUrl}}/brand/550e8400-e29b-41d4-a716-446655440020/products?page=1&pageSize=20
+Authorization: {{token}}
+
+#####################################
+# 5. CATEGORY MANAGEMENT
+#####################################
+
+### Get Category Tree
+GET {{baseUrl}}/category
+Authorization: {{token}}
+
+### Get Root Categories
+GET {{baseUrl}}/category/root
+Authorization: {{token}}
+
+### Get Category by ID
+GET {{baseUrl}}/category/550e8400-e29b-41d4-a716-446655440010
+Authorization: {{token}}
+
+### Create New Category (Staff)
+POST {{baseUrl}}/category
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "Smartphones",
+  "description": "Mobile phones and smartphone accessories",
+  "parentId": null,
+  "slug": "smartphones",
+  "imageUrl": "https://example.com/categories/smartphones.jpg",
+  "isActive": true,
+  "isFeatured": true,
+  "sortOrder": 1,
+  "seoTitle": "Smartphones - Best Prices & Latest Models",
+  "seoDescription": "Shop latest smartphones from top brands with best prices and warranty",
+  "seoKeywords": "smartphone, mobile phone, android, ios, 5g",
+  "attributes": [
+    {
+      "name": "Brand",
+      "type": "select",
+      "required": true,
+      "options": ["Apple", "Samsung", "Xiaomi", "OPPO", "Vivo"]
+    },
+    {
+      "name": "Storage",
+      "type": "select",
+      "required": true,
+      "options": ["64GB", "128GB", "256GB", "512GB", "1TB"]
+    },
+    {
+      "name": "RAM",
+      "type": "select",
+      "required": true,
+      "options": ["4GB", "6GB", "8GB", "12GB", "16GB"]
+    }
+  ]
+}
+
+### Create Subcategory
+POST {{baseUrl}}/category
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "iPhone",
+  "description": "Apple iPhone series",
+  "parentId": "550e8400-e29b-41d4-a716-446655440010",
+  "slug": "iphone",
+  "imageUrl": "https://example.com/categories/iphone.jpg",
+  "isActive": true,
+  "isFeatured": true,
+  "sortOrder": 1,
+  "seoTitle": "iPhone - Official Apple Smartphones",
+  "seoDescription": "Shop latest iPhone models with official warranty",
+  "seoKeywords": "iphone, apple, smartphone, ios"
+}
+
+### Update Category (Staff) - TODO: Not implemented yet
+# PUT {{baseUrl}}/category/550e8400-e29b-41d4-a716-446655440010
+# Authorization: {{token}}
+# Content-Type: application/json
+# 
+# {
+#   "name": "Smartphones Updated",
+#   "description": "Updated description",
+#   "isActive": true,
+#   "isFeatured": true
+# }
+
+### Delete Category (Staff)
+DELETE {{baseUrl}}/category/550e8400-e29b-41d4-a716-446655440010
+Authorization: {{token}}
+
+### Get Products by Category
+GET {{baseUrl}}/category/550e8400-e29b-41d4-a716-446655440010/products?page=1&pageSize=20
+Authorization: {{token}}
+
+#####################################
+# 6. ORDER MANAGEMENT
+#####################################
+
+### Get Order Statistics (Dashboard)
+GET {{baseUrl}}/order/stats
+Authorization: {{token}}
+
+### Get Recent Orders (Dashboard)
+GET {{baseUrl}}/order/recent?limit=10
+Authorization: {{token}}
+
+### Get Orders List (with filters)
+GET {{baseUrl}}/order?page=1&pageSize=20&status=Pending&paymentStatus=Paid
+Authorization: {{token}}
+
+### Get Orders with Date Range
+GET {{baseUrl}}/order?dateFrom=2024-01-01&dateTo=2024-12-31&minAmount=100000&maxAmount=5000000
+Authorization: {{token}}
+
+### Search Orders
+GET {{baseUrl}}/order?search=ORD-20240101-001&page=1&pageSize=10
+Authorization: {{token}}
+
+### Get Order by ID
+GET {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030
+Authorization: {{token}}
+
+### Get Order Status History
+GET {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/status-history
+Authorization: {{token}}
+
+### Get Order Notes
+GET {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/notes
+Authorization: {{token}}
+
+### Confirm Order (Staff)
+PATCH {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/confirm
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "notes": "Order confirmed and ready for processing"
+}
+
+### Process Order (Staff)
+PATCH {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/process
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "notes": "Order is being prepared for shipment"
+}
+
+### Ship Order (Staff)
+PATCH {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/ship
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "trackingNumber": "VN123456789",
+  "shippingProvider": "Giao Hang Nhanh",
+  "estimatedDelivery": "2024-12-15T00:00:00Z",
+  "notes": "Package shipped via GHN express delivery"
+}
+
+### Deliver Order (Staff)
+PATCH {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/deliver
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "deliveredAt": "2024-12-14T14:30:00Z",
+  "receiverName": "Nguyen Van A",
+  "notes": "Package delivered successfully to customer"
+}
+
+### Update Order Status (Generic)
+PATCH {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/status
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "status": "Cancelled",
+  "notes": "Order cancelled by customer request"
+}
+
+### Add Staff Note to Order
+POST {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/staff-notes
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "content": "Customer requested express delivery",
+  "isInternal": false,
+  "priority": "Normal"
+}
+
+### Add Internal Staff Note
+POST {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/staff-notes
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "content": "Check with warehouse for stock availability",
+  "isInternal": true,
+  "priority": "High"
+}
+
+### Process Return (Staff)
+PATCH {{baseUrl}}/order/550e8400-e29b-41d4-a716-446655440030/return
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "reason": "Product defective",
+  "refundAmount": 1500000,
+  "refundMethod": "Bank Transfer",
+  "processingNotes": "Refund processed - defective unit confirmed"
+}
+
+#####################################
+# 7. CART & WISHLIST ANALYTICS
+#####################################
+
+### Get Abandoned Carts (Admin)
+GET {{baseUrl}}/cart/abandoned
+Authorization: {{token}}
+
+### Get Cart Statistics
+GET {{baseUrl}}/cart/stats
+Authorization: {{token}}
+
+### Get Most Wishlisted Products
+GET {{baseUrl}}/wishlist/popular-products
+Authorization: {{token}}
+
+### Get Wishlist Statistics
+GET {{baseUrl}}/wishlist/stats
+Authorization: {{token}}
+
+#####################################
+# 8. PAYMENT MANAGEMENT
+#####################################
+
+### Get Payment Statistics
+GET {{baseUrl}}/payment/stats
+Authorization: {{token}}
+
+### Get Payment Transactions (with filters)
+GET {{baseUrl}}/payment/transactions?status=Completed&dateFrom=2024-01-01&dateTo=2024-12-31
+Authorization: {{token}}
+
+### Process Refund (Staff)
+POST {{baseUrl}}/payment/550e8400-e29b-41d4-a716-446655440040/refund
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "amount": 1500000,
+  "reason": "Product return",
+  "refundMethod": "Bank Transfer",
+  "notes": "Refund processed for returned item"
+}
+
+### Get Available Payment Methods
+GET {{baseUrl}}/payment/methods
+Authorization: {{token}}
+
+#####################################
+# 9. NOTIFICATION MANAGEMENT
+#####################################
+
+### Send Personal Notification (Staff)
+POST {{baseUrl}}/notification/send
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "userId": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "Order Status Update",
+  "message": "Your order #ORD-20240101-001 has been shipped and will arrive in 2-3 days",
+  "type": "Info",
+  "priority": "Normal",
+  "actionUrl": "/orders/550e8400-e29b-41d4-a716-446655440030"
+}
+
+### Send Bulk Notification (Admin)
+POST {{baseUrl}}/notification/broadcast
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "title": "Christmas Sale - Up to 50% Off!",
+  "message": "Don't miss our biggest Christmas sale! Get up to 50% off on selected products. Limited time only!",
+  "type": "Success",
+  "criteria": {
+    "userRoles": ["Customer"],
+    "userTiers": ["Gold", "Platinum"],
+    "location": "Ho Chi Minh City",
+    "minOrderValue": 500000
+  }
+}
+
+### Get Notification Statistics
+GET {{baseUrl}}/notification/stats
+Authorization: {{token}}
+
+### Get Notification Templates
+GET {{baseUrl}}/notification/templates
+Authorization: {{token}}
+
+#####################################
+# 10. DASHBOARD & ANALYTICS
+#####################################
+
+### Get Dashboard Overview
+GET {{baseUrl}}/dashboard/overview
+Authorization: {{token}}
+
+### Get Sales Analytics (30 days)
+GET {{baseUrl}}/analytics/sales?period=30d
+Authorization: {{token}}
+
+### Get Sales Analytics (Custom period)
+GET {{baseUrl}}/analytics/sales?period=custom&from=2024-01-01&to=2024-12-31
+Authorization: {{token}}
+
+### Get Top Performing Products
+GET {{baseUrl}}/analytics/top-products?limit=10&period=30d
+Authorization: {{token}}
+
+### Get User Behavior Analytics
+GET {{baseUrl}}/analytics/users?period=30d
+Authorization: {{token}}
+
+### Get Inventory Alerts
+GET {{baseUrl}}/inventory/alerts
+Authorization: {{token}}
+
+#####################################
+# 11. ADDITIONAL ADMIN ENDPOINTS
+#####################################
+
+### Get System Health Check
+GET {{baseUrl}}/health
+Authorization: {{token}}
+
+### Get API Version Info
+GET {{baseUrl}}/version
+Authorization: {{token}}
+
+### Export Orders to CSV (if available)
+GET {{baseUrl}}/export/orders?format=csv&dateFrom=2024-01-01&dateTo=2024-12-31
+Authorization: {{token}}
+
+### Export Products to CSV (if available)  
+GET {{baseUrl}}/export/products?format=csv&categoryId=550e8400-e29b-41d4-a716-446655440010
+Authorization: {{token}}
+
+### Export Users to CSV (if available)
+GET {{baseUrl}}/export/users?format=csv&role=Customer&tier=Gold
+Authorization: {{token}}
+
+#####################################
+# 12. BULK OPERATIONS (if available)
+#####################################
+
+### Bulk Update Product Prices
+# PATCH {{baseUrl}}/product/bulk/price
+# Authorization: {{token}}
+# Content-Type: application/json
+# 
+# {
+#   "productIds": ["550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"],
+#   "priceChange": {
+#     "type": "percentage",
+#     "value": 10,
+#     "operation": "increase"
+#   }
+# }
+
+### Bulk Update Product Status
+# PATCH {{baseUrl}}/product/bulk/status
+# Authorization: {{token}}
+# Content-Type: application/json
+# 
+# {
+#   "productIds": ["550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440002"],
+#   "status": "Active"
+# }
+
+### Bulk Send Notifications
+# POST {{baseUrl}}/notification/bulk
+# Authorization: {{token}}
+# Content-Type: application/json
+# 
+# {
+#   "userIds": ["user1", "user2", "user3"],
+#   "title": "Bulk Notification",
+#   "message": "This is a bulk notification message",
+#   "type": "Info"
+# }
+
+#####################################
+# ERROR HANDLING EXAMPLES
+#####################################
+
+### Test Invalid Token (401 Error)
+GET {{baseUrl}}/user/stats
+Authorization: Bearer invalid_token_here
+
+### Test Access Denied (403 Error)
+DELETE {{baseUrl}}/user/550e8400-e29b-41d4-a716-446655440000
+Authorization: {{token}}
+
+### Test Not Found (404 Error)
+GET {{baseUrl}}/product/non-existent-id
+Authorization: {{token}}
+
+### Test Validation Error (400 Error)
+POST {{baseUrl}}/product
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "price": -1000
+}
