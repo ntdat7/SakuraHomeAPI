@@ -41,7 +41,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "superadmin@sakurahome.com",
+  "email": "admin@sakurahome.com",
   "password": "Admin123!",
   "rememberMe": true
 }

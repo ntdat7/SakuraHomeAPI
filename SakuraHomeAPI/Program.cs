@@ -260,6 +260,8 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IShippingService, ShippingService>();
 
+builder.Services.AddScoped<IAdminService, AdminService>();
+
 //builder.Services.AddScoped<IProductService, ProductService>();
 //builder.Services.AddScoped<ICategoryService, CategoryService>();
 //builder.Services.AddScoped<IBrandService, BrandService>();
