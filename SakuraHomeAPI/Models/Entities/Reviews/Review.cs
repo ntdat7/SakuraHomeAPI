@@ -25,9 +25,9 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
         public int Rating { get; set; }
 
         [MaxLength(255)]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
-        public string Comment { get; set; }
+        public string Comment { get; set; } = string.Empty;
 
         public bool IsApproved { get; set; } = false;
         public bool IsVerifiedPurchase { get; set; } = false;
@@ -40,21 +40,21 @@ namespace SakuraHomeAPI.Models.Entities.Reviews
         public bool RecommendProduct { get; set; } = true;
 
         [MaxLength(500)]
-        public string Pros { get; set; }
+        public string Pros { get; set; } = string.Empty;
 
         [MaxLength(500)]
-        public string Cons { get; set; }
+        public string Cons { get; set; } = string.Empty;
 
-        public string Attributes { get; set; } // JSON
+        public string Attributes { get; set; } = string.Empty; // JSON
 
         public DateTime? ApprovedAt { get; set; }
         public Guid? ApprovedBy { get; set; } // Changed from int? to Guid? to match User.Id
-        public string RejectionReason { get; set; }
+        public string RejectionReason { get; set; } = string.Empty;
 
-        public virtual User User { get; set; }
-        public virtual Product Product { get; set; }
-        public virtual Order Order { get; set; }
-        public virtual User ApprovedByUser { get; set; }
+        public virtual User User { get; set; } = null!;
+        public virtual Product Product { get; set; } = null!;
+        public virtual Order? Order { get; set; }
+        public virtual User? ApprovedByUser { get; set; }
         public virtual ICollection<ReviewImage> ReviewImages { get; set; } = new List<ReviewImage>();
         public virtual ICollection<ReviewVote> ReviewVotes { get; set; } = new List<ReviewVote>();
         public virtual ICollection<ReviewResponse> ReviewResponses { get; set; } = new List<ReviewResponse>();

@@ -32,6 +32,12 @@ namespace SakuraHomeAPI.Models.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal Fee { get; set; } = 0;
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? FeeAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? RefundedAmount { get; set; }
+
         [Required, MaxLength(3)]
         public string Currency { get; set; } = "VND";
 
@@ -41,9 +47,16 @@ namespace SakuraHomeAPI.Models.Entities
         public string Description { get; set; }
 
         [MaxLength(1000)]
+        public string? ResponseMessage { get; set; }
+
+        [MaxLength(1000)]
         public string ResponseData { get; set; }
 
         public DateTime? ProcessedAt { get; set; }
+
+        public DateTime? CompletedAt { get; set; }
+
+        public DateTime? RefundedAt { get; set; }
 
         // Navigation Properties
         public virtual Order Order { get; set; }

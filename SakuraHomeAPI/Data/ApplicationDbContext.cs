@@ -10,6 +10,7 @@ using SakuraHomeAPI.Models.Entities.Products;
 using SakuraHomeAPI.Models.Entities.Reviews;
 using SakuraHomeAPI.Models.Entities.UserCart;
 using SakuraHomeAPI.Models.Entities.UserWishlist;
+using SakuraHomeAPI.Models.Entities.Shipping;
 using SakuraHomeAPI.Data;
 using System.Reflection;
 
@@ -68,7 +69,7 @@ namespace SakuraHomeAPI.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<ContactMessage> ContactMessages { get; set; }
         public DbSet<NotificationTemplate> NotificationTemplates { get; set; }
-        public DbSet<EmailQueue> EmailQueue { get; set; }
+        public DbSet<EmailQueue> EmailQueues { get; set; }
 
         // Analytics & Tracking
         public DbSet<UserActivity> UserActivities { get; set; }
@@ -88,6 +89,8 @@ namespace SakuraHomeAPI.Data
         // Shipping & Delivery
         public DbSet<ShippingZone> ShippingZones { get; set; }
         public DbSet<ShippingRate> ShippingRates { get; set; }
+        public DbSet<ShippingOrder> ShippingOrders { get; set; }
+        public DbSet<ShippingTracking> ShippingTrackings { get; set; }
 
         // Marketing
         public DbSet<Banner> Banners { get; set; }
@@ -103,6 +106,12 @@ namespace SakuraHomeAPI.Data
 
             // Configure Identity tables
             ConfigureIdentityTables(builder);
+
+            // Configure decimal properties with proper precision
+            ConfigureDecimalProperties(builder);
+
+            // Fix shadow foreign key properties
+            ConfigureForeignKeyProperties(builder);
 
             // Configure indexes for performance
             ConfigureIndexes(builder);
@@ -122,6 +131,202 @@ namespace SakuraHomeAPI.Data
 
             // Seed master data using external seeder
             DatabaseSeeder.SeedData(builder);
+        }
+
+        /// <summary>
+        /// Configure decimal properties with proper precision to fix EF Core warnings
+        /// </summary>
+        private void ConfigureDecimalProperties(ModelBuilder builder)
+        {
+            // Configure Category CommissionRate
+            builder.Entity<Category>()
+                .Property(c => c.CommissionRate)
+                .HasPrecision(18, 4);
+
+            // Configure User TotalSpent
+            builder.Entity<User>()
+                .Property(u => u.TotalSpent)
+                .HasPrecision(18, 2);
+
+            // Configure other decimal properties that might need explicit precision
+            builder.Entity<Product>()
+                .Property(p => p.Price)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Product>()
+                .Property(p => p.OriginalPrice)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ProductVariant>()
+                .Property(pv => pv.Price)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ProductVariant>()
+                .Property(pv => pv.OriginalPrice)
+                .HasPrecision(18, 2);
+
+            // Configure Coupon decimal properties
+            builder.Entity<Coupon>()
+                .Property(c => c.Value)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Coupon>()
+                .Property(c => c.MinOrderAmount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Coupon>()
+                .Property(c => c.MaxDiscountAmount)
+                .HasPrecision(18, 2);
+
+            // Configure PaymentMethodInfo decimal properties
+            builder.Entity<PaymentMethodInfo>()
+                .Property(pm => pm.FeePercentage)
+                .HasPrecision(18, 4);
+
+            builder.Entity<PaymentMethodInfo>()
+                .Property(pm => pm.FixedFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<PaymentMethodInfo>()
+                .Property(pm => pm.MinAmount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<PaymentMethodInfo>()
+                .Property(pm => pm.MaxAmount)
+                .HasPrecision(18, 2);
+
+            // Configure ShippingRate decimal properties
+            builder.Entity<ShippingRate>()
+                .Property(sr => sr.Rate)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingRate>()
+                .Property(sr => sr.FreeShippingThreshold)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingRate>()
+                .Property(sr => sr.MaxWeight)
+                .HasPrecision(18, 2);
+
+            // Configure InventoryLog decimal properties
+            builder.Entity<InventoryLog>()
+                .Property(il => il.UnitCost)
+                .HasPrecision(18, 2);
+
+            builder.Entity<InventoryLog>()
+                .Property(il => il.TotalCost)
+                .HasPrecision(18, 2);
+
+            builder.Entity<InventoryLog>()
+                .Property(il => il.UnitPrice)
+                .HasPrecision(18, 2);
+
+            builder.Entity<InventoryLog>()
+                .Property(il => il.TotalValue)
+                .HasPrecision(18, 2);
+
+            // Configure ShippingOrder decimal properties
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.ShippingFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.CODFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.TotalFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.Weight)
+                .HasPrecision(8, 2);
+
+            builder.Entity<ShippingOrder>()
+                .Property(so => so.CODAmount)
+                .HasPrecision(18, 2);
+        }
+
+        /// <summary>
+        /// Configure foreign key properties to prevent shadow properties
+        /// </summary>
+        private void ConfigureForeignKeyProperties(ModelBuilder builder)
+        {
+            // Configure OrderItem relationships to prevent shadow properties
+            builder.Entity<OrderItem>(entity =>
+            {
+                entity.HasOne(oi => oi.ProductVariant)
+                    .WithMany()
+                    .HasForeignKey(oi => oi.ProductVariantId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                // Explicitly configure the foreign key to prevent shadow property creation
+                entity.Property(oi => oi.ProductVariantId)
+                    .HasColumnName("ProductVariantId");
+            });
+
+            // Configure OrderStatusHistory relationships to prevent shadow properties
+            builder.Entity<OrderStatusHistory>(entity =>
+            {
+                entity.HasOne(osh => osh.Order)
+                    .WithMany()
+                    .HasForeignKey(osh => osh.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Explicitly configure the foreign key
+                entity.Property(osh => osh.OrderId)
+                    .HasColumnName("OrderId");
+            });
+
+            // Configure PaymentTransaction relationships to prevent shadow properties
+            builder.Entity<PaymentTransaction>(entity =>
+            {
+                entity.HasOne(pt => pt.Order)
+                    .WithMany()
+                    .HasForeignKey(pt => pt.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Explicitly configure the foreign key
+                entity.Property(pt => pt.OrderId)
+                    .HasColumnName("OrderId");
+            });
+
+            // Configure CartItem relationships to prevent shadow properties
+            builder.Entity<CartItem>(entity =>
+            {
+                entity.HasOne(ci => ci.ProductVariant)
+                    .WithMany()
+                    .HasForeignKey(ci => ci.ProductVariantId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                // Explicitly configure the foreign key
+                entity.Property(ci => ci.ProductVariantId)
+                    .HasColumnName("ProductVariantId");
+            });
+
+            // Configure ShippingOrder relationships
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.HasOne(so => so.Order)
+                    .WithMany()
+                    .HasForeignKey(so => so.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(so => so.OrderId)
+                    .HasColumnName("OrderId");
+            });
+
+            // Configure ShippingTracking relationships
+            builder.Entity<ShippingTracking>(entity =>
+            {
+                entity.HasOne(st => st.ShippingOrder)
+                    .WithMany(so => so.ShippingTrackings)
+                    .HasForeignKey(st => st.ShippingOrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(st => st.ShippingOrderId)
+                    .HasColumnName("ShippingOrderId");
+            });
         }
 
         /// <summary>
@@ -331,6 +536,22 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(c => c.Code).IsUnique();
                 entity.HasIndex(c => c.IsActive);
                 entity.HasIndex(c => new { c.StartDate, c.EndDate });
+            });
+
+            // Shipping indexes
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.HasIndex(so => so.TrackingNumber).IsUnique();
+                entity.HasIndex(so => so.OrderId);
+                entity.HasIndex(so => so.Status);
+                entity.HasIndex(so => so.CreatedAt);
+            });
+
+            builder.Entity<ShippingTracking>(entity =>
+            {
+                entity.HasIndex(st => st.ShippingOrderId);
+                entity.HasIndex(st => st.Status);
+                entity.HasIndex(st => st.UpdatedAt);
             });
         }
 
@@ -549,6 +770,23 @@ namespace SakuraHomeAPI.Data
                 .HasForeignKey(sr => sr.ShippingZoneId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // New shipping relationships
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.HasOne(so => so.Order)
+                    .WithMany()
+                    .HasForeignKey(so => so.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ShippingTracking>(entity =>
+            {
+                entity.HasOne(st => st.ShippingOrder)
+                    .WithMany(so => so.ShippingTrackings)
+                    .HasForeignKey(st => st.ShippingOrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // Many-to-many relationships
             builder.Entity<ProductTag>()
                 .HasKey(pt => new { pt.ProductId, pt.TagId });
@@ -621,82 +859,89 @@ namespace SakuraHomeAPI.Data
         {
             // Product constraints
             builder.Entity<Product>()
-                .HasCheckConstraint("CK_Product_Price", "Price >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_Product_Price", "Price >= 0"));
 
             builder.Entity<Product>()
-                .HasCheckConstraint("CK_Product_Stock", "Stock >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_Product_Stock", "Stock >= 0"));
 
             builder.Entity<Product>()
-                .HasCheckConstraint("CK_Product_Rating", "Rating >= 0 AND Rating <= 5");
+                .ToTable(t => t.HasCheckConstraint("CK_Product_Rating", "Rating >= 0 AND Rating <= 5"));
 
             builder.Entity<Product>()
-                .HasCheckConstraint("CK_Product_Weight", "Weight IS NULL OR Weight >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_Product_Weight", "Weight IS NULL OR Weight >= 0"));
 
             // Order constraints
             builder.Entity<Order>()
-                .HasCheckConstraint("CK_Order_TotalAmount", "TotalAmount >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_Order_TotalAmount", "TotalAmount >= 0"));
 
             builder.Entity<OrderItem>()
-                .HasCheckConstraint("CK_OrderItem_Quantity", "Quantity > 0");
+                .ToTable(t => t.HasCheckConstraint("CK_OrderItem_Quantity", "Quantity > 0"));
 
             builder.Entity<OrderItem>()
-                .HasCheckConstraint("CK_OrderItem_UnitPrice", "UnitPrice >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_OrderItem_UnitPrice", "UnitPrice >= 0"));
 
             builder.Entity<OrderItem>()
-                .HasCheckConstraint("CK_OrderItem_TotalPrice", "TotalPrice >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_OrderItem_TotalPrice", "TotalPrice >= 0"));
 
             // Review constraints
             builder.Entity<Review>()
-                .HasCheckConstraint("CK_Review_Rating", "Rating >= 1 AND Rating <= 5");
+                .ToTable(t => t.HasCheckConstraint("CK_Review_Rating", "Rating >= 1 AND Rating <= 5"));
 
             // Cart constraints
             builder.Entity<CartItem>()
-                .HasCheckConstraint("CK_CartItem_Quantity", "Quantity > 0");
+                .ToTable(t => t.HasCheckConstraint("CK_CartItem_Quantity", "Quantity > 0"));
 
             // User constraints
             builder.Entity<User>()
-                .HasCheckConstraint("CK_User_Points", "Points >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_User_Points", "Points >= 0"));
 
             builder.Entity<User>()
-                .HasCheckConstraint("CK_User_TotalSpent", "TotalSpent >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_User_TotalSpent", "TotalSpent >= 0"));
 
             builder.Entity<User>()
-                .HasCheckConstraint("CK_User_TotalOrders", "TotalOrders >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_User_TotalOrders", "TotalOrders >= 0"));
 
             builder.Entity<User>()
-                .HasCheckConstraint("CK_User_FailedLoginAttempts", "FailedLoginAttempts >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_User_FailedLoginAttempts", "FailedLoginAttempts >= 0"));
 
             // Payment constraints
             builder.Entity<PaymentTransaction>()
-                .HasCheckConstraint("CK_PaymentTransaction_Amount", "Amount >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_PaymentTransaction_Amount", "Amount >= 0"));
 
             builder.Entity<PaymentTransaction>()
-                .HasCheckConstraint("CK_PaymentTransaction_Fee", "Fee >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_PaymentTransaction_Fee", "Fee >= 0"));
 
             // Coupon constraints
             builder.Entity<Coupon>(entity =>
             {
-                entity.HasCheckConstraint("CK_Coupon_Value", "Value >= 0");
+                entity.ToTable(t => t.HasCheckConstraint("CK_Coupon_Value", "Value >= 0"));
 
-                entity.HasCheckConstraint("CK_Coupon_UsageLimit", "UsageLimit IS NULL OR UsageLimit >= 0");
+                entity.ToTable(t => t.HasCheckConstraint("CK_Coupon_UsageLimit", "UsageLimit IS NULL OR UsageLimit >= 0"));
 
-                entity.HasCheckConstraint("CK_Coupon_UsedCount", "UsedCount >= 0");
+                entity.ToTable(t => t.HasCheckConstraint("CK_Coupon_UsedCount", "UsedCount >= 0"));
             });
 
             // Shipping constraints
             builder.Entity<ShippingRate>()
-                .HasCheckConstraint("CK_ShippingRate_Rate", "Rate >= 0");
+                .ToTable(t => t.HasCheckConstraint("CK_ShippingRate_Rate", "Rate >= 0"));
+
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                entity.ToTable(t => t.HasCheckConstraint("CK_ShippingOrder_Fees", "ShippingFee >= 0 AND CODFee >= 0 AND TotalFee >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ShippingOrder_Weight", "Weight >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ShippingOrder_CODAmount", "CODAmount >= 0"));
+            });
 
             // ReviewSummary constraints and precision configuration
             builder.Entity<ReviewSummary>(entity =>
             {
-                entity.HasCheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5");
-                entity.HasCheckConstraint("CK_ReviewSummary_TotalReviews", "TotalReviews >= 0");
-                entity.HasCheckConstraint("CK_ReviewSummary_StarCounts", 
-                    "OneStar >= 0 AND TwoStar >= 0 AND ThreeStar >= 0 AND FourStar >= 0 AND FiveStar >= 0");
-                entity.HasCheckConstraint("CK_ReviewSummary_VerifiedPurchases", "VerifiedPurchases >= 0");
-                entity.HasCheckConstraint("CK_ReviewSummary_WithImages", "WithImages >= 0");
-                entity.HasCheckConstraint("CK_ReviewSummary_Recommended", "Recommended >= 0");
+                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_TotalReviews", "TotalReviews >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_StarCounts", 
+                    "OneStar >= 0 AND TwoStar >= 0 AND ThreeStar >= 0 AND FourStar >= 0 AND FiveStar >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_VerifiedPurchases", "VerifiedPurchases >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_WithImages", "WithImages >= 0"));
+                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_Recommended", "Recommended >= 0"));
                 
                 // Configure decimal precision for AverageRating
                 entity.Property(rs => rs.AverageRating)
@@ -879,12 +1124,36 @@ namespace SakuraHomeAPI.Data
                 entity.Ignore(ca => ca.DeletedByUser);
             });
 
-            // Configure other entities that inherit from FullEntity -> AuditableEntity
+            // Configure entities that inherit from FullEntity -> AuditableEntity
             builder.Entity<ProductVariant>(entity =>
             {
                 entity.Ignore(pv => pv.CreatedByUser);
                 entity.Ignore(pv => pv.UpdatedByUser);
                 entity.Ignore(pv => pv.DeletedByUser);
+            });
+
+            // Configure ShippingOrder entity to ignore audit navigation properties
+            builder.Entity<ShippingOrder>(entity =>
+            {
+                // Ignore the audit navigation properties since they're incompatible with int audit fields
+                entity.Ignore(so => so.CreatedByUser);
+                entity.Ignore(so => so.UpdatedByUser);
+                
+                // Configure the main relationship
+                entity.HasOne(so => so.Order)
+                    .WithMany()
+                    .HasForeignKey(so => so.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure ShippingTracking entity (inherits from BaseEntity, so no audit properties to ignore)
+            // ShippingTracking doesn't have audit issues since it inherits from BaseEntity
+
+            // Configure Coupon entity to ignore audit navigation properties
+            builder.Entity<Coupon>(entity =>
+            {
+                entity.Ignore(c => c.CreatedByUser);
+                entity.Ignore(c => c.UpdatedByUser);
             });
 
             // Configure entities that have shadow properties being created by EF
@@ -900,11 +1169,7 @@ namespace SakuraHomeAPI.Data
                 entity.Ignore(osh => osh.UpdatedByUser);
             });
 
-            builder.Entity<ReviewImage>(entity =>
-            {
-                entity.Ignore(ri => ri.CreatedByUser);
-                entity.Ignore(ri => ri.UpdatedByUser);
-            });
+            // Note: ReviewImage now inherits from BaseEntity, so no audit properties to ignore
 
             // Note: For entities that properly need audit tracking with User references,
             // they should inherit from AuditableGuidEntity instead of AuditableEntity

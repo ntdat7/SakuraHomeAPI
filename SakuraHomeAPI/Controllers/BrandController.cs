@@ -250,6 +250,126 @@ namespace SakuraHomeAPI.Controllers
         }
 
         /// <summary>
+        /// Update an existing brand
+        /// </summary>
+        [HttpPut("{id}")]
+        [Authorize(Policy = "StaffOnly")]
+        public async Task<ActionResult<ApiResponseDto<BrandDto>>> UpdateBrand(int id, [FromBody] UpdateBrandDto request)
+        {
+            try
+            {
+                var brand = await _context.Brands
+                    .FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted);
+
+                if (brand == null)
+                {
+                    return NotFound(ApiResponseDto<BrandDto>.ErrorResult("Brand not found"));
+                }
+
+                // Check if new name conflicts with existing brands (excluding current brand)
+                if (!string.IsNullOrWhiteSpace(request.Name) && request.Name != brand.Name)
+                {
+                    var existingBrand = await _context.Brands
+                        .AnyAsync(b => b.Name == request.Name && b.Id != id && !b.IsDeleted);
+
+                    if (existingBrand)
+                    {
+                        return BadRequest(ApiResponseDto<BrandDto>.ErrorResult("A brand with this name already exists"));
+                    }
+                }
+
+                // Update brand fields
+                if (!string.IsNullOrWhiteSpace(request.Name))
+                {
+                    brand.Name = request.Name;
+                    brand.Slug = GenerateSlug(request.Name);
+                }
+
+                if (request.Description != null)
+                    brand.Description = request.Description;
+
+                if (request.LogoUrl != null)
+                    brand.LogoUrl = request.LogoUrl;
+
+                if (!string.IsNullOrWhiteSpace(request.Country))
+                    brand.Country = request.Country;
+
+                if (request.Website != null)
+                    brand.Website = request.Website;
+
+                if (request.ContactEmail != null)
+                    brand.ContactEmail = request.ContactEmail;
+
+                if (request.ContactPhone != null)
+                    brand.ContactPhone = request.ContactPhone;
+
+                if (request.FoundedYear.HasValue)
+                    brand.FoundedYear = new DateTime(request.FoundedYear.Value, 1, 1);
+
+                if (request.Headquarters != null)
+                    brand.Headquarters = request.Headquarters;
+
+                if (request.FacebookUrl != null)
+                    brand.FacebookUrl = request.FacebookUrl;
+
+                if (request.InstagramUrl != null)
+                    brand.InstagramUrl = request.InstagramUrl;
+
+                if (request.TwitterUrl != null)
+                    brand.TwitterUrl = request.TwitterUrl;
+
+                if (request.YoutubeUrl != null)
+                    brand.YoutubeUrl = request.YoutubeUrl;
+
+                brand.IsFeatured = request.IsFeatured;
+                brand.IsVerified = request.IsVerified;
+                brand.IsOfficial = request.IsOfficial;
+                brand.DisplayOrder = request.DisplayOrder;
+                brand.IsActive = request.IsActive;
+                brand.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Brand {BrandId} updated successfully", id);
+
+                var brandDto = new BrandDto
+                {
+                    Id = brand.Id,
+                    Name = brand.Name,
+                    Description = brand.Description,
+                    LogoUrl = brand.LogoUrl,
+                    Country = brand.Country,
+                    Website = brand.Website,
+                    ContactEmail = brand.ContactEmail,
+                    ContactPhone = brand.ContactPhone,
+                    IsVerified = brand.IsVerified,
+                    IsOfficial = brand.IsOfficial,
+                    IsFeatured = brand.IsFeatured,
+                    ProductCount = brand.ProductCount,
+                    AverageRating = brand.AverageRating,
+                    ReviewCount = brand.ReviewCount,
+                    FoundedYear = brand.FoundedYear?.Year,
+                    Headquarters = brand.Headquarters,
+                    FacebookUrl = brand.FacebookUrl,
+                    InstagramUrl = brand.InstagramUrl,
+                    TwitterUrl = brand.TwitterUrl,
+                    YoutubeUrl = brand.YoutubeUrl,
+                    Slug = brand.Slug,
+                    DisplayOrder = brand.DisplayOrder,
+                    IsActive = brand.IsActive
+                };
+
+                return Ok(ApiResponseDto<BrandDto>.SuccessResult(brandDto, "Brand updated successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while updating brand {BrandId}", id);
+                return StatusCode(500, ApiResponseDto<BrandDto>.ErrorResult(
+                    "An error occurred while updating the brand"));
+            }
+        }
+
+        /// <summary>
         /// Delete a brand (soft delete)
         /// </summary>
         [HttpDelete("{id}")]
@@ -369,6 +489,53 @@ namespace SakuraHomeAPI.Controllers
 
         public bool IsFeatured { get; set; } = false;
         public int DisplayOrder { get; set; } = 0;
+    }
+
+    public class UpdateBrandDto
+    {
+        [MaxLength(255)]
+        public string? Name { get; set; }
+
+        [MaxLength(1000)]
+        public string? Description { get; set; }
+
+        [MaxLength(500)]
+        public string? LogoUrl { get; set; }
+
+        [MaxLength(100)]
+        public string? Country { get; set; }
+
+        [MaxLength(500)]
+        public string? Website { get; set; }
+
+        [MaxLength(255)]
+        public string? ContactEmail { get; set; }
+
+        [MaxLength(20)]
+        public string? ContactPhone { get; set; }
+
+        public int? FoundedYear { get; set; }
+
+        [MaxLength(500)]
+        public string? Headquarters { get; set; }
+
+        [MaxLength(500)]
+        public string? FacebookUrl { get; set; }
+
+        [MaxLength(500)]
+        public string? InstagramUrl { get; set; }
+
+        [MaxLength(500)]
+        public string? TwitterUrl { get; set; }
+
+        [MaxLength(500)]
+        public string? YoutubeUrl { get; set; }
+
+        public bool IsFeatured { get; set; } = false;
+        public bool IsVerified { get; set; } = false;
+        public bool IsOfficial { get; set; } = false;
+        public int DisplayOrder { get; set; } = 0;
+        public bool IsActive { get; set; } = true;
     }
 
     #endregion

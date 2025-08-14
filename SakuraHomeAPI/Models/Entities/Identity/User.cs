@@ -56,6 +56,12 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public bool SmsNotifications { get; set; } = false;
         public bool PushNotifications { get; set; } = true;
 
+        /// <summary>
+        /// JSON string containing detailed notification preferences
+        /// </summary>
+        [MaxLength(2000)]
+        public string? NotificationPreferences { get; set; }
+
         #endregion
 
         #region Account Status & Security

@@ -1,0 +1,228 @@
+﻿### Sakura Home API - Brand & Category Management Tests
+### Make sure to run the application first: dotnet run
+### Base URL: https://localhost:7240
+
+@baseUrl = http://localhost:5273
+@contentType = application/json
+
+# Variables for testing (get from auth login)
+@staffToken = your-staff-token-here
+
+### ==========================================
+### BRAND MANAGEMENT TESTS
+### ==========================================
+
+### 1. Get all brands
+GET {{baseUrl}}/api/brand
+
+### 2. Get all brands with pagination
+GET {{baseUrl}}/api/brand?page=1&pageSize=5
+
+### 3. Get brand by ID
+GET {{baseUrl}}/api/brand/1
+
+### 4. Get featured brands
+GET {{baseUrl}}/api/brand/featured
+
+### 5. Create new brand (Staff only)
+POST {{baseUrl}}/api/brand
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Sony Japan",
+  "description": "Leading electronics manufacturer from Japan",
+  "logoUrl": "https://example.com/logos/sony.png",
+  "country": "Japan",
+  "website": "https://www.sony.co.jp",
+  "contactEmail": "contact@sony.co.jp",
+  "contactPhone": "+81-3-1234-5678",
+  "foundedYear": 1946,
+  "headquarters": "Tokyo, Japan",
+  "isFeatured": true,
+  "displayOrder": 1
+}
+
+### 6. Update brand (Staff only)
+PUT {{baseUrl}}/api/brand/1
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Updated Brand Name",
+  "description": "Updated brand description",
+  "logoUrl": "https://example.com/logos/updated-logo.png",
+  "country": "Japan",
+  "website": "https://www.updatedbrand.com",
+  "contactEmail": "updated@example.com",
+  "contactPhone": "+81-3-9999-8888",
+  "foundedYear": 1950,
+  "headquarters": "Osaka, Japan",
+  "facebookUrl": "https://facebook.com/brand",
+  "instagramUrl": "https://instagram.com/brand", 
+  "twitterUrl": "https://twitter.com/brand",
+  "youtubeUrl": "https://youtube.com/brand",
+  "isFeatured": false,
+  "isVerified": true,
+  "isOfficial": true,
+  "displayOrder": 5,
+  "isActive": true
+}
+
+### 7. Delete brand (Staff only)
+DELETE {{baseUrl}}/api/brand/1
+Authorization: Bearer {{staffToken}}
+
+### ==========================================
+### CATEGORY MANAGEMENT TESTS
+### ==========================================
+
+### 8. Get all categories
+GET {{baseUrl}}/api/category
+
+### 9. Get category by ID
+GET {{baseUrl}}/api/category/1
+
+### 10. Get root categories (navigation menu)
+GET {{baseUrl}}/api/category/root
+
+### 11. Create root category (Staff only)
+POST {{baseUrl}}/api/category
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Home Decor",
+  "description": "Beautiful home decoration items",
+  "imageUrl": "https://example.com/categories/home-decor.jpg",
+  "icon": "home",
+  "color": "#FF6B6B",
+  "parentId": null,
+  "isFeatured": true,
+  "showInMenu": true,
+  "showInHome": true,
+  "displayOrder": 1
+}
+
+### 12. Create subcategory (Staff only)
+POST {{baseUrl}}/api/category
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Wall Art",
+  "description": "Beautiful wall decorations and art pieces",
+  "imageUrl": "https://example.com/categories/wall-art.jpg",
+  "icon": "image",
+  "color": "#4ECDC4",
+  "parentId": 1,
+  "isFeatured": false,
+  "showInMenu": true,
+  "showInHome": false,
+  "displayOrder": 1
+}
+
+### 13. Update category (Staff only)
+PUT {{baseUrl}}/api/category/1
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Updated Home Decor",
+  "description": "Updated beautiful home decoration items",
+  "imageUrl": "https://example.com/categories/updated-home-decor.jpg",
+  "icon": "home-modern",
+  "color": "#FF8E53",
+  "parentId": null,
+  "isFeatured": true,
+  "showInMenu": true,
+  "showInHome": true,
+  "displayOrder": 2,
+  "isActive": true
+}
+
+### 14. Move category to different parent (Staff only)
+PUT {{baseUrl}}/api/category/2
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Wall Art",
+  "parentId": 3,
+  "displayOrder": 1,
+  "isActive": true
+}
+
+### 15. Delete category (Staff only)
+DELETE {{baseUrl}}/api/category/2
+Authorization: Bearer {{staffToken}}
+
+### ==========================================
+### ERROR TESTING SCENARIOS
+### ==========================================
+
+### 16. Create brand with duplicate name (should fail)
+POST {{baseUrl}}/api/brand
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Sony Japan",
+  "description": "Duplicate brand test"
+}
+
+### 17. Create category with invalid parent (should fail)
+POST {{baseUrl}}/api/category
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Invalid Category",
+  "parentId": 99999
+}
+
+### 18. Try to set category as its own parent (should fail)
+PUT {{baseUrl}}/api/category/1
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "parentId": 1
+}
+
+### 19. Access without staff token (should fail)
+POST {{baseUrl}}/api/brand
+Content-Type: {{contentType}}
+
+{
+  "name": "Unauthorized Brand"
+}
+
+### 20. Get non-existent brand (should fail)
+GET {{baseUrl}}/api/brand/99999
+
+### 21. Get non-existent category (should fail)
+GET {{baseUrl}}/api/category/99999
+
+### ==========================================
+### TESTING NOTES
+### ==========================================
+
+# Before running staff-only endpoints:
+# 1. Login as staff user using Auth.http
+# 2. Copy the access token 
+# 3. Replace {{staffToken}} with actual token
+
+# Test scenarios:
+# 1. CRUD operations for brands
+# 2. CRUD operations for categories  
+# 3. Category hierarchy management
+# 4. Authorization testing
+# 5. Error handling validation
+
+# Expected behaviors:
+# - Only staff can create/update/delete
+# - Categories maintain proper hierarchy
+# - Circular references are prevented
+# - Duplicate names are prevented
+# - Proper error messages returned

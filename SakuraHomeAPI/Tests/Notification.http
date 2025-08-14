@@ -1,0 +1,306 @@
+﻿### Sakura Home API - Notification Testing
+
+### Variables
+@baseUrl = http://localhost:5273/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJiZTlhZTY4Yy0xZWE1LTQzYTktYjcwZC0zZDMwMmM2MjAxMWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6IjE2YTZjYWJhLTQ2YzYtNGVjYi05MWY3LWNmMDRlNmMxMDkwNCIsImlhdCI6MTc1NDM4NDQ0NiwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NDM4NDQ0NiwiZXhwIjoxNzU0Mzg4MDQ2LCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.j9MGhyjCB7YZNfZIZfT-a_Cr6lGBZP8pY9kX1sKDQv8
+
+### Get Current User Notifications
+GET {{baseUrl}}/notification
+Authorization: Bearer {{token}}
+
+###
+
+### Get Current User Notifications - Unread Only
+GET {{baseUrl}}/notification?unreadOnly=true&page=1&pageSize=10
+Authorization: Bearer {{token}}
+
+###
+
+### Get Unread Notification Count
+GET {{baseUrl}}/notification/unread-count
+Authorization: Bearer {{token}}
+
+###
+
+### Get Specific Notification
+GET {{baseUrl}}/notification/1
+Authorization: Bearer {{token}}
+
+###
+
+### Mark Notification as Read
+PATCH {{baseUrl}}/notification/1/read
+Authorization: Bearer {{token}}
+
+###
+
+### Mark All Notifications as Read
+PATCH {{baseUrl}}/notification/mark-all-read
+Authorization: Bearer {{token}}
+
+###
+
+### Delete Notification
+DELETE {{baseUrl}}/notification/1
+Authorization: Bearer {{token}}
+
+###
+
+### Get Notification Preferences
+GET {{baseUrl}}/notification/preferences
+Authorization: Bearer {{token}}
+
+###
+
+### Update Notification Preferences
+PUT {{baseUrl}}/notification/preferences
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "emailNotifications": true,
+  "smsNotifications": false,
+  "pushNotifications": true,
+  "inAppNotifications": true,
+  "orderUpdates": true,
+  "promotionalOffers": false,
+  "securityAlerts": true,
+  "productUpdates": true,
+  "newsletterSubscription": false,
+  "weeklyDigest": false,
+  "quietHoursStart": "22:00:00",
+  "quietHoursEnd": "08:00:00",
+  "noNotificationDays": [0, 6],
+  "language": "vi",
+  "timeZone": "Asia/Ho_Chi_Minh"
+}
+
+### =====================================
+### ADMIN/STAFF ENDPOINTS
+### =====================================
+
+### Send Single Notification (Staff Only)
+POST {{baseUrl}}/notification/send
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "title": "Test Notification",
+  "message": "This is a test notification sent by admin",
+  "type": 1,
+  "actionUrl": "/test",
+  "sendEmail": true,
+  "sendSms": false,
+  "priority": 2,
+  "data": {
+    "testKey": "testValue",
+    "additionalInfo": "some extra data"
+  }
+}
+
+###
+
+### Send Bulk Notification (Staff Only)
+POST {{baseUrl}}/notification/send-bulk
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userIds": [
+    "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "4fa85f64-5717-4562-b3fc-2c963f66afa7"
+  ],
+  "title": "Bulk Test Notification",
+  "message": "This is a bulk notification sent to multiple users",
+  "type": 1,
+  "actionUrl": "/bulk-test",
+  "sendEmail": true,
+  "sendSms": false,
+  "priority": 2,
+  "sendToAll": false
+}
+
+###
+
+### Send Bulk Notification to All Users (Staff Only)
+POST {{baseUrl}}/notification/send-bulk
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "System Announcement",
+  "message": "Important system update notification for all users",
+  "type": 7,
+  "actionUrl": "/system-update",
+  "sendEmail": true,
+  "sendSms": false,
+  "priority": 3,
+  "sendToAll": true,
+  "roleFilter": ["Customer"],
+  "registeredAfter": "2024-01-01T00:00:00Z"
+}
+
+###
+
+### Send Promotional Notification (Staff Only)
+POST {{baseUrl}}/notification/promotional
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "?? Flash Sale - 50% Off Everything!",
+  "message": "Limited time offer! Get 50% off on all Japanese products. Hurry up, sale ends in 24 hours!",
+  "actionUrl": "/promotions/flash-sale-2024",
+  "imageUrl": "/images/promotions/flash-sale-banner.jpg",
+  "scheduledTime": "2024-12-01T09:00:00Z",
+  "expiryTime": "2024-12-02T23:59:59Z",
+  "sendEmail": true,
+  "sendSms": false,
+  "sendPush": true,
+  "sendInApp": true,
+  "sendToAll": true,
+  "targetRoles": ["Customer"],
+  "registeredAfter": "2024-01-01T00:00:00Z",
+  "minOrderAmount": 100000,
+  "campaignId": "FLASH_SALE_2024",
+  "campaignSource": "admin_panel"
+}
+
+###
+
+### Send Maintenance Notification (Admin Only)
+POST {{baseUrl}}/notification/maintenance
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "startTime": "2024-12-15T02:00:00Z",
+  "endTime": "2024-12-15T06:00:00Z",
+  "message": "We will be performing scheduled maintenance to improve our services. Thank you for your patience."
+}
+
+###
+
+### Send Low Stock Alert (Staff Only)
+POST {{baseUrl}}/notification/low-stock
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "currentStock": 5,
+  "threshold": 10
+}
+
+### =====================================
+### ORDER NOTIFICATION TESTING
+### =====================================
+
+### Test Order Confirmation Notification
+# This would typically be called automatically when an order is created
+# For testing, you can call it manually if you have an existing order
+
+### Test Order Status Update
+# This would typically be called when order status changes
+# Example: When admin updates order status to "Shipped"
+
+### Test Payment Confirmation Notification  
+# This would typically be called when payment is confirmed
+
+### =====================================
+### EMAIL TEMPLATE TESTING
+### =====================================
+
+### Test Email Configuration
+POST {{baseUrl}}/email/test
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "testEmail": "test@example.com"
+}
+
+###
+
+### Send Test Welcome Email
+POST {{baseUrl}}/email/welcome
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "userName": "Test User",
+  "language": "vi"
+}
+
+###
+
+### Send Test Order Confirmation Email
+POST {{baseUrl}}/email/order-confirmation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderId": 1
+}
+
+### =====================================
+### NOTIFICATION SCENARIOS
+### =====================================
+
+### Scenario 1: New User Welcome Flow
+# 1. User registers
+# 2. Welcome notification sent
+# 3. Email verification notification sent
+
+### Scenario 2: Order Lifecycle Notifications
+# 1. Order created -> Order confirmation notification
+# 2. Payment confirmed -> Payment confirmation notification  
+# 3. Order confirmed -> Order confirmed notification
+# 4. Order shipped -> Shipment notification
+# 5. Order delivered -> Delivery confirmation notification
+
+### Scenario 3: Marketing Campaign
+# 1. Create promotional notification for targeted users
+# 2. Track engagement and performance
+# 3. Follow up with personalized offers
+
+### Scenario 4: System Maintenance
+# 1. Schedule maintenance notification
+# 2. Send reminder notifications
+# 3. Send completion notification
+
+### =====================================
+### REAL-TIME TESTING
+### =====================================
+
+# To test real-time notifications:
+# 1. Connect to SignalR hub (if implemented)
+# 2. Listen for notification events
+# 3. Send notifications via API
+# 4. Verify real-time delivery
+
+### =====================================
+### PERFORMANCE TESTING
+### =====================================
+
+### Send High Volume Notifications (Be careful with this!)
+# Use this to test system performance with many notifications
+# Adjust userIds array size based on your test data
+
+POST {{baseUrl}}/notification/send-bulk
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Performance Test Notification",
+  "message": "This is a performance test notification",
+  "type": 1,
+  "sendEmail": false,
+  "sendSms": false,
+  "priority": 1,
+  "sendToAll": true
+}
+
+###

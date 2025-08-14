@@ -25,8 +25,8 @@ namespace SakuraHomeAPI.Models.Entities.UserCart
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalPrice { get; set; }
 
-        public string CustomOptions { get; set; }
-        public string GiftMessage { get; set; }
+        public string CustomOptions { get; set; } = string.Empty; // Fixed: Add default value
+        public string GiftMessage { get; set; } = string.Empty; // Fixed: Add default value
         public bool IsGift { get; set; } = false;
 
         public virtual Cart Cart { get; set; }

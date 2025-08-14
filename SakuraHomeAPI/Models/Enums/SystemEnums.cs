@@ -1,22 +1,6 @@
 ﻿namespace SakuraHomeAPI.Models.Enums
 {
     /// <summary>
-    /// Notification types
-    /// </summary>
-    public enum NotificationType
-    {
-        OrderUpdate = 1,        // Cập nhật đơn hàng
-        PaymentUpdate = 2,      // Cập nhật thanh toán
-        Promotion = 3,          // Khuyến mãi
-        System = 4,             // Thông báo hệ thống
-        News = 5,               // Tin tức
-        Review = 6,             // Đánh giá
-        Welcome = 7,            // Chào mừng
-        Security = 8,           // Bảo mật
-        Maintenance = 9         // Bảo trì
-    }
-
-    /// <summary>
     /// Notification delivery channels
     /// </summary>
     public enum NotificationChannel
@@ -90,6 +74,18 @@
     {
         Low = 1,
         Medium = 2,
+        High = 3,
+        Urgent = 4,
+        Critical = 5
+    }
+
+    /// <summary>
+    /// Notification priority levels
+    /// </summary>
+    public enum NotificationPriority
+    {
+        Low = 1,
+        Normal = 2,
         High = 3,
         Urgent = 4,
         Critical = 5
@@ -190,5 +186,95 @@
         Product = 4,            // Sản phẩm cụ thể
         FirstOrder = 5,         // Đơn hàng đầu tiên
         MinimumAmount = 6       // Đơn hàng tối thiểu
+    }
+
+    /// <summary>
+    /// Notification types
+    /// </summary>
+    public enum NotificationType
+    {
+        General = 1,            // Thông báo chung
+        Order = 2,              // Đơn hàng
+        Payment = 3,            // Thanh toán
+        Shipping = 4,           // Vận chuyển
+        Product = 5,            // Sản phẩm
+        Promotion = 6,          // Khuyến mãi
+        System = 7,             // Hệ thống
+        Security = 8,           // Bảo mật
+        Marketing = 9,          // Marketing
+        Reminder = 10,          // Nhắc nhở
+        Alert = 11,             // Cảnh báo
+        Newsletter = 12,        // Bản tin
+        Info = 13,              // Thông tin
+        Warning = 14,           // Cảnh báo
+        Success = 15,           // Thành công
+        Error = 16              // Lỗi
+    }
+
+    /// <summary>
+    /// Email types
+    /// </summary>
+    public enum EmailType
+    {
+        General = 1,            // Email chung
+        Welcome = 2,            // Chào mừng
+        OrderConfirmation = 3,  // Xác nhận đơn hàng
+        OrderUpdate = 4,        // Cập nhật đơn hàng
+        PasswordReset = 5,      // Đặt lại mật khẩu
+        EmailVerification = 6,  // Xác thực email
+        Promotional = 7,        // Khuyến mãi
+        Newsletter = 8,         // Bản tin
+        SystemAlert = 9,        // Cảnh báo hệ thống
+        Receipt = 10,           // Hóa đơn
+        Shipping = 11,          // Vận chuyển
+        Return = 12,            // Trả hàng
+        Survey = 13,            // Khảo sát
+        Announcement = 14       // Thông báo
+    }
+
+    /// <summary>
+    /// Email delivery status
+    /// </summary>
+    public enum EmailDeliveryStatus
+    {
+        Pending = 1,            // Chờ gửi
+        Sending = 2,            // Đang gửi
+        Sent = 3,               // Đã gửi
+        Delivered = 4,          // Đã nhận
+        Failed = 5,             // Thất bại
+        Bounced = 6,            // Bị trả về
+        Spam = 7,               // Spam
+        Unsubscribed = 8,       // Hủy đăng ký
+        Retry = 9               // Thử lại
+    }
+
+    /// <summary>
+    /// SMS status
+    /// </summary>
+    public enum SmsStatus
+    {
+        Pending = 1,            // Chờ gửi
+        Sending = 2,            // Đang gửi
+        Sent = 3,               // Đã gửi
+        Delivered = 4,          // Đã nhận
+        Failed = 5,             // Thất bại
+        Expired = 6,            // Hết hạn
+        Rejected = 7,           // Bị từ chối
+        Retry = 8               // Thử lại
+    }
+
+    /// <summary>
+    /// Push notification status
+    /// </summary>
+    public enum PushNotificationStatus
+    {
+        Pending = 1,            // Chờ gửi
+        Sending = 2,            // Đang gửi
+        Sent = 3,               // Đã gửi
+        Delivered = 4,          // Đã nhận
+        Failed = 5,             // Thất bại
+        Clicked = 6,            // Đã click
+        Dismissed = 7,          // Đã bỏ qua
+        Expired = 8             // Hết hạn
     }
 }

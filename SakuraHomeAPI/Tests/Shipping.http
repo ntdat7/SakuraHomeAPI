@@ -1,0 +1,466 @@
+﻿### =================================================================
+### SHIPPING API TESTS - SakuraHome API
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### ✅ Quick Setup - Login để lấy token
+# @name quickLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com",
+  "password": "Quick123!",
+  "rememberMe": false
+}
+
+### 📝 Store tokens
+@authToken = {{quickLogin.response.body.data.token}}
+
+### =================================================================
+### SHIPPING RATES & CALCULATION
+### =================================================================
+
+### 1. 💰 Calculate Shipping Rates
+POST {{baseUrl}}/api/shipping/calculate-rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "HCM",
+  "fromDistrictCode": "Q1",
+  "toProvinceCode": "HN",
+  "toDistrictCode": "HK",
+  "weight": 1.5,
+  "length": 30,
+  "width": 20,
+  "height": 15,
+  "orderValue": 500000,
+  "serviceType": "STANDARD"
+}
+
+### 2. 💰 Get Standard Shipping Rate
+POST {{baseUrl}}/api/shipping/standard-rate
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "HCM",
+  "fromDistrictCode": "Q1",
+  "toProvinceCode": "HCM",
+  "toDistrictCode": "Q7",
+  "weight": 2.0,
+  "orderValue": 300000
+}
+
+### 3. 📋 Get All Shipping Rates
+GET {{baseUrl}}/api/shipping/rates
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### SHIPPING ORDER MANAGEMENT
+### =================================================================
+
+### 4. 📦 Create Shipping Order (Need existing Order ID)
+POST {{baseUrl}}/api/shipping/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "serviceType": "STANDARD",
+  "notes": "Handle with care",
+  "isCOD": true,
+  "codAmount": 500000
+}
+
+### 5. 📋 Get Shipping Orders (Admin/Staff)
+GET {{baseUrl}}/api/shipping/orders?page=1&pageSize=10&status=PENDING
+Authorization: Bearer {{authToken}}
+
+### 6. 📦 Get Shipping Order by ID
+GET {{baseUrl}}/api/shipping/orders/1
+Authorization: Bearer {{authToken}}
+
+### 7. 📦 Get Shipping by Order ID
+GET {{baseUrl}}/api/shipping/orders/by-order/1
+Authorization: Bearer {{authToken}}
+
+### 8. 🔍 Track Shipping by Tracking Number
+GET {{baseUrl}}/api/shipping/track/SKH20250101123456
+Authorization: Bearer {{authToken}}
+
+### 9. 📊 Get Shipping Statistics
+GET {{baseUrl}}/api/shipping/stats
+Authorization: Bearer {{authToken}}
+
+### 10. 📊 Get Shipping Statistics with Date Range
+GET {{baseUrl}}/api/shipping/stats?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### TRACKING MANAGEMENT
+### =================================================================
+
+### 11. 📍 Update Shipping Tracking
+PUT {{baseUrl}}/api/shipping/orders/1/tracking
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "trackingNumber": "SKH20250101123456",
+  "status": "IN_TRANSIT",
+  "statusDescription": "Đang vận chuyển đến trung tâm phân loại",
+  "updatedAt": "2024-01-15T10:00:00Z",
+  "location": "Trung tâm phân loại TP.HCM",
+  "notes": "Package in transit"
+}
+
+### 12. 📍 Add Tracking Event
+POST {{baseUrl}}/api/shipping/orders/1/tracking-events
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "PICKED_UP",
+  "statusDescription": "Đã lấy hàng từ người gửi",
+  "location": "SakuraHome Warehouse",
+  "notes": "Package picked up successfully",
+  "eventTime": "2024-01-15T09:00:00Z"
+}
+
+### 13. 📋 Get Tracking History
+GET {{baseUrl}}/api/shipping/tracking/SKH20250101123456
+Authorization: Bearer {{authToken}}
+
+### 14. 🔄 Update Shipping Status
+PATCH {{baseUrl}}/api/shipping/orders/1/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "DELIVERED",
+  "description": "Đã giao hàng thành công"
+}
+
+### =================================================================
+### SHIPPING ZONES & LOCATIONS
+### =================================================================
+
+### 15. 🗺️ Get Shipping Zones
+GET {{baseUrl}}/api/shipping/zones
+Authorization: Bearer {{authToken}}
+
+### 16. 🗺️ Get Shipping Zone by ID
+GET {{baseUrl}}/api/shipping/zones/1
+Authorization: Bearer {{authToken}}
+
+### 17. 🗺️ Create Shipping Zone (Admin)
+POST {{baseUrl}}/api/shipping/zones
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Miền Nam",
+  "description": "Khu vực miền Nam Việt Nam",
+  "provinceCodes": ["HCM", "CT", "AG", "BD", "DN"],
+  "isActive": true
+}
+
+### 18. 🗺️ Update Shipping Zone (Admin)
+PUT {{baseUrl}}/api/shipping/zones/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Miền Nam (Updated)",
+  "description": "Khu vực miền Nam Việt Nam - Updated",
+  "provinceCodes": ["HCM", "CT", "AG", "BD", "DN", "VT"],
+  "isActive": true
+}
+
+### 19. 🗺️ Delete Shipping Zone (Admin)
+DELETE {{baseUrl}}/api/shipping/zones/1
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### LOCATION SERVICES
+### =================================================================
+
+### 20. 🏢 Get All Provinces
+GET {{baseUrl}}/api/shipping/locations/provinces
+Authorization: Bearer {{authToken}}
+
+### 21. 🏢 Get Districts by Province
+GET {{baseUrl}}/api/shipping/locations/districts/HCM
+Authorization: Bearer {{authToken}}
+
+### 22. 🏢 Get Wards by District
+GET {{baseUrl}}/api/shipping/locations/wards/Q1
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### SHIPPING ADMINISTRATION
+### =================================================================
+
+### 23. ❌ Cancel Shipping Order
+DELETE {{baseUrl}}/api/shipping/orders/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "cancelReason": "Customer changed mind",
+  "notes": "Customer requested cancellation"
+}
+
+### 24. 📊 Update Shipping Rates (Admin)
+PUT {{baseUrl}}/api/shipping/rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "rates": [
+    {
+      "serviceType": "STANDARD",
+      "rate": 30000,
+      "freeShippingThreshold": 500000,
+      "maxWeight": 10,
+      "isActive": true
+    },
+    {
+      "serviceType": "EXPRESS",
+      "rate": 45000,
+      "freeShippingThreshold": 1000000,
+      "maxWeight": 5,
+      "isActive": true
+    }
+  ]
+}
+
+### 25. 📄 Export Shipping Report (Admin)
+POST {{baseUrl}}/api/shipping/reports/export
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "dateFrom": "2024-01-01",
+  "dateTo": "2024-01-31",
+  "status": "DELIVERED",
+  "serviceType": "STANDARD",
+  "format": "excel"
+}
+
+### =================================================================
+### ERROR TESTING
+### =================================================================
+
+### 🔺 Test Invalid Order ID
+POST {{baseUrl}}/api/shipping/orders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "orderId": 99999,
+  "serviceType": "STANDARD",
+  "isCOD": true,
+  "codAmount": 100000
+}
+
+### 🔺 Test Invalid Tracking Number
+GET {{baseUrl}}/api/shipping/track/INVALID_TRACKING
+Authorization: Bearer {{authToken}}
+
+### 🔺 Test Unauthorized Access (No Token)
+GET {{baseUrl}}/api/shipping/orders
+
+### 🔺 Test Invalid Province Code
+POST {{baseUrl}}/api/shipping/calculate-rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "INVALID",
+  "toProvinceCode": "HN",
+  "weight": 1.0,
+  "orderValue": 100000
+}
+
+### 🔺 Test Cancel Already Delivered Order
+DELETE {{baseUrl}}/api/shipping/orders/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "cancelReason": "Test cancellation",
+  "notes": "Testing cancel delivered order"
+}
+
+### =================================================================
+### PERFORMANCE TESTING
+### =================================================================
+
+### ⚡ Multiple Rate Calculations
+POST {{baseUrl}}/api/shipping/calculate-rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "HCM",
+  "toProvinceCode": "HN",
+  "weight": 0.5,
+  "orderValue": 250000
+}
+
+### ⚡ Bulk Tracking Queries
+GET {{baseUrl}}/api/shipping/orders?page=1&pageSize=50
+Authorization: Bearer {{authToken}}
+
+### =================================================================
+### ADVANCED TEST SCENARIOS
+### =================================================================
+
+### 🎯 Complete Shipping Flow Test
+# 1. First create an order (you need Order API)
+# 2. Create shipping for that order
+# 3. Add tracking events
+# 4. Update status to delivered
+# 5. Get final tracking history
+
+### 🎯 Test Different Service Types
+POST {{baseUrl}}/api/shipping/calculate-rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "HCM",
+  "toProvinceCode": "HN",
+  "weight": 2.5,
+  "orderValue": 750000,
+  "serviceType": "EXPRESS"
+}
+
+### 🎯 Test Heavy Package
+POST {{baseUrl}}/api/shipping/calculate-rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "HCM",
+  "toProvinceCode": "CT",
+  "weight": 10.0,
+  "length": 50,
+  "width": 40,
+  "height": 30,
+  "orderValue": 2000000,
+  "serviceType": "STANDARD"
+}
+
+### 🎯 Test International Shipping (if supported)
+POST {{baseUrl}}/api/shipping/calculate-rates
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fromProvinceCode": "HCM",
+  "toProvinceCode": "INTL",
+  "weight": 1.0,
+  "orderValue": 500000,
+  "serviceType": "INTERNATIONAL"
+}
+
+### =================================================================
+### NOTES & INSTRUCTIONS
+### =================================================================
+
+###
+### 🔧 HƯỚNG DẪN SỬ DỤNG SHIPPING API TESTS:
+### 
+### 1. Khởi chạy ứng dụng: dotnet run
+### 2. Chạy "Quick Setup - Login" để lấy authentication token
+### 3. Các test đã được sắp xếp theo thứ tự logic của shipping workflow
+### 
+### 📋 SHIPPING WORKFLOW:
+### 
+### 1. Calculate shipping rates cho order
+### 2. Create shipping order khi order được confirm
+### 3. Add tracking events khi package được di chuyển
+### 4. Update status từ PENDING → PICKED_UP → IN_TRANSIT → DELIVERED
+### 5. Customer có thể track bằng tracking number
+### 
+### 🎯 KEY FEATURES TESTED:
+### 
+### ✅ Rate Calculation:
+### - Standard vs Express shipping
+### - Weight-based pricing
+### - Distance-based surcharges
+### - COD fee calculation
+### 
+### ✅ Order Management:
+### - Create shipping orders
+### - Track by ID, Order ID, Tracking Number
+### - Status updates and history
+### - Cancellation handling
+### 
+### ✅ Location Services:
+### - Province/District/Ward lookup
+### - Shipping zone management
+### - Geographic rate calculations
+### 
+### ✅ Administration:
+### - Shipping statistics and reports
+### - Rate management
+### - Zone configuration
+### - Export functionality
+### 
+### 📊 EXPECTED RESPONSES:
+### 
+### ✅ Shipping Rate Response:
+### {
+###   "serviceType": "STANDARD",
+###   "serviceName": "Giao hàng tiêu chuẩn",
+###   "fee": 30000,
+###   "codFee": 5000,
+###   "totalFee": 35000,
+###   "estimatedDays": 3,
+###   "isAvailable": true
+### }
+### 
+### ✅ Shipping Order Response:
+### {
+###   "id": 1,
+###   "trackingNumber": "SKH20250101123456",
+###   "status": "PENDING",
+###   "shippingFee": 30000,
+###   "codAmount": 500000,
+###   "receiverName": "Customer Name",
+###   "receiverAddress": "Full Address"
+### }
+### 
+### ⚠️ IMPORTANT NOTES:
+### 
+### - Cần tạo Order trước khi test shipping order creation
+### - Tracking numbers được generate tự động
+### - Chỉ Staff/Admin mới có thể access một số endpoints
+### - COD amount phải <= order total amount
+### - Status transitions phải theo thứ tự logic
+### 
+### 🔒 AUTHENTICATION:
+### 
+### - Tất cả endpoints cần Bearer token
+### - Some admin endpoints cần Staff/Admin role
+### - Rate calculation available cho tất cả authenticated users
+### 
+### 📈 MONITORING:
+### 
+### - Check shipping statistics endpoint để monitor performance
+### - Tracking events được log với timestamps
+### - All shipping operations được audit trong database
+### 
+### 🚚 BUSINESS LOGIC:
+### 
+### - Free shipping cho orders > threshold
+### - Express shipping có 50% surcharge
+### - COD fee: 1% of amount (min 5k, max 50k VND)
+### - Weight surcharge: 10k VND per kg over 1kg
+### - Inter-province surcharge: 15k VND
+###

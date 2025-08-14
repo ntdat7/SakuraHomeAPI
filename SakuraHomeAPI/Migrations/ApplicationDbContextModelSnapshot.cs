@@ -206,7 +206,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Banners");
+                    b.ToTable("Banners", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Catalog.Brand", b =>
@@ -357,7 +357,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("IsActive", "IsDeleted");
 
-                    b.ToTable("Brands");
+                    b.ToTable("Brands", (string)null);
 
                     b.HasData(
                         new
@@ -610,7 +610,8 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(7)");
 
                     b.Property<decimal?>("CommissionRate")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -711,7 +712,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("IsActive", "IsDeleted");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
 
                     b.HasData(
                         new
@@ -900,7 +901,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("CategoryAttributes");
+                    b.ToTable("CategoryAttributes", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Catalog.Translation", b =>
@@ -991,7 +992,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("EntityType", "EntityId", "FieldName", "Language")
                         .IsUnique();
 
-                    b.ToTable("Translations");
+                    b.ToTable("Translations", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.ContactMessage", b =>
@@ -1075,7 +1076,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ContactMessages");
+                    b.ToTable("ContactMessages", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Coupon", b =>
@@ -1091,10 +1092,15 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
@@ -1106,9 +1112,11 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal?>("MaxDiscountAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("MinOrderAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
@@ -1128,6 +1136,12 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UsageLimit")
                         .HasColumnType("int");
 
@@ -1135,6 +1149,7 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Value")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
@@ -1146,7 +1161,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("StartDate", "EndDate");
 
-                    b.ToTable("Coupons", t =>
+                    b.ToTable("Coupons", null, t =>
                         {
                             t.HasCheckConstraint("CK_Coupon_UsageLimit", "UsageLimit IS NULL OR UsageLimit >= 0");
 
@@ -1164,30 +1179,34 @@ namespace SakuraHomeAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AttemptCount")
+                    b.Property<int>("Attempts")
                         .HasColumnType("int");
 
                     b.Property<string>("Body")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ErrorMessage")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<string>("FromEmail")
+                    b.Property<string>("From")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("FromName")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsHtml")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("NextRetryAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("Priority")
                         .HasColumnType("int");
@@ -1198,29 +1217,29 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<DateTime?>("SentAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<string>("Subject")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("ToEmail")
+                    b.Property<string>("To")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("ToName")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.ToTable("EmailQueue");
+                    b.ToTable("EmailQueue", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.Address", b =>
@@ -1310,7 +1329,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Addresses", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.RefreshToken", b =>
@@ -1355,7 +1374,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.User", b =>
@@ -1461,6 +1480,10 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("NotificationPreferences")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -1526,6 +1549,7 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("TotalSpent")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -1601,6 +1625,12 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
+                    b.Property<string>("Data")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ExpiryTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
 
@@ -1609,7 +1639,13 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ScheduledTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
@@ -1617,10 +1653,8 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1641,7 +1675,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.NotificationTemplate", b =>
@@ -1681,7 +1715,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NotificationTemplates");
+                    b.ToTable("NotificationTemplates", (string)null);
 
                     b.HasData(
                         new
@@ -1805,6 +1839,12 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<DateTime?>("PackedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
+
                     b.Property<int?>("PaymentMethodDetailsId")
                         .HasColumnType("int");
 
@@ -1909,7 +1949,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", t =>
+                    b.ToTable("Orders", null, t =>
                         {
                             t.HasCheckConstraint("CK_Order_TotalAmount", "TotalAmount >= 0");
                         });
@@ -1952,7 +1992,8 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("ProductVariantId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("ProductVariantId");
 
                     b.Property<int?>("ProductVariantId1")
                         .HasColumnType("int");
@@ -1986,7 +2027,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductVariantId1");
 
-                    b.ToTable("OrderItems", t =>
+                    b.ToTable("OrderItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_OrderItem_Quantity", "Quantity > 0");
 
@@ -2033,7 +2074,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderNotes");
+                    b.ToTable("OrderNotes", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Orders.OrderStatusHistory", b =>
@@ -2061,7 +2102,8 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
 
                     b.Property<int?>("OrderId1")
                         .HasColumnType("int");
@@ -2078,7 +2120,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("OrderId1");
 
-                    b.ToTable("OrderStatusHistory");
+                    b.ToTable("OrderStatusHistory", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.PaymentMethodInfo", b =>
@@ -2103,9 +2145,11 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("FeePercentage")
+                        .HasPrecision(18, 4)
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<decimal>("FixedFee")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("IsActive")
@@ -2117,9 +2161,11 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<decimal>("MaxAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MinAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
@@ -2129,7 +2175,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PaymentMethods");
+                    b.ToTable("PaymentMethods", (string)null);
 
                     b.HasData(
                         new
@@ -2201,6 +2247,9 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -2222,13 +2271,17 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<decimal>("Fee")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("FeeAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("IpAddress")
                         .IsRequired()
                         .HasMaxLength(45)
                         .HasColumnType("nvarchar(45)");
 
                     b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
 
                     b.Property<int?>("OrderId1")
                         .HasColumnType("int");
@@ -2241,8 +2294,18 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal?>("RefundedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ResponseData")
                         .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ResponseMessage")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -2277,7 +2340,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PaymentTransactions", t =>
+                    b.ToTable("PaymentTransactions", null, t =>
                         {
                             t.HasCheckConstraint("CK_PaymentTransaction_Amount", "Amount >= 0");
 
@@ -2458,9 +2521,11 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal?>("OriginalPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Rating")
@@ -2561,7 +2626,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("CategoryId", "IsActive", "IsDeleted");
 
-                    b.ToTable("Products", t =>
+                    b.ToTable("Products", null, t =>
                         {
                             t.HasCheckConstraint("CK_Product_Price", "Price >= 0");
 
@@ -3159,15 +3224,19 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal?>("TotalCost")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("TotalValue")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("UnitCost")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("UnitPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UserAgent")
@@ -3192,7 +3261,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ReferenceType", "ReferenceId");
 
-                    b.ToTable("InventoryLogs");
+                    b.ToTable("InventoryLogs", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductAttribute", b =>
@@ -3285,7 +3354,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductAttributes");
+                    b.ToTable("ProductAttributes", (string)null);
 
                     b.HasData(
                         new
@@ -3399,7 +3468,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductAttributeValues");
+                    b.ToTable("ProductAttributeValues", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductImage", b =>
@@ -3467,7 +3536,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductTag", b =>
@@ -3497,7 +3566,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("ProductTags");
+                    b.ToTable("ProductTags", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductVariant", b =>
@@ -3546,9 +3615,11 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal?>("OriginalPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -3581,7 +3652,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductVariants");
+                    b.ToTable("ProductVariants", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.ProductView", b =>
@@ -3629,7 +3700,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProductViews");
+                    b.ToTable("ProductViews", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Products.Tag", b =>
@@ -3689,7 +3760,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
 
                     b.HasData(
                         new
@@ -3862,7 +3933,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId", "IsApproved", "IsActive", "IsDeleted");
 
-                    b.ToTable("Reviews", t =>
+                    b.ToTable("Reviews", null, t =>
                         {
                             t.HasCheckConstraint("CK_Review_Rating", "Rating >= 1 AND Rating <= 5");
                         });
@@ -3876,24 +3947,28 @@ namespace SakuraHomeAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AltText")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Caption")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("int");
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
-
-                    b.Property<long?>("FileSize")
+                    b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("Height")
+                    b.Property<int>("Height")
                         .HasColumnType("int");
 
                     b.Property<string>("ImageUrl")
@@ -3904,20 +3979,20 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<int>("ReviewId")
                         .HasColumnType("int");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Width")
+                    b.Property<int>("Width")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ReviewId");
 
-                    b.ToTable("ReviewImages");
+                    b.ToTable("ReviewImages", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Reviews.ReviewResponse", b =>
@@ -3957,7 +4032,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ReviewId");
 
-                    b.ToTable("ReviewResponses");
+                    b.ToTable("ReviewResponses", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Reviews.ReviewSummary", b =>
@@ -4009,7 +4084,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ReviewSummaries", t =>
+                    b.ToTable("ReviewSummaries", null, t =>
                         {
                             t.HasCheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5");
 
@@ -4046,7 +4121,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ReviewVotes");
+                    b.ToTable("ReviewVotes", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.SearchLog", b =>
@@ -4104,7 +4179,195 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SearchLogs");
+                    b.ToTable("SearchLogs", (string)null);
+                });
+
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Shipping.ShippingOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CODAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("CODFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Dimensions")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsCOD")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
+
+                    b.Property<DateTime?>("PickedUpAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReceiverAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReceiverName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ReceiverPhone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SenderAddress")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SenderName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("SenderPhone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ServiceName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ServiceType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("ShippingFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("StatusDescription")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("TotalFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrackingNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Weight")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TrackingNumber")
+                        .IsUnique();
+
+                    b.ToTable("ShippingOrders", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ShippingOrder_CODAmount", "CODAmount >= 0");
+
+                            t.HasCheckConstraint("CK_ShippingOrder_Fees", "ShippingFee >= 0 AND CODFee >= 0 AND TotalFee >= 0");
+
+                            t.HasCheckConstraint("CK_ShippingOrder_Weight", "Weight >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Shipping.ShippingTracking", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("ShippingOrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("ShippingOrderId");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("StatusDescription")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShippingOrderId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UpdatedAt");
+
+                    b.ToTable("ShippingTrackings", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.ShippingRate", b =>
@@ -4124,12 +4387,14 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal?>("FreeShippingThreshold")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<decimal?>("MaxWeight")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal?>("MinOrderAmount")
@@ -4144,6 +4409,7 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Rate")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ShippingZoneId")
@@ -4153,7 +4419,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("ShippingZoneId");
 
-                    b.ToTable("ShippingRates", t =>
+                    b.ToTable("ShippingRates", null, t =>
                         {
                             t.HasCheckConstraint("CK_ShippingRate_Rate", "Rate >= 0");
                         });
@@ -4190,7 +4456,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ShippingZones");
+                    b.ToTable("ShippingZones", (string)null);
 
                     b.HasData(
                         new
@@ -4277,7 +4543,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("SystemSettings");
+                    b.ToTable("SystemSettings", (string)null);
 
                     b.HasData(
                         new
@@ -4435,7 +4701,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId");
 
-                    b.ToTable("UserActivities");
+                    b.ToTable("UserActivities", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserCart.Cart", b =>
@@ -4453,7 +4719,6 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("SessionId")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -4470,7 +4735,7 @@ namespace SakuraHomeAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserCart.CartItem", b =>
@@ -4505,7 +4770,8 @@ namespace SakuraHomeAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<int?>("ProductVariantId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("ProductVariantId");
 
                     b.Property<int?>("ProductVariantId1")
                         .HasColumnType("int");
@@ -4539,7 +4805,7 @@ namespace SakuraHomeAPI.Migrations
                         .IsUnique()
                         .HasFilter("[ProductVariantId] IS NOT NULL");
 
-                    b.ToTable("CartItems", t =>
+                    b.ToTable("CartItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_CartItem_Quantity", "Quantity > 0");
                         });
@@ -4588,7 +4854,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Wishlists");
+                    b.ToTable("Wishlists", (string)null);
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.UserWishlist.WishlistItem", b =>
@@ -4646,7 +4912,7 @@ namespace SakuraHomeAPI.Migrations
                     b.HasIndex("WishlistId", "ProductId")
                         .IsUnique();
 
-                    b.ToTable("WishlistItems");
+                    b.ToTable("WishlistItems", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -5141,6 +5407,28 @@ namespace SakuraHomeAPI.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Shipping.ShippingOrder", b =>
+                {
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Orders.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Shipping.ShippingTracking", b =>
+                {
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Shipping.ShippingOrder", "ShippingOrder")
+                        .WithMany("ShippingTrackings")
+                        .HasForeignKey("ShippingOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ShippingOrder");
+                });
+
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.ShippingRate", b =>
                 {
                     b.HasOne("SakuraHomeAPI.Models.Entities.ShippingZone", "ShippingZone")
@@ -5342,6 +5630,11 @@ namespace SakuraHomeAPI.Migrations
                     b.Navigation("ReviewResponses");
 
                     b.Navigation("ReviewVotes");
+                });
+
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Shipping.ShippingOrder", b =>
+                {
+                    b.Navigation("ShippingTrackings");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.ShippingZone", b =>

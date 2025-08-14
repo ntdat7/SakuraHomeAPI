@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+ï»¿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.Models.DTOs;
 using SakuraHomeAPI.Services.Interfaces;
@@ -37,7 +37,7 @@ namespace SakuraHomeAPI.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse.ErrorResult<AuthResponseDto>("D? li?u không h?p l?", errors));
+                return BadRequest(ApiResponse.ErrorResult<AuthResponseDto>("Dá»¯ liá»‡u khÃ´ng há»£p lá»‡", errors));
             }
 
             var ipAddress = GetIpAddress();
@@ -64,7 +64,7 @@ namespace SakuraHomeAPI.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse.ErrorResult<AuthResponseDto>("D? li?u không h?p l?", errors));
+                return BadRequest(ApiResponse.ErrorResult<AuthResponseDto>("D? li?u khÃ´ng h?p l?", errors));
             }
 
             // Set AcceptTerms to true automatically for simplified registration
@@ -95,7 +95,7 @@ namespace SakuraHomeAPI.Controllers
             var userId = GetCurrentUserId();
             if (userId == null)
             {
-                return Unauthorized(ApiResponse.ErrorResult("Không th? xác ??nh ng??i dùng"));
+                return Unauthorized(ApiResponse.ErrorResult("KhÃ´ng th? xÃ¡c ??nh ng??i dÃ¹ng"));
             }
 
             var result = await _authService.LogoutAsync(userId.Value, request?.RefreshToken);
@@ -116,7 +116,7 @@ namespace SakuraHomeAPI.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse.ErrorResult<AuthResponseDto>("D? li?u không h?p l?", errors));
+                return BadRequest(ApiResponse.ErrorResult<AuthResponseDto>("D? li?u khÃ´ng h?p l?", errors));
             }
 
             var ipAddress = GetIpAddress();
@@ -143,7 +143,7 @@ namespace SakuraHomeAPI.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse.ErrorResult("D? li?u không h?p l?", errors));
+                return BadRequest(ApiResponse.ErrorResult("D? li?u khÃ´ng h?p l?", errors));
             }
 
             var result = await _authService.ForgotPasswordAsync(request);
@@ -163,7 +163,7 @@ namespace SakuraHomeAPI.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse.ErrorResult("D? li?u không h?p l?", errors));
+                return BadRequest(ApiResponse.ErrorResult("D? li?u khÃ´ng h?p l?", errors));
             }
 
             var result = await _authService.ResetPasswordAsync(request);
@@ -191,13 +191,13 @@ namespace SakuraHomeAPI.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse.ErrorResult("D? li?u không h?p l?", errors));
+                return BadRequest(ApiResponse.ErrorResult("D? li?u khÃ´ng h?p l?", errors));
             }
 
             var userId = GetCurrentUserId();
             if (userId == null)
             {
-                return Unauthorized(ApiResponse.ErrorResult("Không th? xác ??nh ng??i dùng"));
+                return Unauthorized(ApiResponse.ErrorResult("KhÃ´ng th? xÃ¡c ??nh ng??i dÃ¹ng"));
             }
 
             var result = await _authService.ChangePasswordAsync(userId.Value, request);
@@ -223,7 +223,7 @@ namespace SakuraHomeAPI.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse.ErrorResult("D? li?u không h?p l?", errors));
+                return BadRequest(ApiResponse.ErrorResult("D? li?u khÃ´ng h?p l?", errors));
             }
 
             var result = await _authService.VerifyEmailAsync(request);
@@ -248,7 +248,7 @@ namespace SakuraHomeAPI.Controllers
         {
             if (string.IsNullOrEmpty(email))
             {
-                return BadRequest(ApiResponse.ErrorResult("Email là b?t bu?c"));
+                return BadRequest(ApiResponse.ErrorResult("Email lÃ  b?t bu?c"));
             }
 
             var result = await _authService.ResendEmailVerificationAsync(email);
@@ -268,7 +268,7 @@ namespace SakuraHomeAPI.Controllers
             var userId = GetCurrentUserId();
             if (userId == null)
             {
-                return Unauthorized(ApiResponse.ErrorResult<UserDto>("Không th? xác ??nh ng??i dùng"));
+                return Unauthorized(ApiResponse.ErrorResult<UserDto>("KhÃ´ng th? xÃ¡c ??nh ng??i dÃ¹ng"));
             }
 
             var result = await _authService.GetCurrentUserAsync(userId.Value);
@@ -296,12 +296,12 @@ namespace SakuraHomeAPI.Controllers
             var userId = GetCurrentUserId();
             if (userId == null)
             {
-                return Unauthorized(ApiResponse.ErrorResult("Không th? xác ??nh ng??i dùng"));
+                return Unauthorized(ApiResponse.ErrorResult("KhÃ´ng th? xÃ¡c ??nh ng??i dÃ¹ng"));
             }
 
             if (string.IsNullOrEmpty(request.RefreshToken))
             {
-                return BadRequest(ApiResponse.ErrorResult("Refresh token là b?t bu?c"));
+                return BadRequest(ApiResponse.ErrorResult("Refresh token lÃ  b?t bu?c"));
             }
 
             var result = await _authService.RevokeTokenAsync(userId.Value, request.RefreshToken);
@@ -321,7 +321,7 @@ namespace SakuraHomeAPI.Controllers
             var userId = GetCurrentUserId();
             if (userId == null)
             {
-                return Unauthorized(ApiResponse.ErrorResult("Không th? xác ??nh ng??i dùng"));
+                return Unauthorized(ApiResponse.ErrorResult("KhÃ´ng th? xÃ¡c ??nh ng??i dÃ¹ng"));
             }
 
             var result = await _authService.RevokeAllTokensAsync(userId.Value);
@@ -341,7 +341,7 @@ namespace SakuraHomeAPI.Controllers
             var userId = GetCurrentUserId();
             if (userId == null)
             {
-                return Unauthorized(ApiResponse.ErrorResult("Token không h?p l?"));
+                return Unauthorized(ApiResponse.ErrorResult("Token khÃ´ng h?p l?"));
             }
 
             return Ok(ApiResponse.SuccessResult("Token h?p l?"));

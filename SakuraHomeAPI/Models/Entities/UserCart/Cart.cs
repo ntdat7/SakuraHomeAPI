@@ -17,7 +17,7 @@ namespace SakuraHomeAPI.Models.Entities.UserCart
         public Guid? UserId { get; set; } // Nullable for guest carts
 
         [MaxLength(100)]
-        public string SessionId { get; set; } // For guest users
+        public string? SessionId { get; set; } = string.Empty; // For guest users - made nullable
 
         public virtual User? User { get; set; }
         public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();

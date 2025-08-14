@@ -1,0 +1,338 @@
+### =================================================================
+### WISHLIST MANAGEMENT API TESTING
+### =================================================================
+@baseUrl = http://localhost:5273
+
+### Prerequisites: Login first to get auth token
+# @name userLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com",
+  "password": "Quick123!",
+  "rememberMe": false
+}
+
+### Store auth token for wishlist operations
+@userAuthToken = {{userLogin.response.body.data.token}}
+
+### =================================================================
+### WISHLIST MANAGEMENT
+### =================================================================
+
+### 1. Get User's Wishlists (should create default if none exists)
+GET {{baseUrl}}/api/wishlist
+Authorization: Bearer {{userAuthToken}}
+
+### 2. Get Default Wishlist
+GET {{baseUrl}}/api/wishlist/default
+Authorization: Bearer {{userAuthToken}}
+
+### 3. Create a New Wishlist
+POST {{baseUrl}}/api/wishlist
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "S?n ph?m yêu thích cho nhà",
+  "description": "Nh?ng s?n ph?m tôi mu?n mua cho ngôi nhà m?i",
+  "isPublic": false
+}
+
+### 4. Create Another Wishlist
+POST {{baseUrl}}/api/wishlist
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "Quà t?ng sinh nh?t",
+  "description": "Danh sách quà cho sinh nh?t b?n thân",
+  "isPublic": true
+}
+
+### 5. Get All Wishlists After Creation
+GET {{baseUrl}}/api/wishlist
+Authorization: Bearer {{userAuthToken}}
+
+### 6. Get Specific Wishlist by ID (replace {id} with actual ID from step 3)
+GET {{baseUrl}}/api/wishlist/2
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### WISHLIST ITEMS MANAGEMENT
+### =================================================================
+
+### 7. Add Item to Default Wishlist (Product ID 1)
+POST {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "wishlistId": null,
+  "notes": "Mu?n mua lo?i này ?? th?"
+}
+
+### 8. Add Item to Specific Wishlist (Product ID 2)
+POST {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 2,
+  "wishlistId": 2,
+  "notes": "S?n ph?m ch?m sóc da t?t"
+}
+
+### 9. Add More Items to Wishlist
+POST {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 3,
+  "wishlistId": 1,
+  "notes": "Snack ngon cho bu?i t?i"
+}
+
+### 10. Add Item to Wishlist (Product ID 4)
+POST {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 4,
+  "wishlistId": 2,
+  "notes": "?? u?ng healthy"
+}
+
+### 11. Get Updated Wishlist to See Items
+GET {{baseUrl}}/api/wishlist/1
+Authorization: Bearer {{userAuthToken}}
+
+### 12. Get Another Wishlist
+GET {{baseUrl}}/api/wishlist/2
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### BULK OPERATIONS
+### =================================================================
+
+### 13. Bulk Add Items to Wishlist
+POST {{baseUrl}}/api/wishlist/bulk/add
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "wishlistId": 1,
+  "items": [
+    {
+      "productId": 5,
+      "notes": "S?n ph?m t?t cho s?c kh?e"
+    },
+    {
+      "productId": 6,
+      "notes": "Món ?n v?t yêu thích"
+    }
+  ]
+}
+
+### 14. Get Wishlist After Bulk Add
+GET {{baseUrl}}/api/wishlist/1
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### ITEM OPERATIONS
+### =================================================================
+
+### 15. Move Wishlist Item to Cart (replace with actual wishlist item ID)
+POST {{baseUrl}}/api/wishlist/items/1/move-to-cart?quantity=2
+Authorization: Bearer {{userAuthToken}}
+
+### 16. Remove Item from Wishlist (replace with actual wishlist item ID)
+DELETE {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "wishlistItemId": 2
+}
+
+### 17. Move All Items from Wishlist to Cart
+POST {{baseUrl}}/api/wishlist/2/move-all-to-cart
+Authorization: Bearer {{userAuthToken}}
+
+### 18. Bulk Remove Items from Wishlist
+DELETE {{baseUrl}}/api/wishlist/bulk/remove
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "wishlistItemIds": [3, 4]
+}
+
+### =================================================================
+### WISHLIST MANAGEMENT OPERATIONS
+### =================================================================
+
+### 19. Update Wishlist Details
+PUT {{baseUrl}}/api/wishlist/1
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "Danh sách yêu thích ?ã c?p nh?t",
+  "description": "Mô t? m?i cho wishlist",
+  "isPublic": true
+}
+
+### 20. Set Wishlist Privacy
+PATCH {{baseUrl}}/api/wishlist/1/privacy?isPublic=false
+Authorization: Bearer {{userAuthToken}}
+
+### 21. Share Wishlist (Generate Share Link)
+POST {{baseUrl}}/api/wishlist/1/share
+Authorization: Bearer {{userAuthToken}}
+
+### 22. Get Shared Wishlist (Public - No Auth Required)
+# Use the share token from step 21 response
+GET {{baseUrl}}/api/wishlist/shared/SAMPLE_TOKEN
+
+### =================================================================
+### CHECK CART AFTER OPERATIONS
+### =================================================================
+
+### 23. Check Cart After Moving Items
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{userAuthToken}}
+
+### 24. Get All Wishlists After Operations
+GET {{baseUrl}}/api/wishlist
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### ERROR TESTING
+### =================================================================
+
+### 25. Try to Access Wishlist Without Authentication
+GET {{baseUrl}}/api/wishlist
+
+### 26. Try to Add Non-existent Product to Wishlist
+POST {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 9999,
+  "notes": "This should fail"
+}
+
+### 27. Try to Add Duplicate Item to Wishlist
+POST {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "wishlistId": 1,
+  "notes": "This should fail - duplicate"
+}
+
+### 28. Try to Update Non-existent Wishlist
+PUT {{baseUrl}}/api/wishlist/999
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "name": "This should fail",
+  "description": "Non-existent wishlist",
+  "isPublic": false
+}
+
+### 29. Try to Remove Non-existent Wishlist Item
+DELETE {{baseUrl}}/api/wishlist/items
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "wishlistItemId": 999
+}
+
+### =================================================================
+### CLEANUP (OPTIONAL)
+### =================================================================
+
+### 30. Delete Test Wishlist
+DELETE {{baseUrl}}/api/wishlist/2
+Authorization: Bearer {{userAuthToken}}
+
+### 31. Final Check - Get Remaining Wishlists
+GET {{baseUrl}}/api/wishlist
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### NOTES & INSTRUCTIONS
+### =================================================================
+
+###
+### ?? WISHLIST API TESTING GUIDE:
+### 
+### 1. Run the login request first to get authentication token
+### 2. Test basic wishlist CRUD operations
+### 3. Test wishlist item management (add, remove, move to cart)
+### 4. Test bulk operations for efficiency
+### 5. Test sharing and privacy features
+### 6. Test error scenarios
+### 
+### ?? EXPECTED BEHAVIORS:
+### 
+### ? Default wishlist created automatically for new users
+### ? Multiple wishlists per user supported
+### ? Items can be added/removed from wishlists
+### ? Items can be moved from wishlist to cart
+### ? Bulk operations work correctly
+### ? Privacy settings can be controlled
+### ? Sharing functionality generates tokens
+### ? Error handling for invalid requests
+### 
+### ?? TESTING CHECKLIST:
+### 
+### ? Wishlist creation and retrieval works
+### ? Default wishlist auto-creation functions
+### ? Items can be added to wishlists
+### ? Duplicate prevention works
+### ? Items can be moved to cart successfully
+### ? Bulk operations complete correctly
+### ? Wishlist updates save properly
+### ? Privacy controls function
+### ? Sharing generates valid tokens
+### ? Error cases return appropriate messages
+### ? Authentication requirements enforced
+### 
+### ?? COMMON ISSUES:
+### 
+### - Replace placeholder IDs with actual IDs from responses
+### - Ensure products exist before adding to wishlist
+### - Check that user is properly authenticated
+### - Verify wishlist IDs are correct for operations
+### 
+### ?? WISHLIST FEATURES:
+### 
+### - Default wishlist automatically created
+### - Multiple wishlists per user
+### - Item notes and priorities
+### - Move items between wishlist and cart
+### - Privacy controls (public/private)
+### - Sharing with generated tokens
+### - Bulk operations for efficiency
+### 
+### ?? ITEM MANAGEMENT:
+### 
+### - Add products to wishlist with notes
+### - Remove individual items
+### - Bulk add/remove operations
+### - Move items to cart with quantity
+### - Move all items from wishlist to cart
+### - Prevent duplicate items in same wishlist
+######

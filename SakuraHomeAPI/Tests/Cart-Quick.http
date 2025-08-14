@@ -1,0 +1,143 @@
+### =================================================================
+### CART API QUICK TEST
+### =================================================================
+@baseUrl = http://localhost:5273
+
+### Step 1: Login to get authentication token
+# @name cartLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com",
+  "password": "Quick123!",
+  "rememberMe": false
+}
+
+### Store auth token
+@cartAuthToken = {{cartLogin.response.body.data.token}}
+
+### Step 2: Get Empty Cart
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### Step 3: Add Pocky to Cart (Product ID = 1)
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2,
+  "customOptions": "Gift wrapping requested",
+  "giftMessage": "Happy Birthday!",
+  "isGift": true
+}
+
+### Step 4: Add Matcha to Cart (Product ID = 2)
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 2,
+  "quantity": 1
+}
+
+### Step 5: Get Cart with Items
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### Step 6: Get Cart Summary
+GET {{baseUrl}}/api/cart/summary
+Authorization: Bearer {{cartAuthToken}}
+
+### Step 7: Update Pocky Quantity
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 3
+}
+
+### Step 8: Remove Matcha from Cart
+DELETE {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 2
+}
+
+### Step 9: Clear Entire Cart
+DELETE {{baseUrl}}/api/cart/clear
+Authorization: Bearer {{cartAuthToken}}
+
+### Step 10: Verify Empty Cart
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### =================================================================
+### GUEST CART TEST (No Login Required)
+### =================================================================
+
+### Guest: Add to Cart
+POST {{baseUrl}}/api/cart/items?sessionId=guest-test-session
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1
+}
+
+### Guest: Get Cart
+GET {{baseUrl}}/api/cart?sessionId=guest-test-session
+
+### Guest: Merge with User Cart (after login)
+POST {{baseUrl}}/api/cart/merge?sessionId=guest-test-session
+Authorization: Bearer {{cartAuthToken}}
+
+### Get Final Cart After Merge
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{cartAuthToken}}
+
+### =================================================================
+### ERROR TESTING
+### =================================================================
+
+### Try to add non-existent product
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 99999,
+  "quantity": 1
+}
+
+### Try to add with negative quantity
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{cartAuthToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": -1
+}
+
+### =================================================================
+### NOTES
+### =================================================================
+###
+### This test file uses the seeded products:
+### - Product ID 1: Pocky Chocolate Sticks (45,000 VND)
+### - Product ID 2: Matcha Green Tea Powder (350,000 VND)
+### - Product ID 3: Shiseido Ultimune (2,800,000 VND)
+### 
+### Make sure to:
+### 1. Start the application (dotnet run)
+### 2. Register/login the test user first
+### 3. Run tests sequentially for best results
+###

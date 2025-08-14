@@ -1,0 +1,275 @@
+### =================================================================
+### USER PROFILE & ADDRESS API TESTING
+### =================================================================
+@baseUrl = http://localhost:5273
+
+### Prerequisites: Login first to get auth token
+# @name userLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "quicktest@example.com",
+  "password": "Quick123!",
+  "rememberMe": false
+}
+
+### Store auth token for user operations
+@userAuthToken = {{userLogin.response.body.data.token}}
+
+### =================================================================
+### USER PROFILE MANAGEMENT
+### =================================================================
+
+### 1. Get User Profile
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userAuthToken}}
+
+### 2. Update User Profile
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Updated First Name",
+  "lastName": "Updated Last Name",
+  "phoneNumber": "+84987654321",
+  "dateOfBirth": "1990-05-15",
+  "gender": 1,
+  "avatar": "https://example.com/avatar.jpg",
+  "preferredLanguage": "en",
+  "preferredCurrency": "USD",
+  "emailNotifications": false,
+  "smsNotifications": true,
+  "pushNotifications": true
+}
+
+### 3. Get User Profile After Update
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userAuthToken}}
+
+### 4. Get User Statistics
+GET {{baseUrl}}/api/user/stats
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### ADDRESS MANAGEMENT
+### =================================================================
+
+### 5. Get User Addresses (Should be empty initially)
+GET {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+
+### 6. Create Home Address
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "addressLine1": "123 Main Street",
+  "addressLine2": "Apartment 4B",
+  "city": "Ho Chi Minh City",
+  "stateProvince": "Ho Chi Minh",
+  "postalCode": "700000",
+  "country": "Vietnam",
+  "phoneNumber": "+84123456789",
+  "recipientName": "John Doe",
+  "isDefault": true,
+  "type": 1,
+  "notes": "Home address - Ring the bell twice"
+}
+
+### 7. Create Office Address
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "addressLine1": "456 Business District",
+  "addressLine2": "Floor 15, Office 1503",
+  "city": "Ho Chi Minh City",
+  "stateProvince": "Ho Chi Minh",
+  "postalCode": "700001",
+  "country": "Vietnam",
+  "phoneNumber": "+84987654321",
+  "recipientName": "John Doe",
+  "isDefault": false,
+  "type": 2,
+  "notes": "Office address - Security desk at ground floor"
+}
+
+### 8. Get All Addresses After Creation
+GET {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+
+### 9. Update First Address (Need to replace {addressId} with actual ID from step 6)
+PUT {{baseUrl}}/api/user/addresses/1
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "addressLine1": "123 Updated Main Street",
+  "addressLine2": "Updated Apartment 4B",
+  "city": "Updated Ho Chi Minh City",
+  "stateProvince": "Updated Ho Chi Minh",
+  "postalCode": "700002",
+  "country": "Vietnam",
+  "phoneNumber": "+84111222333",
+  "recipientName": "Updated John Doe",
+  "isDefault": true,
+  "type": 3,
+  "notes": "Updated home address - Updated instructions"
+}
+
+### 10. Set Second Address as Default
+PATCH {{baseUrl}}/api/user/addresses/2/set-default
+Authorization: Bearer {{userAuthToken}}
+
+### 11. Get Addresses After Updates
+GET {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+
+### 12. Delete First Address
+DELETE {{baseUrl}}/api/user/addresses/1
+Authorization: Bearer {{userAuthToken}}
+
+### 13. Get Addresses After Deletion
+GET {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### ERROR TESTING
+### =================================================================
+
+### 14. Try to access profile without authentication
+GET {{baseUrl}}/api/user/profile
+
+### 15. Try to create address with invalid data
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "addressLine1": "",
+  "city": "",
+  "stateProvince": "",
+  "postalCode": "",
+  "country": "",
+  "phoneNumber": "invalid-phone",
+  "recipientName": ""
+}
+
+### 16. Try to update non-existent address
+PUT {{baseUrl}}/api/user/addresses/999
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "addressLine1": "This should fail",
+  "city": "Test City"
+}
+
+### 17. Try to delete non-existent address
+DELETE {{baseUrl}}/api/user/addresses/999
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### ADVANCED TESTING
+### =================================================================
+
+### 18. Update Profile with Partial Data
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Partially Updated",
+  "emailNotifications": true
+}
+
+### 19. Create Multiple Addresses for Testing
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{userAuthToken}}
+Content-Type: application/json
+
+{
+  "addressLine1": "789 Test Street",
+  "city": "Hanoi",
+  "stateProvince": "Hanoi",
+  "postalCode": "100000",
+  "country": "Vietnam",
+  "phoneNumber": "+84555666777",
+  "recipientName": "Test User",
+  "isDefault": false,
+  "type": 1,
+  "notes": "Test address for bulk operations"
+}
+
+### 20. Get Updated Statistics
+GET {{baseUrl}}/api/user/stats
+Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### PROFILE DELETION TEST (DANGER!)
+### =================================================================
+
+### 21. Delete User Profile (Soft Delete)
+# DELETE {{baseUrl}}/api/user/profile
+# Authorization: Bearer {{userAuthToken}}
+
+### 22. Try to access profile after deletion (should fail)
+# GET {{baseUrl}}/api/user/profile
+# Authorization: Bearer {{userAuthToken}}
+
+### =================================================================
+### NOTES & INSTRUCTIONS
+### =================================================================
+
+###
+### ?? USER API TESTING GUIDE:
+### 
+### 1. Run the login request first to get authentication token
+### 2. Test profile endpoints to see user information and updates
+### 3. Test address management (CRUD operations)
+### 4. Test error cases and edge scenarios
+### 
+### ?? EXPECTED BEHAVIORS:
+### 
+### ? Profile retrieval shows user information
+### ? Profile updates modify user data correctly
+### ? Address creation/update/deletion works properly
+### ? Default address management functions correctly
+### ? Statistics show accurate user data
+### ? Error handling for invalid requests
+### 
+### ?? TESTING CHECKLIST:
+### 
+### ? Profile retrieval works
+### ? Profile updates save correctly
+### ? Address CRUD operations function
+### ? Default address switching works
+### ? User statistics display properly
+### ? Error cases return appropriate messages
+### ? Authentication requirements enforced
+### 
+### ?? COMMON ISSUES:
+### 
+### - Replace {addressId} placeholders with actual IDs from responses
+### - Ensure user is properly authenticated
+### - Check that address data meets validation requirements
+### - Verify field names match the API expectations
+### 
+### ?? ADDRESS TYPES:
+### 
+### - 1: Billing Address
+### - 2: Shipping Address  
+### - 3: Both Billing and Shipping
+### 
+### ?? GENDER VALUES:
+### 
+### - 0: Unknown
+### - 1: Male
+### - 2: Female
+### - 3: Other
+### - 4: Prefer Not to Say
+######
