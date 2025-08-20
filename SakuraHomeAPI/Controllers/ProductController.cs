@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
@@ -578,39 +578,151 @@ namespace SakuraHomeAPI.Controllers
         private IQueryable<Product> ApplyFilters(IQueryable<Product> query, ProductFilterRequestDto request)
         {
             if (request.CategoryId.HasValue)
+            {
                 query = query.Where(p => p.CategoryId == request.CategoryId.Value);
+                _logger.LogInformation("Filtering by CategoryId: {CategoryId}", request.CategoryId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Category) && request.Category.ToLower() != "all")
+            {
+                var categorySlug = request.Category.ToLower().Trim();
+
+                if (request.IncludeSubcategories)
+                {
+                    // Include subcategories in filter
+                    query = query.Where(p =>
+                        p.Category.Slug.ToLower() == categorySlug ||
+                        (p.Category.Parent != null && p.Category.Parent.Slug.ToLower() == categorySlug) ||
+                        (p.Category.Parent != null && p.Category.Parent.Parent != null && p.Category.Parent.Parent.Slug.ToLower() == categorySlug)
+                    );
+                }
+                else
+                {
+                    // Only direct category match
+                    query = query.Where(p => p.Category.Slug.ToLower() == categorySlug);
+                }
+
+                _logger.LogInformation("Filtering by category slug: {CategorySlug}, IncludeSubcategories: {IncludeSubcategories}",
+                    categorySlug, request.IncludeSubcategories);
+            }
 
             if (request.BrandId.HasValue)
+            {
                 query = query.Where(p => p.BrandId == request.BrandId.Value);
+                _logger.LogInformation("Filtering by BrandId: {BrandId}", request.BrandId.Value);
+            }
 
             if (request.MinPrice.HasValue)
+            {
                 query = query.Where(p => p.Price >= request.MinPrice.Value);
+                _logger.LogInformation("Filtering by MinPrice: {MinPrice}", request.MinPrice.Value);
+            }
 
             if (request.MaxPrice.HasValue)
+            {
                 query = query.Where(p => p.Price <= request.MaxPrice.Value);
+                _logger.LogInformation("Filtering by MaxPrice: {MaxPrice}", request.MaxPrice.Value);
+            }
+
+            if (request.MinRating.HasValue)
+            {
+                query = query.Where(p => p.Rating >= request.MinRating.Value);
+                _logger.LogInformation("Filtering by MinRating: {MinRating}", request.MinRating.Value);
+            }
 
             if (request.InStockOnly)
+            {
                 query = query.Where(p => p.Stock > 0 || p.AllowBackorder);
+                _logger.LogInformation("Filtering by InStockOnly");
+            }
 
             if (request.OnSaleOnly)
+            {
                 query = query.Where(p => p.OriginalPrice.HasValue && p.OriginalPrice > p.Price);
+                _logger.LogInformation("Filtering by OnSaleOnly");
+            }
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
                 var searchTerm = request.Search.ToLower().Trim();
-                query = query.Where(p => 
+                query = query.Where(p =>
                     p.Name.ToLower().Contains(searchTerm) ||
                     (p.Description != null && p.Description.ToLower().Contains(searchTerm)) ||
                     (p.Tags != null && p.Tags.ToLower().Contains(searchTerm)) ||
                     p.Brand.Name.ToLower().Contains(searchTerm) ||
                     p.Category.Name.ToLower().Contains(searchTerm));
+                _logger.LogInformation("Filtering by search term: {SearchTerm}", searchTerm);
             }
 
             if (request.FeaturedOnly)
+            {
                 query = query.Where(p => p.IsFeatured);
+                _logger.LogInformation("Filtering by FeaturedOnly");
+            }
 
             if (request.NewOnly)
+            {
                 query = query.Where(p => p.IsNew);
+                _logger.LogInformation("Filtering by NewOnly");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Origin))
+            {
+                query = query.Where(p => p.Origin != null && p.Origin.ToLower().Contains(request.Origin.ToLower()));
+                _logger.LogInformation("Filtering by Origin: {Origin}", request.Origin);
+            }
+
+            if (request.Condition.HasValue)
+            {
+                query = query.Where(p => (int)p.Condition == request.Condition.Value);
+                _logger.LogInformation("Filtering by Condition: {Condition}", request.Condition.Value);
+            }
+
+            if (request.AgeRestriction.HasValue)
+            {
+                query = query.Where(p => (int)p.AgeRestriction == request.AgeRestriction.Value);
+                _logger.LogInformation("Filtering by AgeRestriction: {AgeRestriction}", request.AgeRestriction.Value);
+            }
+
+            if (request.MinWeight.HasValue)
+            {
+                query = query.Where(p => p.Weight.HasValue && p.Weight >= request.MinWeight.Value);
+            }
+
+            if (request.MaxWeight.HasValue)
+            {
+                query = query.Where(p => p.Weight.HasValue && p.Weight <= request.MaxWeight.Value);
+            }
+
+            if (request.HasDiscount.HasValue && request.HasDiscount.Value)
+            {
+                query = query.Where(p => p.OriginalPrice.HasValue && p.OriginalPrice > p.Price);
+            }
+
+            if (request.IsLimitedEdition.HasValue)
+            {
+                query = query.Where(p => p.IsLimitedEdition == request.IsLimitedEdition.Value);
+            }
+
+            if (request.AllowBackorder.HasValue)
+            {
+                query = query.Where(p => p.AllowBackorder == request.AllowBackorder.Value);
+            }
+
+            if (request.AllowPreorder.HasValue)
+            {
+                query = query.Where(p => p.AllowPreorder == request.AllowPreorder.Value);
+            }
+
+            if (request.AvailableFrom.HasValue)
+            {
+                query = query.Where(p => !p.AvailableFrom.HasValue || p.AvailableFrom <= request.AvailableFrom.Value);
+            }
+
+            if (request.AvailableUntil.HasValue)
+            {
+                query = query.Where(p => !p.AvailableUntil.HasValue || p.AvailableUntil >= request.AvailableUntil.Value);
+            }
 
             return query;
         }

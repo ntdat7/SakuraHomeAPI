@@ -1,4 +1,4 @@
-using SakuraHomeAPI.DTOs.Common;
+﻿using SakuraHomeAPI.DTOs.Common;
 
 namespace SakuraHomeAPI.DTOs.Products.Requests
 {
@@ -9,6 +9,7 @@ namespace SakuraHomeAPI.DTOs.Products.Requests
     {
         public string? Search { get; set; }
         public int? CategoryId { get; set; }
+        public string? Category { get; set; }
         public bool IncludeSubcategories { get; set; } = false;
         public int? BrandId { get; set; }
         public decimal? MinPrice { get; set; }

@@ -9,34 +9,34 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "quicktest@example.com",
-  "password": "Quick123!",
-  "rememberMe": false
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
 }
 
 ### ?? Store tokens
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJiZTlhZTY4Yy0xZWE1LTQzYTktYjcwZC0zZDMwMmM2MjAxMWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6IjU5YTI0NzdhLThhN2ItNGQ4My1hYmNlLTM4NzBhMjNlOGVjOSIsImlhdCI6MTc1NDUzNDk4MSwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NDUzNDk4MSwiZXhwIjoxNzU0NTM4NTgxLCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.dV_gJffWhJJwRESDvpEQHJvIiZVHh46Fk46knp4qYhI
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzODU5MWYwOC1jZWRjLTQ3MjctYTZkNC1iYmFlMTY5YjljZGIiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBVc2VyIiwicm9sZSI6IlN1cGVyQWRtaW4iLCJmaXJzdE5hbWUiOiJBZG1pbiIsImxhc3ROYW1lIjoiVXNlciIsInRpZXIiOiJCcm9uemUiLCJzdGF0dXMiOiJBY3RpdmUiLCJlbWFpbFZlcmlmaWVkIjoiRmFsc2UiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiIxMWMyNjg0MS03MDU5LTQ2YjctOGQxNS1hNGZjMmY3NWQ3ZmIiLCJpYXQiOjE3NTU1NzAxODIsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NTU1NzAxODIsImV4cCI6MTc1NTU3Mzc4MiwiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.pnBc8GHrXEs-n372ySVVhvwNxXzTaKvefwBV1UqaE2I
 
 ### =================================================================
 ### COUPON MANAGEMENT (Admin/Staff)
 ### =================================================================
 
 ### 1. ?? Create Percentage Discount Coupon
-POST {{baseUrl}}/api/coupons
+POST {{baseUrl}}/api/coupon
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
   "name": "New Year Sale",
   "code": "NEWYEAR2024",
-  "description": "Gi?m 20% cho don hàng từ 500k",
-  "type": "Percentage",
+  "description": "Giảm 20% cho đơn hàng từ 500k",
+  "type": 1,
   "value": 20,
   "minOrderAmount": 500000,
   "maxDiscountAmount": 200000,
   "usageLimit": 1000,
   "startDate": "2024-01-01T00:00:00Z",
-  "endDate": "2024-01-31T23:59:59Z",
+  "endDate": "2026-01-31T23:59:59Z",
   "isActive": true,
   "applicableToProducts": [1, 2, 3],
   "applicableToCategories": [1, 2],

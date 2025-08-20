@@ -1,7 +1,7 @@
-### =================================================================
+﻿### =================================================================
 ### USER PROFILE & ADDRESS API TESTING
 ### =================================================================
-@baseUrl = http://localhost:5273
+@baseUrl = https://localhost:8080
 
 ### Prerequisites: Login first to get auth token
 # @name userLogin
@@ -9,13 +9,13 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "quicktest@example.com",
-  "password": "Quick123!",
-  "rememberMe": false
+  "email": "datnt712@gmail.com",
+  "password": "Dat7122003@",
+  "rememberMe": true
 }
 
 ### Store auth token for user operations
-@userAuthToken = {{userLogin.response.body.data.token}}
+@userAuthToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJjY2QzMjhmZS1jZmZlLTQ5ZjAtOTEyNi1iOWEyMjY0MGI3YjMiLCJlbWFpbCI6ImRhdG50NzEyQGdtYWlsLmNvbSIsInVuaXF1ZV9uYW1lIjoiTmd1eeG7hW4gIFRow6BuaCDEkOG6oXQiLCJyb2xlIjoiQ3VzdG9tZXIiLCJmaXJzdE5hbWUiOiJOZ3V54buFbiAiLCJsYXN0TmFtZSI6IlRow6BuaCDEkOG6oXQiLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IkZhbHNlIiwicGhvbmVWZXJpZmllZCI6IkZhbHNlIiwicG9pbnRzIjoiMCIsInRvdGFsU3BlbnQiOiIwLjAwIiwicHJlZmVycmVkTGFuZ3VhZ2UiOiJ2aSIsInByZWZlcnJlZEN1cnJlbmN5IjoiVk5EIiwianRpIjoiZDE3MDZlMGMtYWZhMy00YzBlLWFhNzYtZmNiYWUyYjgzYjgyIiwiaWF0IjoxNzU1NTkyNjE1LCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjAzOTY5NjYzNzYiLCJiaXJ0aGRhdGUiOiIyMDAzLTEyLTA3IiwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NTU5MjYxNSwiZXhwIjoxNzU1NTk2MjE1LCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.wyrfZt5jmQzaAZWXItKAHCqTp1-yHtpvq1Z5OGMtDWM
 
 ### =================================================================
 ### USER PROFILE MANAGEMENT
@@ -73,7 +73,7 @@ Content-Type: application/json
   "postalCode": "700000",
   "country": "Vietnam",
   "phoneNumber": "+84123456789",
-  "recipientName": "John Doe",
+  "recipientName": "Dat Nguyen",
   "isDefault": true,
   "type": 1,
   "notes": "Home address - Ring the bell twice"

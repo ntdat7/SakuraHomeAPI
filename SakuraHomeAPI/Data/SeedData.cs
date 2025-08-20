@@ -1276,6 +1276,7 @@ namespace SakuraHomeAPI.Data
                 Status = AccountStatus.Active,
                 PasswordHash = "AQAAAAIAAYagAAAAEEV7OG+DPOtR9KwqdzspiSFEm2Q00X7fYjWfn7fhRI0+8R/F1rFeEV1+CLyGtmKtxw==",
                 SecurityStamp = "b1e2c3d4-5678-1234-9876-abcdefabcdef",
+                ConcurrencyStamp = "12345678-1234-1234-1234-123456789012",
                 IsActive = true,
                 IsDeleted = false,
                 CreatedAt = new DateTime(2024, 1, 1),
