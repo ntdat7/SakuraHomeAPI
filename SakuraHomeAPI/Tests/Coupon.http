@@ -9,9 +9,9 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "quicktest@example.com",
-  "password": "Quick123!",
-  "rememberMe": false
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
 }
 
 ### ?? Store tokens
@@ -23,21 +23,21 @@ Content-Type: application/json
 ### =================================================================
 
 ### 1. ?? Create Percentage Discount Coupon
-POST {{baseUrl}}/api/coupons
+POST {{baseUrl}}/api/coupon
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
   "name": "New Year Sale",
   "code": "NEWYEAR2024",
-  "description": "Gi?m 20% cho don hàng từ 500k",
-  "type": "Percentage",
+  "description": "Giảm 20% cho đơn hàng từ 500k",
+  "type": 1,
   "value": 20,
   "minOrderAmount": 500000,
   "maxDiscountAmount": 200000,
   "usageLimit": 1000,
   "startDate": "2024-01-01T00:00:00Z",
-  "endDate": "2024-01-31T23:59:59Z",
+  "endDate": "2026-01-31T23:59:59Z",
   "isActive": true,
   "applicableToProducts": [1, 2, 3],
   "applicableToCategories": [1, 2],

@@ -9,9 +9,9 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "quicktest@example.com",
-  "password": "Quick123!",
-  "rememberMe": false
+  "email": "datnt712@gmail.com",
+  "password": "Dat7122003@",
+  "rememberMe": true
 }
 
 ### Store auth token for user operations
@@ -73,7 +73,7 @@ Content-Type: application/json
   "postalCode": "700000",
   "country": "Vietnam",
   "phoneNumber": "+84123456789",
-  "recipientName": "John Doe",
+  "recipientName": "Dat Nguyen",
   "isDefault": true,
   "type": 1,
   "notes": "Home address - Ring the bell twice"
