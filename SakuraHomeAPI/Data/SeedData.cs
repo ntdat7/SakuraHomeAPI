@@ -22,7 +22,7 @@ namespace SakuraHomeAPI.Data
             SeedNotificationTemplates(builder);
             SeedPaymentMethods(builder);
             SeedProducts(builder);
-            SeedSuperAdminUser(builder);
+            //SeedSuperAdminUser(builder);
         }
 
         /// <summary>
@@ -1261,27 +1261,27 @@ namespace SakuraHomeAPI.Data
         }
 
 
-        private static void SeedSuperAdminUser(ModelBuilder builder)
-        {
-            var superAdminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-            builder.Entity<User>().HasData(new User
-            {
-                Id = superAdminId,
-                Email = "superadmin@sakurahome.com",
-                UserName = "superadmin",
-                EmailConfirmed = true,
-                FirstName = "Super",
-                LastName = "Admin",
-                Role = UserRole.SuperAdmin,
-                Status = AccountStatus.Active,
-                PasswordHash = "AQAAAAIAAYagAAAAEEV7OG+DPOtR9KwqdzspiSFEm2Q00X7fYjWfn7fhRI0+8R/F1rFeEV1+CLyGtmKtxw==",
-                SecurityStamp = "b1e2c3d4-5678-1234-9876-abcdefabcdef",
-                ConcurrencyStamp = "11111111-1111-1111-1111-111111111111", 
-                IsActive = true,
-                IsDeleted = false,
-                CreatedAt = new DateTime(2024, 1, 1),
-                UpdatedAt = new DateTime(2024, 1, 1)
-            });
-        }
+        //private static void SeedSuperAdminUser(ModelBuilder builder)
+        //{
+        //    var superAdminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        //    builder.Entity<User>().HasData(new User
+        //    {
+        //        Id = superAdminId,
+        //        Email = "superadmin@sakurahome.com",
+        //        UserName = "superadmin",
+        //        EmailConfirmed = true,
+        //        FirstName = "Super",
+        //        LastName = "Admin",
+        //        Role = UserRole.SuperAdmin,
+        //        Status = AccountStatus.Active,
+        //        PasswordHash = "AQAAAAIAAYagAAAAEEV7OG+DPOtR9KwqdzspiSFEm2Q00X7fYjWfn7fhRI0+8R/F1rFeEV1+CLyGtmKtxw==",
+        //        SecurityStamp = "b1e2c3d4-5678-1234-9876-abcdefabcdef",
+        //        ConcurrencyStamp = "12345678-1234-1234-1234-161143123432", 
+        //        IsActive = true,
+        //        IsDeleted = false,
+        //        CreatedAt = new DateTime(2024, 1, 1),
+        //        UpdatedAt = new DateTime(2024, 1, 1)
+        //    });
+        //}
     }
 }

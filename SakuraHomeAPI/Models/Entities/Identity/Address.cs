@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using SakuraHomeAPI.Models.Base;
+using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Enums;
 
 namespace SakuraHomeAPI.Models.Entities.Identity
 {
     /// <summary>
-    /// User address entity
+    /// User address entity - Vietnam only, FE sends IDs
     /// </summary>
     [Table("Addresses")]
     public class Address : BaseEntity, IAuditable, ISoftDelete
     {
-        public Guid UserId { get; set; } // Changed to Guid to match User
+        public Guid UserId { get; set; }
 
         [Required, MaxLength(100)]
         public string Name { get; set; }
@@ -22,19 +23,20 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         public string Phone { get; set; }
 
         [Required, MaxLength(255)]
-        public string AddressLine1 { get; set; }
+        public string AddressLine1 { get; set; } // Số nhà, tên đường
 
         [MaxLength(255)]
-        public string AddressLine2 { get; set; }
+        public string AddressLine2 { get; set; } // Tòa nhà, căn hộ
 
-        [Required, MaxLength(100)]
-        public string City { get; set; }
+        // Vietnam Address Structure - IDs only
+        [Required]
+        public int ProvinceId { get; set; }  // ID from FE dropdown
 
-        [MaxLength(100)]
-        public string State { get; set; }
+        [Required]
+        public int WardId { get; set; }      // ID from FE dropdown
 
         [MaxLength(20)]
-        public string PostalCode { get; set; }
+        public string PostalCode { get; set; } // Optional
 
         [MaxLength(100)]
         public string Country { get; set; } = "Vietnam";
@@ -45,37 +47,27 @@ namespace SakuraHomeAPI.Models.Entities.Identity
         [MaxLength(500)]
         public string Notes { get; set; }
 
-        // Audit properties (implementing IAuditable with int)
+        // Audit properties
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public int? CreatedBy { get; set; }
         public int? UpdatedBy { get; set; }
 
-        // Soft delete properties (implementing ISoftDelete with int)
+        // Soft delete properties
         public bool IsDeleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
         public int? DeletedBy { get; set; }
 
-        // Navigation
+        // Navigation Properties - ONLY User
         public virtual User User { get; set; }
 
         #region Computed Properties
 
         [NotMapped]
-        public string FullAddress
-        {
-            get
-            {
-                var parts = new List<string>();
-                if (!string.IsNullOrEmpty(AddressLine1)) parts.Add(AddressLine1);
-                if (!string.IsNullOrEmpty(AddressLine2)) parts.Add(AddressLine2);
-                if (!string.IsNullOrEmpty(City)) parts.Add(City);
-                if (!string.IsNullOrEmpty(State)) parts.Add(State);
-                if (!string.IsNullOrEmpty(PostalCode)) parts.Add(PostalCode);
-                if (!string.IsNullOrEmpty(Country)) parts.Add(Country);
-                return string.Join(", ", parts);
-            }
-        }
+        public string ShortAddress => AddressLine1;
+
+        // Note: FullAddress with province/ward names requires service layer lookup
+        // Cannot be computed property since we don't have navigation to Province/Ward
 
         #endregion
     }

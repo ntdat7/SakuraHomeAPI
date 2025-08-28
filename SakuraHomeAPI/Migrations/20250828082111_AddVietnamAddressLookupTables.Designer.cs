@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SakuraHomeAPI.Data;
 
@@ -11,9 +12,11 @@ using SakuraHomeAPI.Data;
 namespace SakuraHomeAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250828082111_AddVietnamAddressLookupTables")]
+    partial class AddVietnamAddressLookupTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1260,6 +1263,11 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Country")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1303,8 +1311,10 @@ namespace SakuraHomeAPI.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("ProvinceId")
-                        .HasColumnType("int");
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -1318,25 +1328,11 @@ namespace SakuraHomeAPI.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("WardId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("IsDefault");
-
-                    b.HasIndex("ProvinceId");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("WardId");
-
-                    b.HasIndex("UserId", "IsDefault");
-
-                    b.ToTable("Addresses", t =>
-                        {
-                            t.HasCheckConstraint("CK_Address_ProvinceWard", "ProvinceId > 0 AND WardId > 0");
-                        });
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.RefreshToken", b =>

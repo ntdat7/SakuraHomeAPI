@@ -1,14 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
-using AutoMapper;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
-using SakuraHomeAPI.Services.Interfaces;
-using SakuraHomeAPI.Models.DTOs;
 using SakuraHomeAPI.DTOs.Orders.Requests;
 using SakuraHomeAPI.DTOs.Orders.Responses;
-using SakuraHomeAPI.Models.Entities.Orders;
-using SakuraHomeAPI.Models.Entities.Identity;
-using SakuraHomeAPI.Models.Enums;
+using SakuraHomeAPI.Models.DTOs;
 using SakuraHomeAPI.Models.Entities;
+using SakuraHomeAPI.Models.Entities.Identity;
+using SakuraHomeAPI.Models.Entities.Orders;
+using SakuraHomeAPI.Models.Entities.UserCart;
+using SakuraHomeAPI.Models.Enums;
+using SakuraHomeAPI.Services.Interfaces;
+using System.Linq;
 
 namespace SakuraHomeAPI.Services.Implementations
 {
@@ -44,9 +46,30 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             try
             {
-                _logger.LogInformation("Creating order for user {UserId}", userId);
+                _logger.LogInformation("Creating order for user {UserId} with {ItemCount} items",
+                    userId, request.Items?.Count ?? 0);
 
-                // Use execution strategy to handle retry logic with transactions
+                // Input validation
+                if (request.Items == null || !request.Items.Any())
+                {
+                    _logger.LogWarning("Order creation failed: No items provided for user {UserId}", userId);
+                    return ApiResponse.ErrorResult<OrderResponseDto>("No items provided for order");
+                }
+
+                if (request.ShippingAddressId <= 0)
+                {
+                    _logger.LogWarning("Order creation failed: Invalid shipping address ID {AddressId} for user {UserId}",
+                        request.ShippingAddressId, userId);
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Invalid shipping address");
+                }
+
+                if (string.IsNullOrEmpty(request.PaymentMethod))
+                {
+                    _logger.LogWarning("Order creation failed: No payment method provided for user {UserId}", userId);
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Payment method is required");
+                }
+
+                // Use execution strategy WITHOUT nested transaction
                 var executionStrategy = _context.Database.CreateExecutionStrategy();
 
                 return await executionStrategy.ExecuteAsync(async () =>
@@ -55,28 +78,26 @@ namespace SakuraHomeAPI.Services.Implementations
 
                     try
                     {
-                        // 1. Validate user and get cart
+                        // 1. Validate user exists
                         var user = await _context.Users.FindAsync(userId);
                         if (user == null)
+                        {
+                            _logger.LogWarning("Order creation failed: User {UserId} not found", userId);
                             return ApiResponse.ErrorResult<OrderResponseDto>("User not found");
+                        }
 
-                        var cartResult = await _cartService.GetCartAsync(userId);
-                        if (!cartResult.IsSuccess || cartResult.Data?.Items.Count == 0)
-                            return ApiResponse.ErrorResult<OrderResponseDto>("Cart is empty");
-
-                        // 2. Validate order
-                        var validationResult = await ValidateOrderAsync(request, userId);
-                        if (!validationResult.Success || !validationResult.Data.IsValid)
-                            return ApiResponse.ErrorResult<OrderResponseDto>("Order validation failed", validationResult.Data.Errors);
-
-                        // 3. Get shipping address
+                        // 2. Validate shipping address
                         var shippingAddress = await _context.Addresses
                             .FirstOrDefaultAsync(a => a.Id == request.ShippingAddressId && a.UserId == userId);
 
                         if (shippingAddress == null)
-                            return ApiResponse.ErrorResult<OrderResponseDto>("Shipping address not found");
+                        {
+                            _logger.LogWarning("Order creation failed: Shipping address {AddressId} not found for user {UserId}",
+                                request.ShippingAddressId, userId);
+                            return ApiResponse.ErrorResult<OrderResponseDto>("Shipping address not found or does not belong to you");
+                        }
 
-                        // 4. Get billing address (use shipping if not specified)
+                        // 3. Validate billing address (if different)
                         Address billingAddress = shippingAddress;
                         if (request.BillingAddressId.HasValue && request.BillingAddressId != request.ShippingAddressId)
                         {
@@ -84,56 +105,153 @@ namespace SakuraHomeAPI.Services.Implementations
                                 .FirstOrDefaultAsync(a => a.Id == request.BillingAddressId && a.UserId == userId);
 
                             if (billingAddress == null)
-                                return ApiResponse.ErrorResult<OrderResponseDto>("Billing address not found");
+                            {
+                                _logger.LogWarning("Order creation failed: Billing address {AddressId} not found for user {UserId}",
+                                    request.BillingAddressId, userId);
+                                return ApiResponse.ErrorResult<OrderResponseDto>("Billing address not found or does not belong to you");
+                            }
                         }
 
-                        // 5. Calculate order totals
-                        var cart = cartResult.Data;
-                        var orderTotals = await CalculateOrderTotalAsync(
-                            cart.Items.Select(i => new OrderItemRequestDto
-                            {
-                                ProductId = i.ProductId,
-                                ProductVariantId = i.ProductVariantId,
-                                Quantity = i.Quantity
-                            }).ToList(),
-                            request.ShippingAddressId,
-                            request.CouponCode
-                        );
+                        // 4. Validate and process order items
+                        var orderItemsData = new List<(Product Product, int Quantity, string CustomOptions)>();
+                        decimal subtotal = 0;
 
-                        // 6. Create order
+                        foreach (var requestItem in request.Items)
+                        {
+                            if (requestItem.ProductId <= 0)
+                            {
+                                _logger.LogWarning("Order creation failed: Invalid product ID {ProductId}", requestItem.ProductId);
+                                return ApiResponse.ErrorResult<OrderResponseDto>($"Invalid product ID: {requestItem.ProductId}");
+                            }
+
+                            if (requestItem.Quantity <= 0)
+                            {
+                                _logger.LogWarning("Order creation failed: Invalid quantity {Quantity} for product {ProductId}",
+                                    requestItem.Quantity, requestItem.ProductId);
+                                return ApiResponse.ErrorResult<OrderResponseDto>($"Invalid quantity: {requestItem.Quantity}");
+                            }
+
+                            // Validate product exists and is available
+                            var product = await _context.Products
+                                .Include(p => p.Brand)
+                                .Include(p => p.Category)
+                                .FirstOrDefaultAsync(p => p.Id == requestItem.ProductId);
+
+                            if (product == null)
+                            {
+                                _logger.LogWarning("Order creation failed: Product {ProductId} not found", requestItem.ProductId);
+                                return ApiResponse.ErrorResult<OrderResponseDto>($"Product with ID {requestItem.ProductId} not found");
+                            }
+
+                            // Check if product is active/available
+                            if (product.Status != ProductStatus.Active)
+                            {
+                                _logger.LogWarning("Order creation failed: Product {ProductId} is not active. Status: {Status}",
+                                    requestItem.ProductId, product.Status);
+                                return ApiResponse.ErrorResult<OrderResponseDto>($"Product {product.Name} is not available for purchase");
+                            }
+
+                            // Check stock availability
+                            if (product.Stock < requestItem.Quantity)
+                            {
+                                _logger.LogWarning("Order creation failed: Insufficient stock for product {ProductId}. Available: {Stock}, Requested: {Quantity}",
+                                    requestItem.ProductId, product.Stock, requestItem.Quantity);
+                                return ApiResponse.ErrorResult<OrderResponseDto>(
+                                    $"Insufficient stock for {product.Name}. Available: {product.Stock}, Requested: {requestItem.Quantity}");
+                            }
+
+                            // Add to order items
+                            string customOptions = requestItem.CustomOptions ?? "{}";
+                            orderItemsData.Add((product, requestItem.Quantity, customOptions));
+                            subtotal += product.Price * requestItem.Quantity;
+                        }
+
+                        if (subtotal <= 0)
+                        {
+                            _logger.LogWarning("Order creation failed: Order subtotal is zero or negative for user {UserId}", userId);
+                            return ApiResponse.ErrorResult<OrderResponseDto>("Order total cannot be zero");
+                        }
+
+                        // 5. Calculate costs - FIXED: Pass express delivery parameter
+                        var isExpressDelivery = request.ExpressDelivery == true;
+                        var shippingFee = await CalculateShippingCostForOrderAsync(request.ShippingAddressId, orderItemsData, isExpressDelivery);
+                        var taxAmount = 0m;
+                        var discountAmount = 0m;
+
+                        // Apply coupon if provided
+                        if (!string.IsNullOrEmpty(request.CouponCode))
+                        {
+                            try
+                            {
+                                discountAmount = await CalculateCouponDiscountAsync(request.CouponCode, subtotal);
+                                _logger.LogInformation("Applied coupon {CouponCode} with discount {Discount} for user {UserId}",
+                                    request.CouponCode, discountAmount, userId);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to apply coupon {CouponCode} for user {UserId}",
+                                    request.CouponCode, userId);
+                                // Continue without coupon rather than failing the entire order
+                            }
+                        }
+
+                        var totalAmount = subtotal + shippingFee + taxAmount - discountAmount;
+
+                        if (totalAmount <= 0)
+                        {
+                            _logger.LogWarning("Order creation failed: Final total is zero or negative for user {UserId}. Subtotal: {Subtotal}, Shipping: {Shipping}, Discount: {Discount}",
+                                userId, subtotal, shippingFee, discountAmount);
+                            return ApiResponse.ErrorResult<OrderResponseDto>("Order total cannot be zero or negative");
+                        }
+
+                        // 6. Generate unique order number
+                        string orderNumber;
+                        try
+                        {
+                            orderNumber = await GenerateUniqueOrderNumberAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to generate order number for user {UserId}", userId);
+                            return ApiResponse.ErrorResult<OrderResponseDto>("Failed to generate order number");
+                        }
+
+                        // 7. Create order entity - FIXED: Use async FormatAddressAsync
                         var order = new Order
                         {
                             UserId = userId,
-                            OrderNumber = await GenerateOrderNumberAsync(),
+                            OrderNumber = orderNumber,
                             Status = OrderStatus.Pending,
 
-                            // Use ReceiverName, ReceiverPhone, ShippingAddress instead of detailed fields
-                            ReceiverName = shippingAddress.Name,
-                            ReceiverPhone = shippingAddress.Phone,
-                            ReceiverEmail = user.Email,
-                            ShippingAddress = $"{shippingAddress.AddressLine1}, {shippingAddress.AddressLine2}, {shippingAddress.City}, {shippingAddress.State}, {shippingAddress.PostalCode}, {shippingAddress.Country}",
-                            BillingAddress = $"{billingAddress.AddressLine1}, {billingAddress.AddressLine2}, {billingAddress.City}, {billingAddress.State}, {billingAddress.PostalCode}, {billingAddress.Country}",
+                            // Address information - FIXED: Use async address formatting
+                            ReceiverName = shippingAddress.Name ?? user.FullName ?? "Unknown",
+                            ReceiverPhone = shippingAddress.Phone ?? user.PhoneNumber ?? "",
+                            ReceiverEmail = user.Email ?? "",
+                            ShippingAddress = await FormatAddressAsync(shippingAddress),
+                            BillingAddress = await FormatAddressAsync(billingAddress),
 
                             // Financial Information
-                            SubTotal = cart.SubTotal,
-                            ShippingFee = await CalculateShippingCostAsync(request.ShippingAddressId, cart.Items),
-                            TaxAmount = 0, // TODO: Implement tax calculation
-                            DiscountAmount = await CalculateDiscountAsync(request.CouponCode, cart.SubTotal),
-                            TotalAmount = orderTotals.Data,
+                            SubTotal = subtotal,
+                            ShippingFee = shippingFee,
+                            TaxAmount = taxAmount,
+                            DiscountAmount = discountAmount,
+                            TotalAmount = totalAmount,
                             Currency = "VND",
 
                             // Payment Information
                             PaymentStatus = PaymentStatus.Pending,
 
                             // Order Details
-                            CustomerNotes = request.OrderNotes,
-                            CouponCode = request.CouponCode,
-                            IsGift = request.GiftWrap,
-                            GiftMessage = request.GiftMessage,
-                            GiftWrapRequested = request.GiftWrap,
+                            CustomerNotes = request.OrderNotes?.Trim(),
+                            CouponCode = string.IsNullOrEmpty(request.CouponCode) ? null : request.CouponCode.Trim(),
 
-                            // Delivery method based on express delivery flag
-                            DeliveryMethod = request.ExpressDelivery ? DeliveryMethod.Express : DeliveryMethod.Standard,
+                            // FIXED: Handle nullable bool properly
+                            IsGift = request.GiftWrap == true,
+                            GiftMessage = request.GiftMessage?.Trim(),
+                            GiftWrapRequested = request.GiftWrap == true,
+
+                            // FIXED: Handle nullable bool properly
+                            DeliveryMethod = request.ExpressDelivery == true ? DeliveryMethod.Express : DeliveryMethod.Standard,
 
                             OrderDate = DateTime.UtcNow,
                             CreatedAt = DateTime.UtcNow,
@@ -143,39 +261,34 @@ namespace SakuraHomeAPI.Services.Implementations
                         _context.Orders.Add(order);
                         await _context.SaveChangesAsync();
 
-                        // 7. Create order items
-                        foreach (var cartItem in cart.Items)
+                        _logger.LogInformation("Order entity created with ID {OrderId} for user {UserId}", order.Id, userId);
+
+                        // 8. Create order items
+                        foreach (var (product, quantity, customOptions) in orderItemsData)
                         {
-                            var product = await _context.Products
-                                .Include(p => p.Brand)
-                                .Include(p => p.Category)
-                                .FirstOrDefaultAsync(p => p.Id == cartItem.ProductId);
-
-                            if (product == null) continue;
-
                             var orderItem = new OrderItem
                             {
                                 OrderId = order.Id,
-                                ProductId = cartItem.ProductId,
-                                ProductVariantId = cartItem.ProductVariantId,
+                                ProductId = product.Id,
+                                ProductVariantId = null,
 
                                 // Product snapshot
-                                ProductName = product.Name,
-                                ProductSku = product.SKU,
-                                ProductImage = cartItem.ProductImage,
-                                VariantName = cartItem.VariantName ?? "",
-                                VariantSku = cartItem.ProductSku ?? "", // Use ProductSku instead of VariantSku
-                                ProductAttributes = cartItem.CustomOptions ?? "{}",
+                                ProductName = product.Name ?? "Unknown Product",
+                                ProductSku = product.SKU ?? "",
+                                ProductImage = product.MainImage ?? "",
+                                VariantName = "",
+                                VariantSku = "",
+                                ProductAttributes = customOptions,
 
-                                Quantity = cartItem.Quantity,
-                                UnitPrice = cartItem.UnitPrice,
-                                TotalPrice = cartItem.TotalPrice
+                                Quantity = quantity,
+                                UnitPrice = product.Price,
+                                TotalPrice = product.Price * quantity
                             };
 
                             _context.OrderItems.Add(orderItem);
                         }
 
-                        // 8. Create initial status history
+                        // 9. Create initial status history
                         var statusHistory = new OrderStatusHistory
                         {
                             OrderId = order.Id,
@@ -186,72 +299,122 @@ namespace SakuraHomeAPI.Services.Implementations
                         };
                         _context.OrderStatusHistory.Add(statusHistory);
 
-                        // 9. Update product stock
-                        foreach (var cartItem in cart.Items)
+                        // 10. Update product stock
+                        foreach (var (product, quantity, _) in orderItemsData)
                         {
-                            var product = await _context.Products.FindAsync(cartItem.ProductId);
-                            if (product != null && product.Status == ProductStatus.Active)
+                            product.Stock = Math.Max(0, product.Stock - quantity);
+                            if (product.Stock == 0)
                             {
-                                // Assuming we have Stock property instead of StockQuantity
-                                product.Stock = Math.Max(0, product.Stock - cartItem.Quantity);
-                                if (product.Stock == 0)
-                                {
-                                    product.Status = ProductStatus.OutOfStock;
-                                }
+                                product.Status = ProductStatus.OutOfStock;
                             }
+                            product.UpdatedAt = DateTime.UtcNow;
                         }
-
-                        // 10. Clear cart
-                        await _cartService.ClearCartAsync(userId);
 
                         // 11. Update user statistics
                         user.TotalOrders++;
                         user.TotalSpent += order.TotalAmount;
-                        user.UpdateTier(); // Update user tier based on spending
 
+                        // Safe tier update - User.UpdateTier() method exists
+                        try
+                        {
+                            user.UpdateTier();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to update user tier for user {UserId}", userId);
+                            // Continue - this is not critical
+                        }
+
+                        // 12. Remove ordered items from cart
+                        try
+                        {
+                            await RemoveOrderedItemsFromCartAsync(userId, request.Items);
+                            _logger.LogInformation("Removed ordered items from cart for user {UserId}", userId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to remove items from cart for user {UserId}", userId);
+                            // Continue - cart cleanup is not critical for order success
+                        }
+
+                        // 13. Save all changes
                         await _context.SaveChangesAsync();
                         await transaction.CommitAsync();
 
-                        _logger.LogInformation("Order {OrderNumber} created successfully for user {UserId}", order.OrderNumber, userId);
+                        _logger.LogInformation("Order {OrderNumber} created successfully for user {UserId} with total {Total}",
+                            order.OrderNumber, userId, totalAmount);
 
-                        // 12. Send notifications and emails (outside of transaction)
+                        // 14. Send notifications (fire and forget - outside transaction)
                         _ = Task.Run(async () =>
                         {
                             try
                             {
-                                // Send order confirmation notification
                                 await _notificationService.SendOrderConfirmationNotificationAsync(order.Id);
-
-                                // Send order confirmation email
                                 await _emailService.SendOrderConfirmationEmailAsync(order);
-
                                 _logger.LogInformation("Order notifications sent for order {OrderNumber}", order.OrderNumber);
                             }
                             catch (Exception ex)
                             {
                                 _logger.LogWarning(ex, "Failed to send order notifications for order {OrderNumber}", order.OrderNumber);
-                                // Don't fail the order creation if notifications fail
                             }
                         });
 
-                        // 13. Return order details
+                        // 15. Return order details
                         var orderDto = await MapOrderToDetailDto(order);
                         return ApiResponse.SuccessResult(orderDto, "Order created successfully");
                     }
-                    catch (Exception)
+                    catch (DbUpdateException dbEx)
                     {
                         await transaction.RollbackAsync();
-                        throw; // Re-throw to be caught by execution strategy
+                        _logger.LogError(dbEx, "Database error creating order for user {UserId}: {Message}",
+                            userId, dbEx.Message);
+
+                        if (dbEx.InnerException != null)
+                        {
+                            _logger.LogError("Inner exception: {InnerMessage}", dbEx.InnerException.Message);
+                        }
+
+                        return ApiResponse.ErrorResult<OrderResponseDto>(
+                            "Database error occurred while creating order. Please try again.");
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Unexpected error creating order for user {UserId}: {Message}",
+                            userId, ex.Message);
+
+                        if (ex.InnerException != null)
+                        {
+                            _logger.LogError("Inner exception: {InnerMessage}", ex.InnerException.Message);
+                        }
+
+                        throw; // Re-throw to be caught by outer catch
                     }
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating order for user {UserId}", userId);
-                return ApiResponse.ErrorResult<OrderResponseDto>("Failed to create order");
+                _logger.LogError(ex, "Fatal error creating order for user {UserId}: {Message}", userId, ex.Message);
+
+                // Return more specific error messages based on exception type
+                if (ex is ArgumentException || ex is InvalidOperationException)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>($"Invalid request: {ex.Message}");
+                }
+
+                if (ex is UnauthorizedAccessException)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Access denied");
+                }
+
+                if (ex is TimeoutException)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Request timeout. Please try again.");
+                }
+
+                return ApiResponse.ErrorResult<OrderResponseDto>("An unexpected error occurred while creating the order. Please try again or contact support.");
             }
         }
-
 
         public async Task<ApiResponse<OrderResponseDto>> GetOrderAsync(int orderId, Guid userId)
         {
@@ -353,12 +516,32 @@ namespace SakuraHomeAPI.Services.Implementations
                 {
                     var address = await _context.Addresses
                         .FirstOrDefaultAsync(a => a.Id == request.ShippingAddressId && a.UserId == userId);
-                    
+
                     if (address != null)
                     {
                         order.ReceiverName = address.Name;
                         order.ReceiverPhone = address.Phone;
-                        order.ShippingAddress = $"{address.AddressLine1}, {address.AddressLine2}, {address.City}, {address.State}, {address.PostalCode}, {address.Country}";
+
+                        // FIXED: Use async FormatAddressAsync instead of manual string building
+                        order.ShippingAddress = await FormatAddressAsync(address);
+
+                        // Recalculate shipping fee if delivery method changed
+                        if (request.ExpressDelivery.HasValue)
+                        {
+                            // Get current order items for shipping calculation
+                            var orderItems = await _context.OrderItems
+                                .Include(oi => oi.Product)
+                                .Where(oi => oi.OrderId == orderId)
+                                .ToListAsync();
+
+                            var orderItemsData = orderItems.Select(oi => (oi.Product, oi.Quantity, oi.ProductAttributes ?? "{}")).ToList();
+                            var newShippingFee = await CalculateShippingCostForOrderAsync(address.Id, orderItemsData, request.ExpressDelivery.Value);
+
+                            // Update shipping fee and total
+                            var shippingDiff = newShippingFee - order.ShippingFee;
+                            order.ShippingFee = newShippingFee;
+                            order.TotalAmount += shippingDiff;
+                        }
                     }
                 }
 
@@ -522,7 +705,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 try
                 {
                     await _notificationService.SendOrderStatusNotificationAsync(orderId, newStatus, notes);
-                    
+
                     // Send specific email notifications for important status changes
                     switch (newStatus)
                     {
@@ -533,8 +716,8 @@ namespace SakuraHomeAPI.Services.Implementations
                             await _emailService.SendOrderStatusUpdateEmailAsync(order, newStatus);
                             break;
                     }
-                    
-                    _logger.LogInformation("Order status notifications sent for order {OrderNumber} - Status: {Status}", 
+
+                    _logger.LogInformation("Order status notifications sent for order {OrderNumber} - Status: {Status}",
                         order.OrderNumber, newStatus);
                 }
                 catch (Exception ex)
@@ -559,7 +742,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 var order = await _context.Orders
                     .Include(o => o.User)
                     .FirstOrDefaultAsync(o => o.Id == orderId);
-                    
+
                 if (order == null)
                     return ApiResponse.ErrorResult<OrderResponseDto>("Order not found");
 
@@ -567,7 +750,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 order.ShippingCarrier = request.ShippingCarrier;
                 order.EstimatedDeliveryDate = request.EstimatedDeliveryDate;
                 order.ShippedDate = DateTime.UtcNow;
-                
+
                 var result = await UpdateOrderStatusAsync(orderId, OrderStatus.Shipped, request.ShippingNotes);
 
                 // Send specific shipment notification with tracking info
@@ -604,11 +787,11 @@ namespace SakuraHomeAPI.Services.Implementations
                     try
                     {
                         await _notificationService.SendOrderDeliveryNotificationAsync(orderId);
-                        
+
                         var order = await _context.Orders
                             .Include(o => o.User)
                             .FirstOrDefaultAsync(o => o.Id == orderId);
-                        
+
                         if (order != null)
                         {
                             await _emailService.SendDeliveryConfirmationEmailAsync(order);
@@ -742,7 +925,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
                 var address = await _context.Addresses
                     .FirstOrDefaultAsync(a => a.Id == request.ShippingAddressId && a.UserId == userId);
-                
+
                 validation.ValidShippingAddress = address != null;
                 if (!validation.ValidShippingAddress)
                 {
@@ -768,25 +951,32 @@ namespace SakuraHomeAPI.Services.Implementations
             }
         }
 
-        public async Task<ApiResponse<decimal>> CalculateOrderTotalAsync(List<OrderItemRequestDto> items, int? shippingAddressId = null, string? couponCode = null)
+        public async Task<ApiResponse<decimal>> CalculateOrderTotalAsync(List<OrderItemRequestDto> items, int? shippingAddressId = null, string? couponCode = null, bool isExpressDelivery = false)
         {
             try
             {
                 decimal subTotal = 0;
+                var orderItemsData = new List<(Product Product, int Quantity, string CustomOptions)>();
+
                 foreach (var item in items)
                 {
                     var product = await _context.Products.FindAsync(item.ProductId);
                     if (product != null)
                     {
                         subTotal += product.Price * item.Quantity;
+                        orderItemsData.Add((product, item.Quantity, item.CustomOptions ?? "{}"));
                     }
                 }
 
-                decimal shipping = shippingAddressId.HasValue 
-                    ? await CalculateShippingCostAsync(shippingAddressId.Value, new List<DTOs.Cart.Responses.CartItemDto>())
+                // FIXED: Pass express delivery parameter and use updated shipping calculation
+                decimal shipping = shippingAddressId.HasValue
+                    ? await CalculateShippingCostForOrderAsync(shippingAddressId.Value, orderItemsData, isExpressDelivery)
+                    : (isExpressDelivery ? 50000 : 30000);
+
+                decimal discount = !string.IsNullOrEmpty(couponCode)
+                    ? await CalculateCouponDiscountAsync(couponCode, subTotal)
                     : 0;
 
-                decimal discount = await CalculateDiscountAsync(couponCode, subTotal);
                 decimal total = subTotal + shipping - discount;
 
                 return ApiResponse.SuccessResult(total, "Order total calculated successfully");
@@ -830,9 +1020,9 @@ namespace SakuraHomeAPI.Services.Implementations
                 CustomerName = order.ReceiverName,
                 CustomerEmail = order.ReceiverEmail ?? "",
                 CustomerPhone = order.ReceiverPhone,
-                
+
                 Items = order.OrderItems?.Select(MapOrderItemToDto).ToList() ?? new List<OrderItemDto>(),
-                        
+
                 ShippingAddress = new OrderAddressDto
                 {
                     FullName = order.ReceiverName,
@@ -845,7 +1035,7 @@ namespace SakuraHomeAPI.Services.Implementations
                     Country = "",
                     Notes = ""
                 },
-                
+
                 BillingAddress = new OrderAddressDto
                 {
                     FullName = order.ReceiverName,
@@ -857,34 +1047,34 @@ namespace SakuraHomeAPI.Services.Implementations
                     PostalCode = "",
                     Country = ""
                 },
-                
+
                 SubTotal = order.SubTotal,
                 ShippingCost = order.ShippingFee,
                 TaxAmount = order.TaxAmount,
                 DiscountAmount = order.DiscountAmount,
                 TotalAmount = order.TotalAmount,
-                
+
                 PaymentMethod = "COD", // Default - you can enhance this
                 PaymentStatus = order.PaymentStatus,
                 PaymentDate = null,
-                
+
                 TrackingNumber = order.TrackingNumber,
                 ShippingCarrier = order.ShippingCarrier,
                 ShippedDate = order.ShippedDate,
                 DeliveredDate = order.DeliveredDate,
                 EstimatedDeliveryDate = order.EstimatedDeliveryDate,
-                
+
                 OrderNotes = order.CustomerNotes ?? "",
                 CouponCode = order.CouponCode,
                 ExpressDelivery = order.DeliveryMethod == DeliveryMethod.Express,
                 GiftWrap = order.GiftWrapRequested,
                 GiftMessage = order.GiftMessage,
-                
+
                 CreatedAt = order.CreatedAt,
                 UpdatedAt = order.UpdatedAt,
                 CancelledDate = order.CancelledDate,
                 CancellationReason = order.CancelReason,
-                
+
                 StatusHistory = order.StatusHistory?.Select(sh => new OrderStatusHistoryDto
                 {
                     Id = sh.Id,
@@ -894,7 +1084,7 @@ namespace SakuraHomeAPI.Services.Implementations
                     CreatedAt = sh.CreatedAt,
                     IsSystemGenerated = true
                 }).ToList() ?? new List<OrderStatusHistoryDto>(),
-                
+
                 Notes = order.OrderNotes?.Select(n => new OrderNoteDto
                 {
                     Id = n.Id,
@@ -953,95 +1143,18 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Pending => "?ang ch? x? lý",
-                OrderStatus.Confirmed => "?ã xác nh?n",
-                OrderStatus.Processing => "?ang x? lý",
-                OrderStatus.Packed => "?ã ?óng gói",
-                OrderStatus.Shipped => "?ã giao cho v?n chuy?n",
-                OrderStatus.OutForDelivery => "?ang giao hàng",
-                OrderStatus.Delivered => "?ã giao hàng",
-                OrderStatus.Cancelled => "?ã h?y",
-                OrderStatus.Returned => "?ã tr? hàng",
-                OrderStatus.Refunded => "?ã hoàn ti?n",
-                _ => "Không xác ??nh"
+                OrderStatus.Pending => "Đang chờ xử lý",
+                OrderStatus.Confirmed => "Đã xác nhận",
+                OrderStatus.Processing => "Đang xử lý",
+                OrderStatus.Packed => "Đã đóng gói",
+                OrderStatus.Shipped => "Đã giao cho vận chuyển",
+                OrderStatus.OutForDelivery => "Đang giao hàng",
+                OrderStatus.Delivered => "Đã giao hàng",
+                OrderStatus.Cancelled => "Đã hủy",
+                OrderStatus.Returned => "Đã trả hàng",
+                OrderStatus.Refunded => "Đã hoàn tiền",
+                _ => "Không xác định"
             };
-        }
-
-        /// <summary>
-        /// Generate unique order number
-        /// </summary>
-        private async Task<string> GenerateOrderNumberAsync()
-        {
-            var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-            var random = new Random().Next(100, 999);
-            var orderNumber = $"{timestamp}{random}";
-            
-            // Ensure uniqueness
-            while (await _context.Orders.AnyAsync(o => o.OrderNumber == orderNumber))
-            {
-                random = new Random().Next(100, 999);
-                orderNumber = $"{timestamp}{random}";
-            }
-            
-            return orderNumber;
-        }
-
-        /// <summary>
-        /// Calculate shipping cost based on address and items
-        /// </summary>
-        private async Task<decimal> CalculateShippingCostAsync(int shippingAddressId, List<DTOs.Cart.Responses.CartItemDto> items)
-        {
-            try
-            {
-                // Get shipping address
-                var address = await _context.Addresses.FindAsync(shippingAddressId);
-                if (address == null) return 0;
-
-                // For now, return a fixed shipping cost based on location
-                // In a real implementation, you would calculate based on weight, distance, etc.
-                var baseCost = address.Country?.ToLower() == "vietnam" ? 30000m : 100000m;
-                
-                // Add weight-based calculation if needed
-                // For now, assume average weight of 0.5kg per item if not specified
-                var totalWeight = items?.Sum(i => 0.5m * i.Quantity) ?? 0;
-                var weightCost = totalWeight > 2 ? (totalWeight - 2) * 10000 : 0;
-
-                return baseCost + weightCost;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error calculating shipping cost, using default");
-                return 30000m; // Default shipping cost
-            }
-        }
-
-        /// <summary>
-        /// Calculate discount amount from coupon
-        /// </summary>
-        private async Task<decimal> CalculateDiscountAsync(string? couponCode, decimal subtotal)
-        {
-            if (string.IsNullOrEmpty(couponCode)) return 0;
-
-            try
-            {
-                var coupon = await _context.Coupons
-                    .FirstOrDefaultAsync(c => c.Code == couponCode && c.IsActive);
-
-                if (coupon == null || !coupon.IsValidForOrder(subtotal))
-                    return 0;
-
-                return coupon.Type switch
-                {
-                    CouponType.Percentage => Math.Min(subtotal * coupon.Value / 100m, coupon.MaxDiscountAmount ?? decimal.MaxValue),
-                    CouponType.FixedAmount => Math.Min(coupon.Value, subtotal),
-                    _ => 0
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error calculating discount for coupon {CouponCode}", couponCode);
-                return 0;
-            }
         }
 
         public async Task<ApiResponse<List<OrderStatusHistoryDto>>> GetOrderStatusHistoryAsync(int orderId)
@@ -1071,5 +1184,294 @@ namespace SakuraHomeAPI.Services.Implementations
                 return ApiResponse.ErrorResult<List<OrderStatusHistoryDto>>("Failed to retrieve order status history");
             }
         }
+
+        #region Helper Methods - FIXED
+
+        /// <summary>
+        /// Calculate shipping cost - NEW LOGIC: Simple standard/express rates + free shipping threshold
+        /// </summary>
+        private async Task<decimal> CalculateShippingCostForOrderAsync(int shippingAddressId,
+            List<(Product Product, int Quantity, string CustomOptions)> orderItems, bool isExpressDelivery = false)
+        {
+            try
+            {
+                // Calculate subtotal first
+                decimal subtotal = 0;
+                foreach (var (product, quantity, _) in orderItems)
+                {
+                    subtotal += product.Price * quantity;
+                }
+
+                // FREE SHIPPING for orders > 700,000 VND
+                if (subtotal > 700000)
+                {
+                    _logger.LogInformation("Free shipping applied for order subtotal {Subtotal} VND", subtotal);
+                    return 0;
+                }
+
+                // Standard shipping logic based on delivery method
+                decimal shippingFee = isExpressDelivery ? 50000 : 30000;
+
+                _logger.LogInformation("Calculated shipping cost: {ShippingFee} VND (Express: {IsExpress}, Subtotal: {Subtotal})",
+                    shippingFee, isExpressDelivery, subtotal);
+
+                return shippingFee;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating shipping cost for address {AddressId}", shippingAddressId);
+                return 30000; // Return default shipping fee on error
+            }
+        }
+
+        /// <summary>
+        /// Format address with province/ward lookup - ASYNC METHOD
+        /// </summary>
+        private async Task<string> FormatAddressAsync(Address address)
+        {
+            if (address == null) return "";
+
+            try
+            {
+                var parts = new List<string>();
+
+                // Add address lines
+                if (!string.IsNullOrEmpty(address.AddressLine1)) parts.Add(address.AddressLine1);
+                if (!string.IsNullOrEmpty(address.AddressLine2)) parts.Add(address.AddressLine2);
+
+                // Lookup and add province/ward names
+                if (address.WardId > 0)
+                {
+                    var ward = await _context.VietnamWards.FindAsync(address.WardId);
+                    if (ward != null) parts.Add(ward.Name);
+                }
+
+                if (address.ProvinceId > 0)
+                {
+                    var province = await _context.VietnamProvinces.FindAsync(address.ProvinceId);
+                    if (province != null) parts.Add(province.Name);
+                }
+
+                // Add postal code and country if available
+                if (!string.IsNullOrEmpty(address.PostalCode)) parts.Add(address.PostalCode);
+                if (!string.IsNullOrEmpty(address.Country)) parts.Add(address.Country);
+
+                return string.Join(", ", parts.Where(p => !string.IsNullOrEmpty(p)));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error formatting address for AddressId {AddressId}", address?.Id);
+
+                // Fallback to basic address
+                var fallbackParts = new List<string>();
+                if (!string.IsNullOrEmpty(address?.AddressLine1)) fallbackParts.Add(address.AddressLine1);
+                if (!string.IsNullOrEmpty(address?.Country)) fallbackParts.Add(address.Country);
+
+                return string.Join(", ", fallbackParts);
+            }
+        }
+
+        /// <summary>
+        /// Remove ordered items from cart
+        /// </summary>
+        private async Task RemoveOrderedItemsFromCartAsync(Guid userId, List<OrderItemRequestDto> orderedItems)
+        {
+            if (orderedItems == null || !orderedItems.Any())
+            {
+                _logger.LogDebug("No items to remove from cart for user {UserId}", userId);
+                return;
+            }
+
+            try
+            {
+                _logger.LogDebug("Removing {Count} ordered items from cart for user {UserId}",
+                    orderedItems.Count, userId);
+
+                var cart = await _context.Carts
+                    .Include(c => c.CartItems)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                if (cart == null)
+                {
+                    _logger.LogDebug("No cart found for user {UserId}", userId);
+                    return;
+                }
+
+                if (!cart.CartItems.Any())
+                {
+                    _logger.LogDebug("Cart is empty for user {UserId}", userId);
+                    return;
+                }
+
+                var itemsToRemove = new List<CartItem>();
+
+                foreach (var orderedItem in orderedItems)
+                {
+                    var cartItem = cart.CartItems.FirstOrDefault(ci =>
+                        ci.ProductId == orderedItem.ProductId &&
+                        (ci.ProductVariantId ?? 0) == (orderedItem.ProductVariantId ?? 0));
+
+                    if (cartItem == null)
+                    {
+                        _logger.LogDebug("Cart item not found for ProductId={ProductId}, VariantId={VariantId}",
+                            orderedItem.ProductId, orderedItem.ProductVariantId);
+                        continue;
+                    }
+
+                    if (cartItem.Quantity <= orderedItem.Quantity)
+                    {
+                        _logger.LogDebug("Marking cart item for removal: ProductId={ProductId}, CartQty={CartQty}, OrderedQty={OrderedQty}",
+                            orderedItem.ProductId, cartItem.Quantity, orderedItem.Quantity);
+                        itemsToRemove.Add(cartItem);
+                    }
+                    else
+                    {
+                        var newQuantity = cartItem.Quantity - orderedItem.Quantity;
+                        _logger.LogDebug("Updating cart item quantity: ProductId={ProductId}, From={From}, To={To}",
+                            orderedItem.ProductId, cartItem.Quantity, newQuantity);
+
+                        cartItem.Quantity = newQuantity;
+                        cartItem.TotalPrice = cartItem.UnitPrice * newQuantity;
+                        cartItem.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+
+                if (itemsToRemove.Any())
+                {
+                    _context.CartItems.RemoveRange(itemsToRemove);
+                    _logger.LogDebug("Removing {Count} cart items", itemsToRemove.Count);
+                }
+
+                cart.UpdatedAt = DateTime.UtcNow;
+
+                _logger.LogInformation("Successfully processed cart updates for user {UserId}: {RemovedCount} items removed",
+                    userId, itemsToRemove.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing ordered items from cart for user {UserId}", userId);
+            }
+        }
+
+        private async Task<string> GenerateUniqueOrderNumberAsync()
+        {
+            const int maxAttempts = 10;
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    var timestamp = DateTime.UtcNow.ToString("yyyyMMdd");
+                    var random = Random.Shared.Next(1000, 9999);
+                    var orderNumber = $"ORD{timestamp}{random}";
+
+                    var exists = await _context.Orders.AnyAsync(o => o.OrderNumber == orderNumber);
+                    if (!exists)
+                    {
+                        _logger.LogDebug("Generated unique order number: {OrderNumber} on attempt {Attempt}",
+                            orderNumber, attempt);
+                        return orderNumber;
+                    }
+
+                    _logger.LogDebug("Order number {OrderNumber} already exists, retrying... (attempt {Attempt})",
+                        orderNumber, attempt);
+
+                    await Task.Delay(10);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error generating order number on attempt {Attempt}", attempt);
+
+                    if (attempt == maxAttempts)
+                    {
+                        throw new InvalidOperationException($"Failed to generate unique order number after {maxAttempts} attempts", ex);
+                    }
+
+                    await Task.Delay(50);
+                }
+            }
+
+            throw new InvalidOperationException($"Failed to generate unique order number after {maxAttempts} attempts");
+        }
+
+        private async Task<decimal> CalculateCouponDiscountAsync(string couponCode, decimal subtotal)
+        {
+            if (string.IsNullOrWhiteSpace(couponCode) || subtotal <= 0) return 0;
+
+            try
+            {
+                _logger.LogDebug("Calculating coupon discount for code {CouponCode} on subtotal {Subtotal}",
+                    couponCode, subtotal);
+
+                var coupon = await _context.Coupons
+                    .FirstOrDefaultAsync(c => c.Code.ToUpper() == couponCode.ToUpper() &&
+                        c.IsActive &&
+                        c.StartDate <= DateTime.UtcNow &&
+                        c.EndDate >= DateTime.UtcNow);
+
+                if (coupon == null)
+                {
+                    _logger.LogWarning("Coupon {CouponCode} not found or not valid", couponCode);
+                    return 0;
+                }
+
+                if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit)
+                {
+                    _logger.LogWarning("Coupon {CouponCode} has exceeded usage limit: {UsedCount}/{Limit}",
+                        couponCode, coupon.UsedCount, coupon.UsageLimit);
+                    return 0;
+                }
+
+                if (coupon.MinOrderAmount.HasValue && subtotal < coupon.MinOrderAmount)
+                {
+                    _logger.LogWarning("Order amount {Subtotal} is below minimum {Minimum} for coupon {CouponCode}",
+                        subtotal, coupon.MinOrderAmount, couponCode);
+                    return 0;
+                }
+
+                decimal discount = 0;
+
+                if (coupon.Type == CouponType.Percentage)
+                {
+                    discount = subtotal * (coupon.Value / 100);
+                }
+                else if (coupon.Type == CouponType.FixedAmount)
+                {
+                    discount = coupon.Value;
+                }
+                else
+                {
+                    _logger.LogWarning("Unknown coupon type {Type} for coupon {CouponCode}",
+                        coupon.Type, couponCode);
+                    return 0;
+                }
+
+                if (coupon.MaxDiscountAmount.HasValue)
+                {
+                    discount = Math.Min(discount, coupon.MaxDiscountAmount.Value);
+                }
+
+                discount = Math.Min(discount, subtotal);
+
+                coupon.UsedCount++;
+                if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit)
+                {
+                    coupon.IsActive = false;
+                    _logger.LogInformation("Coupon {CouponCode} deactivated after reaching usage limit", couponCode);
+                }
+
+                _logger.LogInformation("Applied coupon {CouponCode} with discount {Discount} (type: {Type}, value: {Value})",
+                    couponCode, discount, coupon.Type, coupon.Value);
+
+                return discount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating discount for coupon {CouponCode}", couponCode);
+                return 0;
+            }
+        }
+
+        #endregion
     }
 }

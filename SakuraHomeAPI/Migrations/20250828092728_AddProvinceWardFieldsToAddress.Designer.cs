@@ -12,8 +12,8 @@ using SakuraHomeAPI.Data;
 namespace SakuraHomeAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250814124305_FixStaticSeedData")]
-    partial class FixStaticSeedData
+    [Migration("20250828092728_AddProvinceWardFieldsToAddress")]
+    partial class AddProvinceWardFieldsToAddress
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,113 @@ namespace SakuraHomeAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Address", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddressLine1")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("AddressLine2")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("ProvinceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("WardId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDefault");
+
+                    b.HasIndex("ProvinceId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WardId");
+
+                    b.HasIndex("UserId", "IsDefault");
+
+                    b.ToTable("Addresses", t =>
+                        {
+                            t.HasCheckConstraint("CK_Address_ProvinceWard", "ProvinceId > 0 AND WardId > 0");
+                        });
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
@@ -1245,96 +1352,6 @@ namespace SakuraHomeAPI.Migrations
                     b.ToTable("EmailQueue");
                 });
 
-            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.Address", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AddressLine1")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("AddressLine2")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("DeletedBy")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Notes")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Addresses");
-                });
-
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
@@ -1607,43 +1624,56 @@ namespace SakuraHomeAPI.Migrations
 
                             t.HasCheckConstraint("CK_User_TotalSpent", "TotalSpent >= 0");
                         });
+                });
 
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "11111111-1111-1111-1111-111111111111",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "superadmin@sakurahome.com",
-                            EmailConfirmed = true,
-                            EmailNotifications = true,
-                            EmailVerified = true,
-                            FailedLoginAttempts = 0,
-                            FirstName = "Super",
-                            IsActive = true,
-                            IsDeleted = false,
-                            LastName = "Admin",
-                            LockoutEnabled = false,
-                            PasswordHash = "AQAAAAIAAYagAAAAEEV7OG+DPOtR9KwqdzspiSFEm2Q00X7fYjWfn7fhRI0+8R/F1rFeEV1+CLyGtmKtxw==",
-                            PhoneNumberConfirmed = false,
-                            PhoneVerified = false,
-                            Points = 0,
-                            PreferredCurrency = "VND",
-                            PreferredLanguage = "vi",
-                            Provider = 1,
-                            PushNotifications = true,
-                            Role = 4,
-                            SecurityStamp = "b1e2c3d4-5678-1234-9876-abcdefabcdef",
-                            SmsNotifications = false,
-                            Status = 2,
-                            Tier = 1,
-                            TotalOrders = 0,
-                            TotalSpent = 0m,
-                            TwoFactorEnabled = false,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            UserName = "superadmin"
-                        });
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Lookup.VietnamProvince", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("VietnamProvinces");
+                });
+
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Lookup.VietnamWard", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("ProvinceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("ProvinceId");
+
+                    b.ToTable("VietnamWards");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Notification", b =>
@@ -4955,6 +4985,17 @@ namespace SakuraHomeAPI.Migrations
                     b.ToTable("WishlistItems");
                 });
 
+            modelBuilder.Entity("Address", b =>
+                {
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "User")
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
@@ -5068,17 +5109,6 @@ namespace SakuraHomeAPI.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.Address", b =>
-                {
-                    b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "User")
-                        .WithMany("Addresses")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Identity.RefreshToken", b =>
                 {
                     b.HasOne("SakuraHomeAPI.Models.Entities.Identity.User", "User")
@@ -5112,6 +5142,17 @@ namespace SakuraHomeAPI.Migrations
                     b.Navigation("DeletedByUser");
 
                     b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Lookup.VietnamWard", b =>
+                {
+                    b.HasOne("SakuraHomeAPI.Models.Entities.Lookup.VietnamProvince", "Province")
+                        .WithMany("Wards")
+                        .HasForeignKey("ProvinceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Province");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Notification", b =>
@@ -5599,6 +5640,11 @@ namespace SakuraHomeAPI.Migrations
                     b.Navigation("SearchLogs");
 
                     b.Navigation("Wishlist");
+                });
+
+            modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Lookup.VietnamProvince", b =>
+                {
+                    b.Navigation("Wards");
                 });
 
             modelBuilder.Entity("SakuraHomeAPI.Models.Entities.Orders.Order", b =>
