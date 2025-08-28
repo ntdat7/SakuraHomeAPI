@@ -1,4 +1,4 @@
-﻿### Sakura Home API - Order Management Tests
+﻿### Sakura Home API - Order Management Latest Tests
 ### Make sure to run the application first: dotnet run
 
 @baseUrl = https://localhost:8080
@@ -356,3 +356,4 @@ Authorization: Bearer different-user-token
 # EWallet = E-Wallet (MoMo, ZaloPay)
 # QRCode = QR Code Payment
 # Installment = Installment Payment
+

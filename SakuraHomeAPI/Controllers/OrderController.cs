@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.DTOs.Orders.Requests;
@@ -40,11 +40,11 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.CreateOrderAsync(request, userId.Value);
-                
+
                 if (result.Success)
-                    return CreatedAtAction(nameof(GetOrder), new { orderId = result.Data?.Id }, 
+                    return CreatedAtAction(nameof(GetOrder), new { orderId = result.Data?.Id },
                         ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message, result.Errors));
             }
             catch (Exception ex)
@@ -67,10 +67,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<List<OrderSummaryDto>>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.GetUserOrdersAsync(userId.Value, filter);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<List<OrderSummaryDto>>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<List<OrderSummaryDto>>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -93,10 +93,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.GetOrderAsync(orderId, userId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return NotFound(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -119,10 +119,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.UpdateOrderAsync(orderId, request, userId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -145,10 +145,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.CancelOrderAsync(orderId, request.Reason, userId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto.SuccessResult(result.Message));
-                
+
                 return BadRequest(ApiResponseDto.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -176,10 +176,10 @@ namespace SakuraHomeAPI.Controllers
                     return NotFound(ApiResponseDto<List<OrderStatusHistoryDto>>.ErrorResult("Order not found"));
 
                 var result = await _orderService.GetOrderStatusHistoryAsync(orderId);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<List<OrderStatusHistoryDto>>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<List<OrderStatusHistoryDto>>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -202,10 +202,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.AddOrderNoteAsync(orderId, request.Note, true, userId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -228,10 +228,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<List<OrderNoteDto>>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.GetOrderNotesAsync(orderId, userId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<List<OrderNoteDto>>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<List<OrderNoteDto>>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -254,10 +254,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderValidationDto>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.ValidateOrderAsync(request, userId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderValidationDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderValidationDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -276,10 +276,10 @@ namespace SakuraHomeAPI.Controllers
             try
             {
                 var result = await _orderService.CalculateOrderTotalAsync(request.Items, request.ShippingAddressId, request.CouponCode);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<decimal>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<decimal>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -302,10 +302,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("User not authenticated"));
 
                 var result = await _orderService.RequestReturnAsync(orderId, request, userId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -333,10 +333,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
 
                 var result = await _orderService.ConfirmOrderAsync(orderId, staffId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -360,10 +360,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
 
                 var result = await _orderService.ProcessOrderAsync(orderId, request, staffId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -387,10 +387,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
 
                 var result = await _orderService.ShipOrderAsync(orderId, request, staffId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -414,10 +414,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
 
                 var result = await _orderService.DeliverOrderAsync(orderId, staffId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -437,10 +437,10 @@ namespace SakuraHomeAPI.Controllers
             try
             {
                 var result = await _orderService.UpdateOrderStatusAsync(orderId, request.Status, request.Notes);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -464,10 +464,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
 
                 var result = await _orderService.AddOrderNoteAsync(orderId, request.Note, request.IsCustomerVisible, staffId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -491,10 +491,10 @@ namespace SakuraHomeAPI.Controllers
                     return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
 
                 var result = await _orderService.ProcessReturnAsync(orderId, request, staffId.Value);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -514,10 +514,10 @@ namespace SakuraHomeAPI.Controllers
             try
             {
                 var result = await _orderService.GetOrderStatsAsync(null, fromDate, toDate);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<OrderStatsDto>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<OrderStatsDto>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -537,10 +537,10 @@ namespace SakuraHomeAPI.Controllers
             try
             {
                 var result = await _orderService.GetRecentOrdersAsync(count);
-                
+
                 if (result.Success)
                     return Ok(ApiResponseDto<List<OrderSummaryDto>>.SuccessResult(result.Data, result.Message));
-                
+
                 return BadRequest(ApiResponseDto<List<OrderSummaryDto>>.ErrorResult(result.Message));
             }
             catch (Exception ex)
@@ -593,7 +593,7 @@ namespace SakuraHomeAPI.Controllers
         [Required]
         [MaxLength(1000)]
         public string Note { get; set; } = string.Empty;
-        
+
         public bool IsCustomerVisible { get; set; } = false;
     }
 
@@ -604,7 +604,7 @@ namespace SakuraHomeAPI.Controllers
     {
         [Required]
         public OrderStatus Status { get; set; }
-        
+
         [MaxLength(1000)]
         public string? Notes { get; set; }
     }
@@ -616,9 +616,9 @@ namespace SakuraHomeAPI.Controllers
     {
         [Required]
         public List<OrderItemRequestDto> Items { get; set; } = new();
-        
+
         public int? ShippingAddressId { get; set; }
-        
+
         [MaxLength(20)]
         public string? CouponCode { get; set; }
     }

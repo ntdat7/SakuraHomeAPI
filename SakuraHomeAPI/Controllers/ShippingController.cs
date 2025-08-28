@@ -53,7 +53,7 @@ namespace SakuraHomeAPI.Controllers
         public async Task<ActionResult<ApiResponse<object>>> GetShippingZone(int id)
         {
             var result = await _shippingService.GetShippingZoneByIdAsync(id);
-            
+
             if (!result.IsSuccess)
             {
                 return NotFound(result);
@@ -69,7 +69,7 @@ namespace SakuraHomeAPI.Controllers
         public async Task<ActionResult<ApiResponse<object>>> TrackShipping(string trackingNumber)
         {
             var result = await _shippingService.TrackShippingAsync(trackingNumber);
-            
+
             if (!result.IsSuccess)
             {
                 return NotFound(result);
@@ -113,7 +113,7 @@ namespace SakuraHomeAPI.Controllers
         public async Task<ActionResult<ApiResponse<object>>> GetShippingOrder(int id)
         {
             var result = await _shippingService.GetShippingOrderByIdAsync(id);
-            
+
             if (!result.IsSuccess)
             {
                 return NotFound(result);

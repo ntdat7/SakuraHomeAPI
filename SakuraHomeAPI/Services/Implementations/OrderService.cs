@@ -42,198 +42,216 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public async Task<ApiResponse<OrderResponseDto>> CreateOrderAsync(CreateOrderRequestDto request, Guid userId)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 _logger.LogInformation("Creating order for user {UserId}", userId);
 
-                // 1. Validate user and get cart
-                var user = await _context.Users.FindAsync(userId);
-                if (user == null)
-                    return ApiResponse.ErrorResult<OrderResponseDto>("User not found");
+                // Use execution strategy to handle retry logic with transactions
+                var executionStrategy = _context.Database.CreateExecutionStrategy();
 
-                var cartResult = await _cartService.GetCartAsync(userId);
-                if (!cartResult.IsSuccess || cartResult.Data?.Items.Count == 0)
-                    return ApiResponse.ErrorResult<OrderResponseDto>("Cart is empty");
-
-                // 2. Validate order
-                var validationResult = await ValidateOrderAsync(request, userId);
-                if (!validationResult.Success || !validationResult.Data.IsValid)
-                    return ApiResponse.ErrorResult<OrderResponseDto>("Order validation failed", validationResult.Data.Errors);
-
-                // 3. Get shipping address
-                var shippingAddress = await _context.Addresses
-                    .FirstOrDefaultAsync(a => a.Id == request.ShippingAddressId && a.UserId == userId);
-                
-                if (shippingAddress == null)
-                    return ApiResponse.ErrorResult<OrderResponseDto>("Shipping address not found");
-
-                // 4. Get billing address (use shipping if not specified)
-                Address billingAddress = shippingAddress;
-                if (request.BillingAddressId.HasValue && request.BillingAddressId != request.ShippingAddressId)
+                return await executionStrategy.ExecuteAsync(async () =>
                 {
-                    billingAddress = await _context.Addresses
-                        .FirstOrDefaultAsync(a => a.Id == request.BillingAddressId && a.UserId == userId);
-                    
-                    if (billingAddress == null)
-                        return ApiResponse.ErrorResult<OrderResponseDto>("Billing address not found");
-                }
+                    using var transaction = await _context.Database.BeginTransactionAsync();
 
-                // 5. Calculate order totals
-                var cart = cartResult.Data;
-                var orderTotals = await CalculateOrderTotalAsync(
-                    cart.Items.Select(i => new OrderItemRequestDto 
-                    { 
-                        ProductId = i.ProductId, 
-                        ProductVariantId = i.ProductVariantId,
-                        Quantity = i.Quantity 
-                    }).ToList(),
-                    request.ShippingAddressId,
-                    request.CouponCode
-                );
-
-                // 6. Create order
-                var order = new Order
-                {
-                    UserId = userId,
-                    OrderNumber = await GenerateOrderNumberAsync(),
-                    Status = OrderStatus.Pending,
-                    
-                    // Use ReceiverName, ReceiverPhone, ShippingAddress instead of detailed fields
-                    ReceiverName = shippingAddress.Name,
-                    ReceiverPhone = shippingAddress.Phone,
-                    ReceiverEmail = user.Email,
-                    ShippingAddress = $"{shippingAddress.AddressLine1}, {shippingAddress.AddressLine2}, {shippingAddress.City}, {shippingAddress.State}, {shippingAddress.PostalCode}, {shippingAddress.Country}",
-                    BillingAddress = $"{billingAddress.AddressLine1}, {billingAddress.AddressLine2}, {billingAddress.City}, {billingAddress.State}, {billingAddress.PostalCode}, {billingAddress.Country}",
-                    
-                    // Financial Information
-                    SubTotal = cart.SubTotal,
-                    ShippingFee = await CalculateShippingCostAsync(request.ShippingAddressId, cart.Items),
-                    TaxAmount = 0, // TODO: Implement tax calculation
-                    DiscountAmount = await CalculateDiscountAsync(request.CouponCode, cart.SubTotal),
-                    TotalAmount = orderTotals.Data,
-                    Currency = "VND",
-                    
-                    // Payment Information
-                    PaymentStatus = PaymentStatus.Pending,
-                    
-                    // Order Details
-                    CustomerNotes = request.OrderNotes,
-                    CouponCode = request.CouponCode,
-                    IsGift = request.GiftWrap,
-                    GiftMessage = request.GiftMessage,
-                    GiftWrapRequested = request.GiftWrap,
-                    
-                    // Delivery method based on express delivery flag
-                    DeliveryMethod = request.ExpressDelivery ? DeliveryMethod.Express : DeliveryMethod.Standard,
-                    
-                    OrderDate = DateTime.UtcNow,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _context.Orders.Add(order);
-                await _context.SaveChangesAsync();
-
-                // 7. Create order items
-                foreach (var cartItem in cart.Items)
-                {
-                    var product = await _context.Products
-                        .Include(p => p.Brand)
-                        .Include(p => p.Category)
-                        .FirstOrDefaultAsync(p => p.Id == cartItem.ProductId);
-
-                    if (product == null) continue;
-
-                    var orderItem = new OrderItem
+                    try
                     {
-                        OrderId = order.Id,
-                        ProductId = cartItem.ProductId,
-                        ProductVariantId = cartItem.ProductVariantId,
-                        
-                        // Product snapshot
-                        ProductName = product.Name,
-                        ProductSku = product.SKU,
-                        ProductImage = cartItem.ProductImage,
-                        VariantName = cartItem.VariantName ?? "",
-                        VariantSku = cartItem.ProductSku ?? "", // Use ProductSku instead of VariantSku
-                        ProductAttributes = cartItem.CustomOptions ?? "{}",
-                        
-                        Quantity = cartItem.Quantity,
-                        UnitPrice = cartItem.UnitPrice,
-                        TotalPrice = cartItem.TotalPrice
-                    };
+                        // 1. Validate user and get cart
+                        var user = await _context.Users.FindAsync(userId);
+                        if (user == null)
+                            return ApiResponse.ErrorResult<OrderResponseDto>("User not found");
 
-                    _context.OrderItems.Add(orderItem);
-                }
+                        var cartResult = await _cartService.GetCartAsync(userId);
+                        if (!cartResult.IsSuccess || cartResult.Data?.Items.Count == 0)
+                            return ApiResponse.ErrorResult<OrderResponseDto>("Cart is empty");
 
-                // 8. Create initial status history
-                var statusHistory = new OrderStatusHistory
-                {
-                    OrderId = order.Id,
-                    OldStatus = OrderStatus.Pending,
-                    NewStatus = OrderStatus.Pending,
-                    Notes = "Order created successfully",
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.OrderStatusHistory.Add(statusHistory);
+                        // 2. Validate order
+                        var validationResult = await ValidateOrderAsync(request, userId);
+                        if (!validationResult.Success || !validationResult.Data.IsValid)
+                            return ApiResponse.ErrorResult<OrderResponseDto>("Order validation failed", validationResult.Data.Errors);
 
-                // 9. Update product stock
-                foreach (var cartItem in cart.Items)
-                {
-                    var product = await _context.Products.FindAsync(cartItem.ProductId);
-                    if (product != null && product.Status == ProductStatus.Active)
-                    {
-                        // Assuming we have Stock property instead of StockQuantity
-                        product.Stock = Math.Max(0, product.Stock - cartItem.Quantity);
-                        if (product.Stock == 0)
+                        // 3. Get shipping address
+                        var shippingAddress = await _context.Addresses
+                            .FirstOrDefaultAsync(a => a.Id == request.ShippingAddressId && a.UserId == userId);
+
+                        if (shippingAddress == null)
+                            return ApiResponse.ErrorResult<OrderResponseDto>("Shipping address not found");
+
+                        // 4. Get billing address (use shipping if not specified)
+                        Address billingAddress = shippingAddress;
+                        if (request.BillingAddressId.HasValue && request.BillingAddressId != request.ShippingAddressId)
                         {
-                            product.Status = ProductStatus.OutOfStock;
+                            billingAddress = await _context.Addresses
+                                .FirstOrDefaultAsync(a => a.Id == request.BillingAddressId && a.UserId == userId);
+
+                            if (billingAddress == null)
+                                return ApiResponse.ErrorResult<OrderResponseDto>("Billing address not found");
                         }
+
+                        // 5. Calculate order totals
+                        var cart = cartResult.Data;
+                        var orderTotals = await CalculateOrderTotalAsync(
+                            cart.Items.Select(i => new OrderItemRequestDto
+                            {
+                                ProductId = i.ProductId,
+                                ProductVariantId = i.ProductVariantId,
+                                Quantity = i.Quantity
+                            }).ToList(),
+                            request.ShippingAddressId,
+                            request.CouponCode
+                        );
+
+                        // 6. Create order
+                        var order = new Order
+                        {
+                            UserId = userId,
+                            OrderNumber = await GenerateOrderNumberAsync(),
+                            Status = OrderStatus.Pending,
+
+                            // Use ReceiverName, ReceiverPhone, ShippingAddress instead of detailed fields
+                            ReceiverName = shippingAddress.Name,
+                            ReceiverPhone = shippingAddress.Phone,
+                            ReceiverEmail = user.Email,
+                            ShippingAddress = $"{shippingAddress.AddressLine1}, {shippingAddress.AddressLine2}, {shippingAddress.City}, {shippingAddress.State}, {shippingAddress.PostalCode}, {shippingAddress.Country}",
+                            BillingAddress = $"{billingAddress.AddressLine1}, {billingAddress.AddressLine2}, {billingAddress.City}, {billingAddress.State}, {billingAddress.PostalCode}, {billingAddress.Country}",
+
+                            // Financial Information
+                            SubTotal = cart.SubTotal,
+                            ShippingFee = await CalculateShippingCostAsync(request.ShippingAddressId, cart.Items),
+                            TaxAmount = 0, // TODO: Implement tax calculation
+                            DiscountAmount = await CalculateDiscountAsync(request.CouponCode, cart.SubTotal),
+                            TotalAmount = orderTotals.Data,
+                            Currency = "VND",
+
+                            // Payment Information
+                            PaymentStatus = PaymentStatus.Pending,
+
+                            // Order Details
+                            CustomerNotes = request.OrderNotes,
+                            CouponCode = request.CouponCode,
+                            IsGift = request.GiftWrap,
+                            GiftMessage = request.GiftMessage,
+                            GiftWrapRequested = request.GiftWrap,
+
+                            // Delivery method based on express delivery flag
+                            DeliveryMethod = request.ExpressDelivery ? DeliveryMethod.Express : DeliveryMethod.Standard,
+
+                            OrderDate = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+
+                        _context.Orders.Add(order);
+                        await _context.SaveChangesAsync();
+
+                        // 7. Create order items
+                        foreach (var cartItem in cart.Items)
+                        {
+                            var product = await _context.Products
+                                .Include(p => p.Brand)
+                                .Include(p => p.Category)
+                                .FirstOrDefaultAsync(p => p.Id == cartItem.ProductId);
+
+                            if (product == null) continue;
+
+                            var orderItem = new OrderItem
+                            {
+                                OrderId = order.Id,
+                                ProductId = cartItem.ProductId,
+                                ProductVariantId = cartItem.ProductVariantId,
+
+                                // Product snapshot
+                                ProductName = product.Name,
+                                ProductSku = product.SKU,
+                                ProductImage = cartItem.ProductImage,
+                                VariantName = cartItem.VariantName ?? "",
+                                VariantSku = cartItem.ProductSku ?? "", // Use ProductSku instead of VariantSku
+                                ProductAttributes = cartItem.CustomOptions ?? "{}",
+
+                                Quantity = cartItem.Quantity,
+                                UnitPrice = cartItem.UnitPrice,
+                                TotalPrice = cartItem.TotalPrice
+                            };
+
+                            _context.OrderItems.Add(orderItem);
+                        }
+
+                        // 8. Create initial status history
+                        var statusHistory = new OrderStatusHistory
+                        {
+                            OrderId = order.Id,
+                            OldStatus = OrderStatus.Pending,
+                            NewStatus = OrderStatus.Pending,
+                            Notes = "Order created successfully",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.OrderStatusHistory.Add(statusHistory);
+
+                        // 9. Update product stock
+                        foreach (var cartItem in cart.Items)
+                        {
+                            var product = await _context.Products.FindAsync(cartItem.ProductId);
+                            if (product != null && product.Status == ProductStatus.Active)
+                            {
+                                // Assuming we have Stock property instead of StockQuantity
+                                product.Stock = Math.Max(0, product.Stock - cartItem.Quantity);
+                                if (product.Stock == 0)
+                                {
+                                    product.Status = ProductStatus.OutOfStock;
+                                }
+                            }
+                        }
+
+                        // 10. Clear cart
+                        await _cartService.ClearCartAsync(userId);
+
+                        // 11. Update user statistics
+                        user.TotalOrders++;
+                        user.TotalSpent += order.TotalAmount;
+                        user.UpdateTier(); // Update user tier based on spending
+
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        _logger.LogInformation("Order {OrderNumber} created successfully for user {UserId}", order.OrderNumber, userId);
+
+                        // 12. Send notifications and emails (outside of transaction)
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                // Send order confirmation notification
+                                await _notificationService.SendOrderConfirmationNotificationAsync(order.Id);
+
+                                // Send order confirmation email
+                                await _emailService.SendOrderConfirmationEmailAsync(order);
+
+                                _logger.LogInformation("Order notifications sent for order {OrderNumber}", order.OrderNumber);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to send order notifications for order {OrderNumber}", order.OrderNumber);
+                                // Don't fail the order creation if notifications fail
+                            }
+                        });
+
+                        // 13. Return order details
+                        var orderDto = await MapOrderToDetailDto(order);
+                        return ApiResponse.SuccessResult(orderDto, "Order created successfully");
                     }
-                }
-
-                // 10. Clear cart
-                await _cartService.ClearCartAsync(userId);
-
-                // 11. Update user statistics
-                user.TotalOrders++;
-                user.TotalSpent += order.TotalAmount;
-                user.UpdateTier(); // Update user tier based on spending
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                _logger.LogInformation("Order {OrderNumber} created successfully for user {UserId}", order.OrderNumber, userId);
-
-                // 12. Send notifications and emails
-                try
-                {
-                    // Send order confirmation notification
-                    await _notificationService.SendOrderConfirmationNotificationAsync(order.Id);
-                    
-                    // Send order confirmation email
-                    await _emailService.SendOrderConfirmationEmailAsync(order);
-                    
-                    _logger.LogInformation("Order notifications sent for order {OrderNumber}", order.OrderNumber);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send order notifications for order {OrderNumber}", order.OrderNumber);
-                    // Don't fail the order creation if notifications fail
-                }
-
-                // 12. Return order details
-                var orderDto = await MapOrderToDetailDto(order);
-                return ApiResponse.SuccessResult(orderDto, "Order created successfully");
+                    catch (Exception)
+                    {
+                        await transaction.RollbackAsync();
+                        throw; // Re-throw to be caught by execution strategy
+                    }
+                });
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error creating order for user {UserId}", userId);
                 return ApiResponse.ErrorResult<OrderResponseDto>("Failed to create order");
             }
         }
+
 
         public async Task<ApiResponse<OrderResponseDto>> GetOrderAsync(int orderId, Guid userId)
         {

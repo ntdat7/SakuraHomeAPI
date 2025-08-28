@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
@@ -8,6 +8,7 @@ using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.DTOs.Products.Requests;
 using SakuraHomeAPI.DTOs.Products.Responses;
 using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Products.Components;
 using AutoMapper;
 
 namespace SakuraHomeAPI.Controllers
@@ -24,7 +25,7 @@ namespace SakuraHomeAPI.Controllers
         private readonly IMapper _mapper;
 
         public ProductController(
-            ApplicationDbContext context, 
+            ApplicationDbContext context,
             ILogger<ProductController> logger,
             IMapper mapper)
         {
@@ -44,12 +45,12 @@ namespace SakuraHomeAPI.Controllers
                 var totalProducts = await _context.Products.CountAsync();
                 var activeProducts = await _context.Products.CountAsync(p => p.IsActive && !p.IsDeleted);
                 var allProducts = await _context.Products.ToListAsync();
-                
+
                 // Also check other seed data
                 var totalCategories = await _context.Categories.CountAsync();
                 var totalBrands = await _context.Brands.CountAsync();
                 var totalSettings = await _context.SystemSettings.CountAsync();
-                
+
                 var debugInfo = new
                 {
                     TotalProducts = totalProducts,
@@ -152,7 +153,16 @@ namespace SakuraHomeAPI.Controllers
                         ImageUrl = p.Category.ImageUrl,
                         IsActive = p.Category.IsActive,
                         ParentId = p.Category.ParentId
-                    } : null
+                    } : null,
+                    // Add images for product list (optional - might want to limit to main image only)
+                    Images = p.ProductImages?.Where(pi => pi.IsActive).Select(pi => new SakuraHomeAPI.DTOs.Products.ProductImageDto
+                    {
+                        Id = pi.Id,
+                        ImageUrl = pi.ImageUrl,
+                        AltText = pi.AltText,
+                        DisplayOrder = pi.DisplayOrder,
+                        IsMain = pi.IsMain
+                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<SakuraHomeAPI.DTOs.Products.ProductImageDto>()
                 }).ToList();
 
                 // Create response directly without ApiResponseDto wrapper
@@ -177,7 +187,7 @@ namespace SakuraHomeAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while getting products with filters: {@Filters}", request);
-                
+
                 // Return error response in same format
                 var errorResponse = new ProductListResponseDto
                 {
@@ -186,7 +196,7 @@ namespace SakuraHomeAPI.Controllers
                     Success = false,
                     Message = "An error occurred while processing your request"
                 };
-                
+
                 return StatusCode(500, errorResponse);
             }
         }
@@ -271,7 +281,17 @@ namespace SakuraHomeAPI.Controllers
                         ImageUrl = product.Category.ImageUrl,
                         IsActive = product.Category.IsActive,
                         ParentId = product.Category.ParentId
-                    } : null
+                    } : null,
+                    // Add the images mapping that was missing
+                    Images = product.ProductImages?.Where(pi => pi.IsActive).Select(pi => new SakuraHomeAPI.DTOs.Products.ProductImageDto
+                    {
+                        Id = pi.Id,
+                        ImageUrl = pi.ImageUrl,
+                        AltText = pi.AltText,
+                        DisplayOrder = pi.DisplayOrder,
+                        IsMain = pi.IsMain,
+                        Caption = pi.Caption
+                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<SakuraHomeAPI.DTOs.Products.ProductImageDto>()
                 };
 
                 return Ok(ApiResponseDto<ProductDetailDto>.SuccessResult(productDto, "Product retrieved successfully"));
@@ -350,7 +370,7 @@ namespace SakuraHomeAPI.Controllers
                 var createdProduct = await _context.Products
                     .Include(p => p.Brand)
                     .Include(p => p.Category)
-                    .Include(p => p.ProductImages)
+                    .Include(p => p.ProductImages.Where(pi => pi.IsActive).OrderBy(pi => pi.DisplayOrder))
                     .FirstOrDefaultAsync(p => p.Id == product.Id);
 
                 var productDto = new ProductDetailDto
@@ -407,12 +427,22 @@ namespace SakuraHomeAPI.Controllers
                         ImageUrl = createdProduct.Category.ImageUrl,
                         IsActive = createdProduct.Category.IsActive,
                         ParentId = createdProduct.Category.ParentId
-                    } : null
+                    } : null,
+                    // Add images mapping for created product
+                    Images = createdProduct.ProductImages?.Where(pi => pi.IsActive).Select(pi => new SakuraHomeAPI.DTOs.Products.ProductImageDto
+                    {
+                        Id = pi.Id,
+                        ImageUrl = pi.ImageUrl,
+                        AltText = pi.AltText,
+                        DisplayOrder = pi.DisplayOrder,
+                        IsMain = pi.IsMain,
+                        Caption = pi.Caption
+                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<SakuraHomeAPI.DTOs.Products.ProductImageDto>()
                 };
 
                 return CreatedAtAction(
-                    nameof(GetProduct), 
-                    new { id = product.Id }, 
+                    nameof(GetProduct),
+                    new { id = product.Id },
                     ApiResponseDto<ProductDetailDto>.SuccessResult(productDto, "Product created successfully"));
             }
             catch (Exception ex)
@@ -551,7 +581,7 @@ namespace SakuraHomeAPI.Controllers
                 // Check if low stock
                 var isLowStock = product.MinStock.HasValue && product.Stock <= product.MinStock.Value && product.TrackInventory;
 
-                _logger.LogInformation("Stock updated for product {ProductId} from {OldStock} to {NewStock}", 
+                _logger.LogInformation("Stock updated for product {ProductId} from {OldStock} to {NewStock}",
                     id, oldStock, request.NewStock);
 
                 var response = new
@@ -598,7 +628,7 @@ namespace SakuraHomeAPI.Controllers
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
                 var searchTerm = request.Search.ToLower().Trim();
-                query = query.Where(p => 
+                query = query.Where(p =>
                     p.Name.ToLower().Contains(searchTerm) ||
                     (p.Description != null && p.Description.ToLower().Contains(searchTerm)) ||
                     (p.Tags != null && p.Tags.ToLower().Contains(searchTerm)) ||
@@ -623,7 +653,7 @@ namespace SakuraHomeAPI.Controllers
             {
                 "name" => isAscending ? query.OrderBy(p => p.Name) : query.OrderByDescending(p => p.Name),
                 "price" => isAscending ? query.OrderBy(p => p.Price) : query.OrderByDescending(p => p.Price),
-                "rating" => isAscending 
+                "rating" => isAscending
                     ? query.OrderBy(p => p.Rating).ThenBy(p => p.ReviewCount)
                     : query.OrderByDescending(p => p.Rating).ThenByDescending(p => p.ReviewCount),
                 "sold" => isAscending ? query.OrderBy(p => p.SoldCount) : query.OrderByDescending(p => p.SoldCount),

@@ -1,7 +1,7 @@
-### =================================================================
+﻿### =================================================================
 ### USER PROFILE & ADDRESS API TESTING
 ### =================================================================
-@baseUrl = http://localhost:5273
+@baseUrl = https://localhost:8080
 
 ### Prerequisites: Login first to get auth token
 # @name userLogin
@@ -15,7 +15,7 @@ Content-Type: application/json
 }
 
 ### Store auth token for user operations
-@userAuthToken = {{userLogin.response.body.data.token}}
+@userAuthToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxYTVhZTk5MS0wOTQwLTRlY2UtYjY0My03ZTkxMzI0NWFlYWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6IjI0MDE1NWEwLTgzM2UtNDk0OC1iZjg3LTI4M2JlY2RjY2QyYyIsImlhdCI6MTc1NTc3NjQ2MywiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NTc3NjQ2MywiZXhwIjoxNzU1NzgwMDYzLCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.ACDXOOLlaBpKL7p0IQOdznOG65vw_6d67b7LHiicHzg
 
 ### =================================================================
 ### USER PROFILE MANAGEMENT
