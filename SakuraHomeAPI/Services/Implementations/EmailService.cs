@@ -1,6 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SakuraHomeAPI.Data;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities.Orders;
 using SakuraHomeAPI.Models.Entities;
 using SakuraHomeAPI.Models.Enums;
@@ -61,7 +63,7 @@ namespace SakuraHomeAPI.Services.Implementations
             {
                 UserName = userName,
                 Email = email,
-                WelcomeMessage = "Ch‡o m?ng b?n ??n v?i Sakura Home!",
+                WelcomeMessage = "Ch√†o m?ng b?n ??n v?i Sakura Home!",
                 LoginUrl = $"{_configuration["Frontend:BaseUrl"]}/login",
                 SupportEmail = _configuration["Email:SupportEmail"]
             };
@@ -95,7 +97,7 @@ namespace SakuraHomeAPI.Services.Implementations
                     TrackingUrl = $"{_configuration["Frontend:BaseUrl"]}/orders/{order.Id}/tracking"
                 };
 
-                return await SendEmailAsync(order.User.Email, "Order Confirmation", model, $"X·c nh?n ??n h‡ng #{order.OrderNumber}");
+                return await SendEmailAsync(order.User.Email, "Order Confirmation", model, $"X√°c nh?n ??n h√†ng #{order.OrderNumber}");
             }
             catch (Exception ex)
             {
@@ -129,7 +131,7 @@ namespace SakuraHomeAPI.Services.Implementations
                     _ => "Order Status Update"
                 };
 
-                var subject = $"C?p nh?t ??n h‡ng #{order.OrderNumber} - {GetOrderStatusText(newStatus)}";
+                var subject = $"C?p nh?t ??n h√†ng #{order.OrderNumber} - {GetOrderStatusText(newStatus)}";
 
                 return await SendEmailAsync(order.User.Email, templateName, model, subject);
             }
@@ -150,7 +152,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 SupportEmail = _configuration["Email:SupportEmail"]
             };
 
-            return await SendEmailAsync(email, "Password Reset", model, "??t l?i m?t kh?u t‡i kho?n", language);
+            return await SendEmailAsync(email, "Password Reset", model, "??t l?i m?t kh?u t√†i kho?n", language);
         }
 
         public async Task<ApiResponse> SendEmailVerificationAsync(string email, string verificationToken, string userName, string language = "vi")
@@ -162,7 +164,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 SupportEmail = _configuration["Email:SupportEmail"]
             };
 
-            return await SendEmailAsync(email, "Email Verification", model, "X·c th?c ??a ch? email", language);
+            return await SendEmailAsync(email, "Email Verification", model, "X√°c th?c ??a ch? email", language);
         }
 
         public async Task<ApiResponse> SendShipmentNotificationEmailAsync(Order order, string? trackingNumber = null)
@@ -181,7 +183,7 @@ namespace SakuraHomeAPI.Services.Implementations
                     OrderTrackingUrl = $"{_configuration["Frontend:BaseUrl"]}/orders/{order.Id}/tracking"
                 };
 
-                return await SendEmailAsync(order.User.Email, "Order Shipped", model, $"??n h‡ng #{order.OrderNumber} ?„ ???c giao cho v?n chuy?n");
+                return await SendEmailAsync(order.User.Email, "Order Shipped", model, $"??n h√†ng #{order.OrderNumber} ?√£ ???c giao cho v?n chuy?n");
             }
             catch (Exception ex)
             {
@@ -203,7 +205,7 @@ namespace SakuraHomeAPI.Services.Implementations
                     SupportEmail = _configuration["Email:SupportEmail"]
                 };
 
-                return await SendEmailAsync(order.User.Email, "Order Delivered", model, $"??n h‡ng #{order.OrderNumber} ?„ ???c giao th‡nh cÙng");
+                return await SendEmailAsync(order.User.Email, "Order Delivered", model, $"??n h√†ng #{order.OrderNumber} ?√£ ???c giao th√†nh c√¥ng");
             }
             catch (Exception ex)
             {
@@ -223,11 +225,11 @@ namespace SakuraHomeAPI.Services.Implementations
                     ReturnReason = reason,
                     ReturnDate = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm"),
                     RefundAmount = order.TotalAmount.ToString("N0"),
-                    ProcessingDays = "3-5 ng‡y l‡m vi?c",
+                    ProcessingDays = "3-5 ng√†y l√†m vi?c",
                     SupportEmail = _configuration["Email:SupportEmail"]
                 };
 
-                return await SendEmailAsync(order.User.Email, "Return Processed", model, $"X? l˝ tr? h‡ng ??n #{order.OrderNumber}");
+                return await SendEmailAsync(order.User.Email, "Return Processed", model, $"X? l√Ω tr? h√†ng ??n #{order.OrderNumber}");
             }
             catch (Exception ex)
             {
@@ -442,14 +444,14 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return method switch
             {
-                PaymentMethod.COD => "Thanh to·n khi nh?n h‡ng",
-                PaymentMethod.BankTransfer => "Chuy?n kho?n ng‚n h‡ng",
-                PaymentMethod.CreditCard => "Th? tÌn d?ng",
+                PaymentMethod.COD => "Thanh to√°n khi nh?n h√†ng",
+                PaymentMethod.BankTransfer => "Chuy?n kho?n ng√¢n h√†ng",
+                PaymentMethod.CreditCard => "Th? t√≠n d?ng",
                 PaymentMethod.DebitCard => "Th? ghi n?",
-                PaymentMethod.EWallet => "VÌ ?i?n t?",
-                PaymentMethod.QRCode => "QuÈt m„ QR",
-                PaymentMethod.Installment => "Tr? gÛp",
-                _ => "KhÙng x·c ??nh"
+                PaymentMethod.EWallet => "V√≠ ?i?n t?",
+                PaymentMethod.QRCode => "Qu√©t m√£ QR",
+                PaymentMethod.Installment => "Tr? g√≥p",
+                _ => "Kh√¥ng x√°c ??nh"
             };
         }
 
@@ -457,11 +459,11 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return method switch
             {
-                DeliveryMethod.Standard => "Giao h‡ng tiÍu chu?n",
-                DeliveryMethod.Express => "Giao h‡ng nhanh",
-                DeliveryMethod.SuperFast => "Giao h‡ng siÍu t?c",
+                DeliveryMethod.Standard => "Giao h√†ng ti√™u chu?n",
+                DeliveryMethod.Express => "Giao h√†ng nhanh",
+                DeliveryMethod.SuperFast => "Giao h√†ng si√™u t?c",
                 DeliveryMethod.SelfPickup => "T? ??n l?y",
-                _ => "KhÙng x·c ??nh"
+                _ => "Kh√¥ng x√°c ??nh"
             };
         }
 
@@ -469,16 +471,16 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Pending => "Ch? x? l˝",
-                OrderStatus.Confirmed => "?„ x·c nh?n",
-                OrderStatus.Processing => "?ang x? l˝",
-                OrderStatus.Packed => "?„ ?Ûng gÛi",
+                OrderStatus.Pending => "Ch? x? l√Ω",
+                OrderStatus.Confirmed => "?√£ x√°c nh?n",
+                OrderStatus.Processing => "?ang x? l√Ω",
+                OrderStatus.Packed => "?√£ ?√≥ng g√≥i",
                 OrderStatus.Shipped => "?ang v?n chuy?n",
-                OrderStatus.Delivered => "?„ giao h‡ng",
-                OrderStatus.Cancelled => "?„ h?y",
-                OrderStatus.Returned => "?„ tr? h‡ng",
-                OrderStatus.Refunded => "?„ ho‡n ti?n",
-                _ => "KhÙng x·c ??nh"
+                OrderStatus.Delivered => "?√£ giao h√†ng",
+                OrderStatus.Cancelled => "?√£ h?y",
+                OrderStatus.Returned => "?√£ tr? h√†ng",
+                OrderStatus.Refunded => "?√£ ho√†n ti?n",
+                _ => "Kh√¥ng x√°c ??nh"
             };
         }
 
@@ -486,8 +488,8 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return carrier switch
             {
-                "GHN" => "Giao H‡ng Nhanh",
-                "GHTK" => "Giao H‡ng Ti?t Ki?m",
+                "GHN" => "Giao H√†ng Nhanh",
+                "GHTK" => "Giao H√†ng Ti?t Ki?m",
                 "VTP" => "Viettel Post",
                 "VNPOST" => "Vietnam Post",
                 _ => carrier ?? "??n v? v?n chuy?n"

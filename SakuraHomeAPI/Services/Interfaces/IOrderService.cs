@@ -1,4 +1,4 @@
-﻿using SakuraHomeAPI.Models.DTOs;
+﻿using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Orders.Requests;
 using SakuraHomeAPI.DTOs.Orders.Responses;
 using SakuraHomeAPI.Models.Enums;

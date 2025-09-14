@@ -1,10 +1,13 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Reviews.Requests;
 using SakuraHomeAPI.DTOs.Reviews.Responses;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities.Reviews;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.Models.Entities.Identity;
+using SakuraHomeAPI.Models.Entities.Orders;
+using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
 
 namespace SakuraHomeAPI.Services.Implementations

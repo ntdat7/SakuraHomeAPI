@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.DTOs.Admin.Requests;
 using SakuraHomeAPI.DTOs.Admin.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 

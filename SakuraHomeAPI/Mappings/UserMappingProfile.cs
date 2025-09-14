@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using SakuraHomeAPI.DTOs.Users;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities.Identity;
@@ -32,7 +32,7 @@ namespace SakuraHomeAPI.Mappings
                 .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
                 .ForMember(dest => dest.PreferredLanguage, opt => opt.MapFrom(src => src.PreferredLanguage))
-                .ForMember(dest => dest.EmailNotifications, opt => opt.MapFrom(src => src.SubscribeToNewsletter))
+                .ForMember(dest => dest.EmailNotifications, opt => opt.MapFrom(_ => true)) // Default to true
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(_ => Models.Enums.UserRole.Customer))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => Models.Enums.AccountStatus.Pending))
                 .ForMember(dest => dest.Tier, opt => opt.MapFrom(_ => Models.Enums.UserTier.Bronze))

@@ -1,4 +1,4 @@
-﻿using SakuraHomeAPI.Models.DTOs;
+﻿using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Services.Common;
 using SakuraHomeAPI.DTOs.Cart.Requests;
 using SakuraHomeAPI.DTOs.Cart.Responses;

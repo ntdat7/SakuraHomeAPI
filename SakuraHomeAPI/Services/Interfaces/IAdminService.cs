@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using SakuraHomeAPI.DTOs.Admin.Requests;
 using SakuraHomeAPI.DTOs.Admin.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 
 namespace SakuraHomeAPI.Services.Interfaces
 {

@@ -1,8 +1,10 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SakuraHomeAPI.Data;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Payments.Requests;
 using SakuraHomeAPI.DTOs.Payments.Responses;
-using SakuraHomeAPI.Models.DTOs;
 using SakuraHomeAPI.Models.Entities;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
@@ -307,9 +309,9 @@ namespace SakuraHomeAPI.Services.Implementations
                     ExpiresAt = DateTime.UtcNow.AddDays(3),
                     Instructions = new List<string>
                     {
-                        "Chuy?n kho?n ?úng s? ti?n và n?i dung chuy?n kho?n",
-                        "G?i ?nh ch?p biên lai chuy?n kho?n ?? xác nh?n",
-                        "??n hàng s? ???c x? lý sau khi xác nh?n thanh toán"
+                        "Chuy?n kho?n ?Ãºng s? tiï¿½n vÃ  n?i dung chuy?n kho?n",
+                        "G?i ?nh ch?p biÃªn lai chuy?n kho?n ?? xÃ¡c nh?n",
+                        "??n hÃ ng s? ???c x? lÃ½ sau khi xÃ¡c nh?n thanh toÃ¡n"
                     }
                 };
 
@@ -473,14 +475,14 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return method switch
             {
-                PaymentMethod.COD => "Thanh toán khi nh?n hàng",
-                PaymentMethod.BankTransfer => "Chuy?n kho?n ngân hàng",
-                PaymentMethod.CreditCard => "Th? tín d?ng",
+                PaymentMethod.COD => "Thanh toÃ¡n khi nh?n hÃ ng",
+                PaymentMethod.BankTransfer => "Chuy?n kho?n ngÃ¢n hÃ ng",
+                PaymentMethod.CreditCard => "Th? tÃ­n d?ng",
                 PaymentMethod.DebitCard => "Th? ghi n?",
-                PaymentMethod.EWallet => "Ví ?i?n t?",
-                PaymentMethod.QRCode => "Quét mã QR",
-                PaymentMethod.Installment => "Tr? góp",
-                _ => "Thanh toán khi nh?n hàng"  // Default to COD
+                PaymentMethod.EWallet => "VÃ­ ?i?n t?",
+                PaymentMethod.QRCode => "QuÃ©t mÃ£ QR",
+                PaymentMethod.Installment => "Tr? gÃ³p",
+                _ => "Thanh toÃ¡n khi nh?n hÃ ng"  // Default to COD
             };
         }
 
@@ -505,16 +507,16 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                PaymentStatus.Pending => "Ch? thanh toán",
-                PaymentStatus.Processing => "?ang x? lý",
-                PaymentStatus.Paid => "?ã thanh toán",
-                PaymentStatus.Failed => "Thanh toán th?t b?i",
-                PaymentStatus.Cancelled => "?ã h?y",
-                PaymentStatus.Refunded => "?ã hoàn ti?n",
-                PaymentStatus.PartiallyRefunded => "Hoàn ti?n m?t ph?n",
+                PaymentStatus.Pending => "Ch? thanh toÃ¡n",
+                PaymentStatus.Processing => "?ang x? lÃ½",
+                PaymentStatus.Paid => "?Ã£ thanh toÃ¡n",
+                PaymentStatus.Failed => "Thanh toÃ¡n th?t b?i",
+                PaymentStatus.Cancelled => "?Ã£ h?y",
+                PaymentStatus.Refunded => "?Ã£ hoÃ n ti?n",
+                PaymentStatus.PartiallyRefunded => "HoÃ n ti?n m?t ph?n",
                 PaymentStatus.Expired => "H?t h?n",
-                PaymentStatus.Confirmed => "?ã xác nh?n",
-                _ => "Không xác ??nh"
+                PaymentStatus.Confirmed => "?Ã£ xÃ¡c nh?n",
+                _ => "KhÃ´ng xÃ¡c ??nh"
             };
         }
 
@@ -522,7 +524,7 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return code switch
             {
-                "COD" => "Thanh toán b?ng ti?n m?t khi nh?n hàng. Shipper s? thu ti?n khi giao hàng.",
+                "COD" => "Thanh toÃ¡n b?ng ti?n m?t khi nh?n hÃ ng. Shipper s? thu ti?n khi giao hÃ ng.",
                 _ => null
             };
         }

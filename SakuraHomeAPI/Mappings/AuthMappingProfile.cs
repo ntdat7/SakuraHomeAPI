@@ -1,5 +1,5 @@
-using AutoMapper;
-using SakuraHomeAPI.Models.DTOs;
+﻿using AutoMapper;
+using SakuraHomeAPI.DTOs.Users;
 using SakuraHomeAPI.Models.Entities.Identity;
 
 namespace SakuraHomeAPI.Mappings

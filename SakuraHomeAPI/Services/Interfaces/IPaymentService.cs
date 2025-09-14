@@ -1,6 +1,6 @@
-using SakuraHomeAPI.DTOs.Payments.Requests;
+﻿using SakuraHomeAPI.DTOs.Payments.Requests;
 using SakuraHomeAPI.DTOs.Payments.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Enums;
 
 namespace SakuraHomeAPI.Services.Interfaces

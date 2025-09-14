@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Admin.Requests;
 using SakuraHomeAPI.DTOs.Admin.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;

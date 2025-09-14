@@ -1,19 +1,19 @@
-using SakuraHomeAPI.Models.Enums;
+﻿using SakuraHomeAPI.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace SakuraHomeAPI.Models.DTOs
+namespace SakuraHomeAPI.DTOs.Users
 {
     /// <summary>
     /// DTO for user login request
     /// </summary>
     public class LoginRequestDto
     {
-        [Required(ErrorMessage = "Email l� b?t bu?c")]
-        [EmailAddress(ErrorMessage = "Email kh�ng h?p l?")]
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "M?t kh?u l� b?t bu?c")]
-        [MinLength(6, ErrorMessage = "M?t kh?u ph?i c� �t nh?t 6 k� t?")]
+        [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
+        [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
         public string Password { get; set; } = string.Empty;
 
         public bool RememberMe { get; set; } = false;
@@ -24,30 +24,30 @@ namespace SakuraHomeAPI.Models.DTOs
     /// </summary>
     public class RegisterRequestDto
     {
-        [Required(ErrorMessage = "Email l� b?t bu?c")]
-        [EmailAddress(ErrorMessage = "Email kh�ng h?p l?")]
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "M?t kh?u l� b?t bu?c")]
-        [MinLength(6, ErrorMessage = "M?t kh?u ph?i c� �t nh?t 6 k� t?")]
+        [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
+        [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$", 
-            ErrorMessage = "M?t kh?u ph?i ch?a �t nh?t 1 ch? hoa, 1 ch? th??ng v� 1 s?")]
+            ErrorMessage = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số")]
         public string Password { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "X�c nh?n m?t kh?u l� b?t bu?c")]
-        [Compare("Password", ErrorMessage = "M?t kh?u x�c nh?n kh�ng kh?p")]
+        [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
+        [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         public string ConfirmPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "H? l� b?t bu?c")]
-        [MaxLength(100, ErrorMessage = "H? kh�ng ???c v??t qu� 100 k� t?")]
+        [Required(ErrorMessage = "Họ là bắt buộc")]
+        [MaxLength(100, ErrorMessage = "Họ không được vượt quá 100 ký tự")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "T�n l� b?t bu?c")]
-        [MaxLength(100, ErrorMessage = "T�n kh�ng ???c v??t qu� 100 k� t?")]
+        [Required(ErrorMessage = "Tên là bắt buộc")]
+        [MaxLength(100, ErrorMessage = "Tên không được vượt quá 100 ký tự")]
         public string LastName { get; set; } = string.Empty;
 
         // Optional fields with default values - these will be set automatically
-        [Phone(ErrorMessage = "S? ?i?n tho?i kh�ng h?p l?")]
+        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
         public string? PhoneNumber { get; set; }
 
         public DateTime? DateOfBirth { get; set; }
@@ -111,8 +111,8 @@ namespace SakuraHomeAPI.Models.DTOs
     /// </summary>
     public class ForgotPasswordRequestDto
     {
-        [Required(ErrorMessage = "Email l� b?t bu?c")]
-        [EmailAddress(ErrorMessage = "Email kh�ng h?p l?")]
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; } = string.Empty;
     }
 
@@ -121,21 +121,21 @@ namespace SakuraHomeAPI.Models.DTOs
     /// </summary>
     public class ResetPasswordRequestDto
     {
-        [Required(ErrorMessage = "Email l� b?t bu?c")]
-        [EmailAddress(ErrorMessage = "Email kh�ng h?p l?")]
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Token ??t l?i m?t kh?u l� b?t bu?c")]
+        [Required(ErrorMessage = "Token đặt lại mật khẩu là bắt buộc")]
         public string Token { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "M?t kh?u m?i l� b?t bu?c")]
-        [MinLength(6, ErrorMessage = "M?t kh?u ph?i c� �t nh?t 6 k� t?")]
+        [Required(ErrorMessage = "Mật khẩu mới là bắt buộc")]
+        [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$", 
-            ErrorMessage = "M?t kh?u ph?i ch?a �t nh?t 1 ch? hoa, 1 ch? th??ng v� 1 s?")]
+            ErrorMessage = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số")]
         public string NewPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "X�c nh?n m?t kh?u l� b?t bu?c")]
-        [Compare("NewPassword", ErrorMessage = "M?t kh?u x�c nh?n kh�ng kh?p")]
+        [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
+        [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
@@ -144,17 +144,17 @@ namespace SakuraHomeAPI.Models.DTOs
     /// </summary>
     public class ChangePasswordRequestDto
     {
-        [Required(ErrorMessage = "M?t kh?u hi?n t?i l� b?t bu?c")]
+        [Required(ErrorMessage = "Mật khẩu hiện tại là bắt buộc")]
         public string CurrentPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "M?t kh?u m?i l� b?t bu?c")]
-        [MinLength(6, ErrorMessage = "M?t kh?u ph?i c� �t nh?t 6 k� t?")]
+        [Required(ErrorMessage = "Mật khẩu mới là bắt buộc")]
+        [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$", 
-            ErrorMessage = "M?t kh?u ph?i ch?a �t nh?t 1 ch? hoa, 1 ch? th??ng v� 1 s?")]
+            ErrorMessage = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số")]
         public string NewPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "X�c nh?n m?t kh?u l� b?t bu?c")]
-        [Compare("NewPassword", ErrorMessage = "M?t kh?u x�c nh?n kh�ng kh?p")]
+        [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
+        [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
@@ -163,11 +163,11 @@ namespace SakuraHomeAPI.Models.DTOs
     /// </summary>
     public class VerifyEmailRequestDto
     {
-        [Required(ErrorMessage = "Email l� b?t bu?c")]
-        [EmailAddress(ErrorMessage = "Email kh�ng h?p l?")]
+        [Required(ErrorMessage = "Email là bắt buộc")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Token x�c th?c l� b?t bu?c")]
+        [Required(ErrorMessage = "Token xác thực là bắt buộc")]
         public string Token { get; set; } = string.Empty;
     }
 
@@ -176,10 +176,10 @@ namespace SakuraHomeAPI.Models.DTOs
     /// </summary>
     public class RefreshTokenRequestDto
     {
-        [Required(ErrorMessage = "Access token l� b?t bu?c")]
+        [Required(ErrorMessage = "Access token là bắt buộc")]
         public string AccessToken { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Refresh token l� b?t bu?c")]
+        [Required(ErrorMessage = "Refresh token là bắt buộc")]
         public string RefreshToken { get; set; } = string.Empty;
     }
 

@@ -1,13 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using SakuraHomeAPI.Data;
-using SakuraHomeAPI.Services.Interfaces;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Users.Requests;
 using SakuraHomeAPI.DTOs.Users.Responses;
+using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Enums;
-using AutoMapper;
 
 namespace SakuraHomeAPI.Services.Implementations
 {

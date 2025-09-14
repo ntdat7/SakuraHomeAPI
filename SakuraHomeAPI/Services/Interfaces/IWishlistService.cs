@@ -1,4 +1,4 @@
-using SakuraHomeAPI.Models.DTOs;
+﻿using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Wishlist.Requests;
 using SakuraHomeAPI.DTOs.Wishlist.Responses;
 

@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Users;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Entities.UserWishlist;
 using SakuraHomeAPI.Models.Entities;
