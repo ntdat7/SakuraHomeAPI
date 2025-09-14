@@ -1,0 +1,1097 @@
+﻿### =================================================================
+### SHOPPING CART API - COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### Quick Login to get tokens
+# @name customerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+@customerToken = {{customerLogin.response.body.data.token}}
+
+# @name customer2Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer2@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+@customer2Token = {{customer2Login.response.body.data.token}}
+
+### =================================================================
+### CART INITIALIZATION & RETRIEVAL
+### =================================================================
+
+### 1. ✅ Get Empty Cart (First Time)
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{customerToken}}
+
+### 2. ✅ Get Cart Summary
+GET {{baseUrl}}/api/cart/summary
+Authorization: Bearer {{customerToken}}
+
+### 3. ✅ Get Cart Item Count
+GET {{baseUrl}}/api/cart/count
+Authorization: Bearer {{customerToken}}
+
+### 4. ❌ Get Cart Without Authentication
+GET {{baseUrl}}/api/cart
+
+### =================================================================
+### ADDING ITEMS TO CART
+### =================================================================
+
+### 5. ✅ Add First Item to Cart
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2,
+  "variantId": null
+}
+
+### 6. ✅ Add Second Item to Cart
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 3,
+  "quantity": 1,
+  "variantId": 1
+}
+
+### 7. ✅ Add Item with Large Quantity
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 5,
+  "quantity": 10
+}
+
+### 8. ✅ Add Same Item Again (Should Update Quantity)
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1
+}
+
+### 9. ✅ Add Item with Product Options
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 7,
+  "quantity": 1,
+  "productOptions": [
+    {
+      "optionId": 1,
+      "value": "Gift Wrapping"
+    },
+    {
+      "optionId": 2,
+      "value": "Express Delivery"
+    }
+  ]
+}
+
+### 10. ❌ Add Item with Zero Quantity
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 0
+}
+
+### 11. ❌ Add Item with Negative Quantity
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": -5
+}
+
+### 12. ❌ Add Non-existent Product
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 99999,
+  "quantity": 1
+}
+
+### 13. ❌ Add Inactive Product
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 999,
+  "quantity": 1
+}
+
+### 14. ❌ Add Out of Stock Product
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 2,
+  "quantity": 1000
+}
+
+### 15. ❌ Add Item Without Authentication
+POST {{baseUrl}}/api/cart/items
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1
+}
+
+### =================================================================
+### UPDATING CART ITEMS
+### =================================================================
+
+### 16. ✅ Update Item Quantity
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 5,
+  "variantId": null
+}
+
+### 17. ✅ Update Item with Variant
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 3,
+  "quantity": 3,
+  "variantId": 1
+}
+
+### 18. ✅ Update Item Options
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 7,
+  "quantity": 1,
+  "productOptions": [
+    {
+      "optionId": 1,
+      "value": "Premium Gift Wrapping"
+    }
+  ]
+}
+
+### 19. ✅ Reduce Item Quantity
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 5,
+  "quantity": 5
+}
+
+### 20. ❌ Update Item to Zero Quantity
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 0
+}
+
+### 21. ❌ Update Non-existent Item
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 99999,
+  "quantity": 1
+}
+
+### 22. ❌ Update Item Exceeding Stock
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1000000
+}
+
+### =================================================================
+### REMOVING ITEMS FROM CART
+### =================================================================
+
+### 23. ✅ Remove Specific Item
+DELETE {{baseUrl}}/api/cart/items/7
+Authorization: Bearer {{customerToken}}
+
+### 24. ✅ Remove Item by Product ID
+DELETE {{baseUrl}}/api/cart/items?productId=5
+Authorization: Bearer {{customerToken}}
+
+### 25. ✅ Remove Item with Variant
+DELETE {{baseUrl}}/api/cart/items?productId=3&variantId=1
+Authorization: Bearer {{customerToken}}
+
+### 26. ❌ Remove Non-existent Item
+DELETE {{baseUrl}}/api/cart/items/99999
+Authorization: Bearer {{customerToken}}
+
+### 27. ❌ Remove Item Without Authentication
+DELETE {{baseUrl}}/api/cart/items/1
+
+### =================================================================
+### BULK CART OPERATIONS
+### =================================================================
+
+### 28. ✅ Add Multiple Items at Once
+POST {{baseUrl}}/api/cart/items/bulk
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 8,
+      "quantity": 2
+    },
+    {
+      "productId": 9,
+      "quantity": 1,
+      "variantId": 2
+    },
+    {
+      "productId": 10,
+      "quantity": 3
+    }
+  ]
+}
+
+### 29. ✅ Update Multiple Items at Once
+PUT {{baseUrl}}/api/cart/items/bulk
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    },
+    {
+      "productId": 8,
+      "quantity": 4
+    },
+    {
+      "productId": 10,
+      "quantity": 1
+    }
+  ]
+}
+
+### 30. ✅ Remove Multiple Items at Once
+DELETE {{baseUrl}}/api/cart/items/bulk
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productIds": [8, 9, 10]
+}
+
+### 31. ✅ Clear Entire Cart
+DELETE {{baseUrl}}/api/cart/clear
+Authorization: Bearer {{customerToken}}
+
+### 32. ❌ Bulk Add with Mixed Valid/Invalid Items
+POST {{baseUrl}}/api/cart/items/bulk
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    },
+    {
+      "productId": 99999,
+      "quantity": 1
+    },
+    {
+      "productId": 3,
+      "quantity": -1
+    }
+  ]
+}
+
+### =================================================================
+### CART CALCULATIONS & TOTALS
+### =================================================================
+
+### 33. ✅ Repopulate Cart for Testing
+POST {{baseUrl}}/api/cart/items/bulk
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    },
+    {
+      "productId": 3,
+      "quantity": 1
+    },
+    {
+      "productId": 5,
+      "quantity": 3
+    }
+  ]
+}
+
+### 34. ✅ Get Cart Totals
+GET {{baseUrl}}/api/cart/totals
+Authorization: Bearer {{customerToken}}
+
+### 35. ✅ Calculate Cart with Shipping
+GET {{baseUrl}}/api/cart/totals?shippingZone=HCM&shippingMethod=STANDARD
+Authorization: Bearer {{customerToken}}
+
+### 36. ✅ Calculate Cart with Tax
+GET {{baseUrl}}/api/cart/totals?taxZone=VN&includeVAT=true
+Authorization: Bearer {{customerToken}}
+
+### 37. ✅ Get Detailed Cart Breakdown
+GET {{baseUrl}}/api/cart/breakdown
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### CART PERSISTENCE & RECOVERY
+### =================================================================
+
+### 38. ✅ Save Cart for Later
+POST {{baseUrl}}/api/cart/save
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "name": "My Saved Cart",
+  "description": "Items I want to buy later"
+}
+
+### 39. ✅ Get Saved Carts
+GET {{baseUrl}}/api/cart/saved
+Authorization: Bearer {{customerToken}}
+
+### 40. ✅ Load Saved Cart
+POST {{baseUrl}}/api/cart/load/1
+Authorization: Bearer {{customerToken}}
+
+### 41. ✅ Merge with Existing Cart
+POST {{baseUrl}}/api/cart/merge/1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "mergeStrategy": "ADD_TO_EXISTING"
+}
+
+### 42. ✅ Delete Saved Cart
+DELETE {{baseUrl}}/api/cart/saved/1
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### COUPON APPLICATION
+### =================================================================
+
+### 43. ✅ Apply Valid Coupon
+POST {{baseUrl}}/api/cart/coupon
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "couponCode": "WELCOME10"
+}
+
+### 44. ✅ Get Cart with Applied Coupon
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{customerToken}}
+
+### 45. ✅ Remove Applied Coupon
+DELETE {{baseUrl}}/api/cart/coupon
+Authorization: Bearer {{customerToken}}
+
+### 46. ❌ Apply Invalid Coupon
+POST {{baseUrl}}/api/cart/coupon
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "couponCode": "INVALID_CODE"
+}
+
+### 47. ❌ Apply Expired Coupon
+POST {{baseUrl}}/api/cart/coupon
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "couponCode": "EXPIRED2023"
+}
+
+### 48. ❌ Apply Coupon with Insufficient Order Amount
+POST {{baseUrl}}/api/cart/coupon
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "couponCode": "HIGHVALUE500"
+}
+
+### =================================================================
+### CART VALIDATION & CHECKING
+### =================================================================
+
+### 49. ✅ Validate Cart Before Checkout
+POST {{baseUrl}}/api/cart/validate
+Authorization: Bearer {{customerToken}}
+
+### 50. ✅ Check Item Availability
+POST {{baseUrl}}/api/cart/check-availability
+Authorization: Bearer {{customerToken}}
+
+### 51. ✅ Validate Shipping Address
+POST {{baseUrl}}/api/cart/validate-shipping
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "addressId": 1
+}
+
+### 52. ✅ Calculate Final Checkout Summary
+POST {{baseUrl}}/api/cart/checkout-summary
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "shippingMethod": "STANDARD",
+  "paymentMethod": "COD",
+  "couponCode": "WELCOME10"
+}
+
+### =================================================================
+### CART SHARING & WISHLIST INTEGRATION
+### =================================================================
+
+### 53. ✅ Share Cart (Generate Link)
+POST {{baseUrl}}/api/cart/share
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "expiryDays": 7,
+  "allowModification": false
+}
+
+### 54. ✅ View Shared Cart (Public)
+GET {{baseUrl}}/api/cart/shared/{{shareToken}}
+
+### 55. ✅ Copy Shared Cart to My Cart
+POST {{baseUrl}}/api/cart/copy-shared/{{shareToken}}
+Authorization: Bearer {{customer2Token}}
+
+### 56. ✅ Move Items to Wishlist
+POST {{baseUrl}}/api/cart/move-to-wishlist
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productIds": [1, 3]
+}
+
+### 57. ✅ Move Items from Wishlist to Cart
+POST {{baseUrl}}/api/cart/move-from-wishlist
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "wishlistItemIds": [1, 2]
+}
+
+### =================================================================
+### CART RECOMMENDATIONS & SUGGESTIONS
+### =================================================================
+
+### 58. ✅ Get Recommended Items for Cart
+GET {{baseUrl}}/api/cart/recommendations?count=5
+Authorization: Bearer {{customerToken}}
+
+### 59. ✅ Get Frequently Bought Together
+GET {{baseUrl}}/api/cart/frequently-bought-together?count=3
+Authorization: Bearer {{customerToken}}
+
+### 60. ✅ Get Cart Completion Suggestions
+GET {{baseUrl}}/api/cart/completion-suggestions?minAmount=500000
+Authorization: Bearer {{customerToken}}
+
+### 61. ✅ Get Cross-sell Recommendations
+GET {{baseUrl}}/api/cart/cross-sell?count=4
+Authorization: Bearer {{customerToken}}
+
+### 62. ✅ Get Upsell Recommendations
+GET {{baseUrl}}/api/cart/upsell?count=3
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### CART ANALYTICS & TRACKING
+### =================================================================
+
+### 63. ✅ Track Cart Abandonment Event
+POST {{baseUrl}}/api/cart/analytics/abandoned
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "reason": "Went to compare prices",
+  "pageLeavingFrom": "cart-review"
+}
+
+### 64. ✅ Track Item View in Cart
+POST {{baseUrl}}/api/cart/analytics/item-view
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "viewDuration": 30
+}
+
+### 65. ✅ Get Cart Analytics Summary
+GET {{baseUrl}}/api/cart/analytics/summary
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### ERROR HANDLING TESTS
+### =================================================================
+
+### 66. ❌ Invalid Product ID Type
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": "invalid-id",
+  "quantity": 1
+}
+
+### 67. ❌ String Quantity Instead of Number
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": "five"
+}
+
+### 68. ❌ Extremely Large Quantity
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 9999999999
+}
+
+### 69. ❌ Missing Required Fields
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
+
+### 70. ❌ Empty Request Body
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{}
+
+### =================================================================
+### SECURITY TESTS
+### =================================================================
+
+### 71. 🔒 SQL Injection in Product ID
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": "1; DROP TABLE Carts; --",
+  "quantity": 1
+}
+
+### 72. 🔒 XSS in Cart Item Options
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 7,
+  "quantity": 1,
+  "productOptions": [
+    {
+      "optionId": 1,
+      "value": "<script>alert('XSS')</script>"
+    }
+  ]
+}
+
+### 73. 🔒 Cross-User Cart Access
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{customer2Token}}
+
+### 74. 🔒 Cross-User Cart Modification
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customer2Token}}
+Content-Type: application/json
+
+{
+  "cartId": "other-user-cart-id",
+  "productId": 1,
+  "quantity": 1
+}
+
+### =================================================================
+### PERFORMANCE TESTS
+### =================================================================
+
+### 75. ⚡ Rapid Cart Operations
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 11,
+  "quantity": 1
+}
+
+### 76. ⚡ Rapid Cart Updates
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 11,
+  "quantity": 2
+}
+
+### 77. ⚡ Large Bulk Operation
+POST {{baseUrl}}/api/cart/items/bulk
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {"productId": 12, "quantity": 1},
+    {"productId": 13, "quantity": 2},
+    {"productId": 14, "quantity": 1},
+    {"productId": 15, "quantity": 3},
+    {"productId": 16, "quantity": 1}
+  ]
+}
+
+### 78. ⚡ Cart Total Calculation Performance
+GET {{baseUrl}}/api/cart/totals?includeAllCalculations=true
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### CART STATE MANAGEMENT
+### =================================================================
+
+### 79. 🔄 Concurrent Cart Updates
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 10
+}
+
+### 80. 🔄 Concurrent Cart Updates (Conflict)
+PUT {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 5,
+  "version": 1
+}
+
+### 81. 🔄 Stock Changes During Cart Session
+GET {{baseUrl}}/api/cart/check-stock-changes
+Authorization: Bearer {{customerToken}}
+
+### 82. 🔄 Price Changes During Cart Session
+GET {{baseUrl}}/api/cart/check-price-changes
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### CART EXPIRATION & CLEANUP
+### =================================================================
+
+### 83. ✅ Get Cart Expiration Status
+GET {{baseUrl}}/api/cart/expiration-status
+Authorization: Bearer {{customerToken}}
+
+### 84. ✅ Extend Cart Expiration
+POST {{baseUrl}}/api/cart/extend-expiration
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "extendByHours": 24
+}
+
+### 85. ✅ Get Expired Cart Items
+GET {{baseUrl}}/api/cart/expired-items
+Authorization: Bearer {{customerToken}}
+
+### 86. ✅ Remove Expired Items
+DELETE {{baseUrl}}/api/cart/expired-items
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### MOBILE-SPECIFIC CART FEATURES
+### =================================================================
+
+### 87. ✅ Get Mobile-Optimized Cart
+GET {{baseUrl}}/api/cart/mobile
+Authorization: Bearer {{customerToken}}
+
+### 88. ✅ Quick Add for Mobile
+POST {{baseUrl}}/api/cart/quick-add
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 17,
+  "quantity": 1,
+  "source": "mobile_quick_buy"
+}
+
+### 89. ✅ Cart Widget Data
+GET {{baseUrl}}/api/cart/widget
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### GUEST CART MANAGEMENT
+### =================================================================
+
+### 90. ✅ Create Guest Cart
+POST {{baseUrl}}/api/cart/guest
+Content-Type: application/json
+
+{
+  "guestId": "guest-12345",
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    }
+  ]
+}
+
+### 91. ✅ Get Guest Cart
+GET {{baseUrl}}/api/cart/guest/guest-12345
+
+### 92. ✅ Merge Guest Cart with User Cart
+POST {{baseUrl}}/api/cart/merge-guest
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "guestId": "guest-12345",
+  "mergeStrategy": "KEEP_HIGHEST_QUANTITY"
+}
+
+### =================================================================
+### CLEANUP & FINAL VALIDATION
+### =================================================================
+
+### 93. 🧹 Clear Cart for Final State
+DELETE {{baseUrl}}/api/cart/clear
+Authorization: Bearer {{customerToken}}
+
+### 94. 🧹 Verify Empty Cart State
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{customerToken}}
+
+### 95. 🧹 Verify Cart Count is Zero
+GET {{baseUrl}}/api/cart/count
+Authorization: Bearer {{customerToken}}
+
+### 96. 🧹 Add Test Item for Other Tests
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+### =================================================================
+### TEST SUMMARY & VALIDATION CHECKLIST
+### =================================================================
+
+###
+### ✅ CART MANAGEMENT FEATURES TESTED:
+### 
+### 🛒 Cart Initialization:
+### - Empty cart retrieval
+### - Cart summary access
+### - Item count tracking
+### - Authentication requirements
+### 
+### ➕ Adding Items:
+### - Single item addition
+### - Multiple item addition
+### - Item with variants
+### - Item with options
+### - Quantity updates on duplicate adds
+### - Zero/negative quantity validation
+### - Non-existent product handling
+### - Out-of-stock validation
+### - Authentication enforcement
+### 
+### ✏️ Updating Items:
+### - Quantity modifications
+### - Variant changes
+### - Option updates
+### - Quantity reductions
+### - Zero quantity handling
+### - Stock limit validation
+### - Non-existent item handling
+### 
+### 🗑️ Removing Items:
+### - Individual item removal
+### - Product-based removal
+### - Variant-specific removal
+### - Bulk item removal
+### - Full cart clearing
+### - Non-existent item handling
+### 
+### 📦 Bulk Operations:
+### - Multiple item additions
+### - Multiple item updates
+### - Multiple item removals
+### - Mixed valid/invalid handling
+### - Transaction consistency
+### 
+### 💰 Calculations & Totals:
+### - Basic cart totals
+### - Shipping calculations
+### - Tax calculations
+### - Detailed breakdowns
+### - Real-time updates
+### 
+### 💾 Cart Persistence:
+### - Cart saving functionality
+### - Saved cart management
+### - Cart loading
+### - Cart merging strategies
+### - Persistence across sessions
+### 
+### 🎫 Coupon Integration:
+### - Coupon application
+### - Coupon validation
+### - Coupon removal
+### - Invalid coupon handling
+### - Minimum order validation
+### 
+### ✅ Cart Validation:
+### - Checkout validation
+### - Item availability checking
+### - Shipping validation
+### - Final summary calculation
+### - Business rule enforcement
+### 
+### 🤝 Sharing & Integration:
+### - Cart sharing functionality
+### - Shared cart viewing
+### - Cross-user cart copying
+### - Wishlist integration
+### - Item movement between lists
+### 
+### 🤖 Recommendations:
+### - Recommended items
+### - Frequently bought together
+### - Cart completion suggestions
+### - Cross-sell recommendations
+### - Upsell recommendations
+### 
+### 📊 Analytics & Tracking:
+### - Abandonment tracking
+### - Item view tracking
+### - Cart analytics summary
+### - User behavior insights
+### 
+### 🛡️ Security Testing:
+### - SQL injection prevention
+### - XSS attack prevention
+### - Cross-user access prevention
+### - Data manipulation prevention
+### 
+### ⚡ Performance Testing:
+### - Rapid operation handling
+### - Bulk operation performance
+### - Calculation performance
+### - Concurrent access management
+### 
+### 🔄 State Management:
+### - Concurrent update handling
+### - Version conflict resolution
+### - Stock change notifications
+### - Price change handling
+### 
+### ⏰ Cart Lifecycle:
+### - Expiration status tracking
+### - Expiration extension
+### - Expired item management
+### - Automatic cleanup
+### 
+### 📱 Mobile Features:
+### - Mobile-optimized views
+### - Quick add functionality
+### - Widget data provision
+### 
+### 👥 Guest Support:
+### - Guest cart creation
+### - Guest cart management
+### - Guest-to-user merging
+### - Anonymous shopping support
+### 
+### 📊 EXPECTED RESPONSE CODES:
+### 
+### ✅ Success Scenarios:
+### - 200 OK: Get operations, updates
+### - 201 Created: Item additions, cart creation
+### - 204 No Content: Item removals, cart clearing
+### 
+### ❌ Error Scenarios:
+### - 400 Bad Request: Validation errors, invalid data
+### - 401 Unauthorized: Missing authentication
+### - 403 Forbidden: Cross-user access attempts
+### - 404 Not Found: Non-existent items/carts
+### - 409 Conflict: Stock conflicts, concurrent updates
+### - 422 Unprocessable Entity: Business rule violations
+### 
+### 🎯 PERFORMANCE TARGETS:
+### 
+### - Item addition: < 200ms
+### - Cart retrieval: < 150ms
+### - Total calculation: < 300ms
+### - Bulk operations: < 500ms
+### - Coupon application: < 400ms
+### - Cart validation: < 600ms
+### - Recommendation loading: < 800ms
+### 
+### 📋 VALIDATION CHECKLIST:
+### 
+### ✅ Functional Requirements:
+### - All cart operations work correctly
+### - Calculations are accurate
+### - Stock validation is enforced
+### - Business rules are respected
+### - Integration points function properly
+### 
+### ✅ Data Integrity:
+### - Cart totals are precise
+### - Stock levels are updated
+### - User isolation is maintained
+### - Session data is consistent
+### - Calculation accuracy is verified
+### 
+### ✅ User Experience:
+### - Cart state persists correctly
+### - Real-time updates work
+### - Error messages are clear
+### - Performance meets expectations
+### - Mobile experience is optimized
+### 
+### ✅ Security Requirements:
+### - Authentication is enforced
+### - User data is protected
+### - Cross-user access is prevented
+### - Input validation is comprehensive
+### - Session security is maintained
+### 
+### 🔧 TROUBLESHOOTING:
+### 
+### If tests fail:
+### 1. Verify database connectivity
+### 2. Check authentication setup
+### 3. Confirm product data exists
+### 4. Validate stock calculation logic
+### 5. Check coupon configuration
+### 6. Verify session management
+### 7. Confirm shipping integration
+### 8. Check recommendation engine
+### 
+### 📈 MONITORING RECOMMENDATIONS:
+### 
+### - Monitor cart abandonment rates
+### - Track conversion from cart to order
+### - Alert on stock availability issues
+### - Monitor cart performance metrics
+### - Track recommendation effectiveness
+### - Alert on payment gateway issues
+### - Monitor cart sharing usage
+### - Track mobile cart performance
+###

@@ -112,16 +112,16 @@ namespace SakuraHomeAPI.Models.Base
     public abstract class ContentEntity : TranslatableEntity, ISlugifiable, ISeoFriendly, IOrderable
     {
         [MaxLength(255)]
-        public string Slug { get; set; }
+        public string? Slug { get; set; } // ✅ Changed to nullable - Slug có thể chưa tạo
 
         [MaxLength(160)]
-        public string MetaTitle { get; set; }
+        public string? MetaTitle { get; set; } // ✅ Changed to nullable - SEO có thể chưa set
 
         [MaxLength(320)]
-        public string MetaDescription { get; set; }
+        public string? MetaDescription { get; set; } // ✅ Changed to nullable - CHÍNH LỖI HIỆN TẠI
 
         [MaxLength(500)]
-        public string MetaKeywords { get; set; }
+        public string? MetaKeywords { get; set; } // ✅ Changed to nullable - Keywords có thể chưa có
 
         public int DisplayOrder { get; set; } = 0;
     }
@@ -135,9 +135,9 @@ namespace SakuraHomeAPI.Models.Base
         public string Name { get; set; }
 
         [MaxLength(100)]
-        public string Code { get; set; }
+        public string? Code { get; set; } // ✅ Changed to nullable - Code có thể không có
 
-        public string Description { get; set; }
+        public string? Description { get; set; } // ✅ Changed to nullable - Description có thể rỗng
 
         public int DisplayOrder { get; set; } = 0;
     }
@@ -150,10 +150,10 @@ namespace SakuraHomeAPI.Models.Base
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [MaxLength(45)]
-        public string IpAddress { get; set; }
+        public string? IpAddress { get; set; } // ✅ Changed to nullable - IP có thể không có
 
         [MaxLength(500)]
-        public string UserAgent { get; set; }
+        public string? UserAgent { get; set; } // ✅ Changed to nullable - UserAgent có thể rỗng
 
         public Guid? UserId { get; set; }
         public virtual User User { get; set; }

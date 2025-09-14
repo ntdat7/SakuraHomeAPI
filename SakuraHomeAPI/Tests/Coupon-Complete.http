@@ -1,0 +1,1127 @@
+﻿### =================================================================
+### COUPON MANAGEMENT API - COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### Quick Login to get tokens
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+@adminToken = {{adminLogin.response.body.data.token}}
+
+# @name customerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+@customerToken = {{customerLogin.response.body.data.token}}
+
+# @name customer2Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer2@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+@customer2Token = {{customer2Login.response.body.data.token}}
+
+### =================================================================
+### COUPON CREATION & MANAGEMENT (ADMIN)
+### =================================================================
+
+### 1. ✅ Create Percentage Discount Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "name": "New Year Sale",
+  "description": "20% discount for orders over 500k VND",
+  "type": "Percentage",
+  "value": 20,
+  "minOrderAmount": 500000,
+  "maxDiscountAmount": 200000,
+  "usageLimit": 1000,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-01-31T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### 2. ✅ Create Fixed Amount Discount Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "FREESHIP50",
+  "name": "Free Shipping",
+  "description": "50k VND discount on shipping",
+  "type": "FixedAmount",
+  "value": 50000,
+  "minOrderAmount": 300000,
+  "maxDiscountAmount": null,
+  "usageLimit": 500,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-12-31T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### 3. ✅ Create First-Time Customer Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "WELCOME15",
+  "name": "Welcome Discount",
+  "description": "15% discount for new customers",
+  "type": "Percentage",
+  "value": 15,
+  "minOrderAmount": 200000,
+  "maxDiscountAmount": 100000,
+  "usageLimit": 10000,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-12-31T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### 4. ✅ Create Limited Time Flash Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "FLASH30",
+  "name": "Flash Sale 30%",
+  "description": "30% discount - Limited time only!",
+  "type": "Percentage",
+  "value": 30,
+  "minOrderAmount": 400000,
+  "maxDiscountAmount": 300000,
+  "usageLimit": 100,
+  "startDate": "2024-01-15T00:00:00Z",
+  "endDate": "2024-01-15T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### 5. ✅ Create VIP Exclusive Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "VIP2024",
+  "name": "VIP Exclusive",
+  "description": "Exclusive 25% discount for VIP members",
+  "type": "Percentage",
+  "value": 25,
+  "minOrderAmount": 1000000,
+  "maxDiscountAmount": 500000,
+  "usageLimit": 200,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-12-31T23:59:59Z",
+  "isActive": true,
+  "isPublic": false
+}
+
+### 6. ❌ Create Coupon with Duplicate Code
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "name": "Duplicate Code Test",
+  "description": "This should fail",
+  "type": "Percentage",
+  "value": 10,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-01-31T23:59:59Z"
+}
+
+### 7. ❌ Create Coupon with Invalid Value
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "INVALID_PERCENT",
+  "name": "Invalid Percentage",
+  "description": "Invalid percentage value",
+  "type": "Percentage",
+  "value": 150,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-01-31T23:59:59Z"
+}
+
+### 8. ❌ Create Coupon with Past Dates
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "PASTDATE",
+  "name": "Past Date Coupon",
+  "description": "This should fail",
+  "type": "FixedAmount",
+  "value": 50000,
+  "startDate": "2023-01-01T00:00:00Z",
+  "endDate": "2023-01-31T23:59:59Z"
+}
+
+### 9. ❌ Customer Trying to Create Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "CUSTOMER_CREATE",
+  "name": "Customer Created",
+  "description": "This should fail",
+  "type": "Percentage",
+  "value": 10
+}
+
+### =================================================================
+### COUPON LISTING & RETRIEVAL (ADMIN)
+### =================================================================
+
+### 10. ✅ Get All Coupons (Admin)
+GET {{baseUrl}}/api/coupon?page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 11. ✅ Get Active Coupons Only
+GET {{baseUrl}}/api/coupon?page=1&pageSize=10&isActive=true
+Authorization: Bearer {{adminToken}}
+
+### 12. ✅ Get Coupons by Type
+GET {{baseUrl}}/api/coupon?page=1&pageSize=10&type=Percentage
+Authorization: Bearer {{adminToken}}
+
+### 13. ✅ Search Coupons by Code
+GET {{baseUrl}}/api/coupon?page=1&pageSize=10&search=NEW
+Authorization: Bearer {{adminToken}}
+
+### 14. ✅ Get Coupons by Date Range
+GET {{baseUrl}}/api/coupon?page=1&pageSize=10&startDate=2024-01-01&endDate=2024-01-31
+Authorization: Bearer {{adminToken}}
+
+### 15. ✅ Get Specific Coupon Details
+GET {{baseUrl}}/api/coupon/1
+Authorization: Bearer {{adminToken}}
+
+### 16. ❌ Get Non-existent Coupon
+GET {{baseUrl}}/api/coupon/99999
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### COUPON UPDATES (ADMIN)
+### =================================================================
+
+### 17. ✅ Update Coupon Basic Information
+PUT {{baseUrl}}/api/coupon/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated New Year Sale",
+  "description": "Updated 25% discount for orders over 500k VND",
+  "type": "Percentage",
+  "value": 25,
+  "minOrderAmount": 500000,
+  "maxDiscountAmount": 250000,
+  "usageLimit": 1500,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-02-29T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### 18. ✅ Toggle Coupon Status (Deactivate)
+PATCH {{baseUrl}}/api/coupon/2/toggle-status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+false
+
+### 19. ✅ Toggle Coupon Status (Reactivate)
+PATCH {{baseUrl}}/api/coupon/2/toggle-status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+true
+
+### 20. ❌ Update Non-existent Coupon
+PUT {{baseUrl}}/api/coupon/99999
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Non-existent Update"
+}
+
+### 21. ❌ Customer Trying to Update Coupon
+PUT {{baseUrl}}/api/coupon/1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "name": "Customer Update Attempt"
+}
+
+### =================================================================
+### PUBLIC COUPON DISCOVERY
+### =================================================================
+
+### 22. ✅ Get Active Public Coupons
+GET {{baseUrl}}/api/coupon/active?page=1&pageSize=10
+
+### 23. ✅ Get Active Public Coupons (Authenticated)
+GET {{baseUrl}}/api/coupon/active?page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 24. ✅ Get Coupon by Code (Public Info)
+GET {{baseUrl}}/api/coupon/code/NEWYEAR2024
+
+### 25. ✅ Get Coupon by Code (Authenticated)
+GET {{baseUrl}}/api/coupon/code/FREESHIP50
+Authorization: Bearer {{customerToken}}
+
+### 26. ❌ Get Private Coupon via Public Endpoint
+GET {{baseUrl}}/api/coupon/code/VIP2024
+
+### 27. ❌ Get Non-existent Coupon by Code
+GET {{baseUrl}}/api/coupon/code/NONEXISTENT
+
+### =================================================================
+### COUPON VALIDATION
+### =================================================================
+
+### 28. ✅ Validate Valid Coupon
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "orderAmount": 600000
+}
+
+### 29. ✅ Validate Coupon at Minimum Order Amount
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "FREESHIP50",
+  "orderAmount": 300000
+}
+
+### 30. ❌ Validate Coupon Below Minimum Order
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "orderAmount": 100000
+}
+
+### 31. ❌ Validate Invalid Coupon Code
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "INVALID_CODE",
+  "orderAmount": 500000
+}
+
+### 32. ❌ Validate Inactive Coupon
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "INACTIVE_COUPON",
+  "orderAmount": 500000
+}
+
+### 33. ❌ Validate Expired Coupon (Flash Sale)
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "FLASH30",
+  "orderAmount": 500000
+}
+
+### =================================================================
+### DISCOUNT CALCULATION
+### =================================================================
+
+### 34. ✅ Calculate Percentage Discount
+POST {{baseUrl}}/api/coupon/calculate-discount
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "orderAmount": 800000
+}
+
+### 35. ✅ Calculate Fixed Amount Discount
+POST {{baseUrl}}/api/coupon/calculate-discount
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "FREESHIP50",
+  "orderAmount": 400000
+}
+
+### 36. ✅ Calculate Discount with Max Cap
+POST {{baseUrl}}/api/coupon/calculate-discount
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "orderAmount": 2000000
+}
+
+### 37. ✅ Calculate Discount at Exact Minimum
+POST {{baseUrl}}/api/coupon/calculate-discount
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "WELCOME15",
+  "orderAmount": 200000
+}
+
+### =================================================================
+### COUPON USAGE & REDEMPTION
+### =================================================================
+
+### 38. ✅ Use Valid Coupon
+POST {{baseUrl}}/api/coupon/use
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "FREESHIP50",
+  "orderAmount": 350000
+}
+
+### 39. ✅ Use Percentage Coupon
+POST {{baseUrl}}/api/coupon/use
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "WELCOME15",
+  "orderAmount": 250000
+}
+
+### 40. ❌ Use Same Coupon Again (User Limit)
+POST {{baseUrl}}/api/coupon/use
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "WELCOME15",
+  "orderAmount": 250000
+}
+
+### 41. ✅ Different User Using Same Coupon
+POST {{baseUrl}}/api/coupon/use
+Authorization: Bearer {{customer2Token}}
+Content-Type: application/json
+
+{
+  "code": "WELCOME15",
+  "orderAmount": 300000
+}
+
+### 42. ❌ Use Coupon Without Authentication
+POST {{baseUrl}}/api/coupon/use
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "orderAmount": 500000
+}
+
+### =================================================================
+### COUPON USAGE TRACKING & HISTORY
+### =================================================================
+
+### 43. ✅ Get User's Coupon Usage History
+GET {{baseUrl}}/api/coupon/my-history?page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 44. ✅ Get Coupon Usage Statistics (Admin)
+GET {{baseUrl}}/api/coupon/stats
+Authorization: Bearer {{adminToken}}
+
+### 45. ✅ Get Expired Coupons (Admin)
+GET {{baseUrl}}/api/coupon/expired
+Authorization: Bearer {{adminToken}}
+
+### 46. ✅ Get Expiring Coupons (Admin)
+GET {{baseUrl}}/api/coupon/expiring?days=7
+Authorization: Bearer {{adminToken}}
+
+### 47. ✅ Get Expiring Coupons (30 days)
+GET {{baseUrl}}/api/coupon/expiring?days=30
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### COUPON REVOCATION & RECOVERY
+### =================================================================
+
+### 48. ✅ Revert Coupon Usage (Admin)
+POST {{baseUrl}}/api/coupon/revert/FREESHIP50
+Authorization: Bearer {{adminToken}}
+
+### 49. ✅ Revert Another Coupon Usage
+POST {{baseUrl}}/api/coupon/revert/WELCOME15
+Authorization: Bearer {{adminToken}}
+
+### 50. ❌ Customer Trying to Revert Usage
+POST {{baseUrl}}/api/coupon/revert/NEWYEAR2024
+Authorization: Bearer {{customerToken}}
+
+### 51. ❌ Revert Non-existent Coupon Usage
+POST {{baseUrl}}/api/coupon/revert/NONEXISTENT
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### BULK COUPON OPERATIONS (ADMIN)
+### =================================================================
+
+### 52. ✅ Create Multiple Coupons (Bulk)
+POST {{baseUrl}}/api/coupon/bulk
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "coupons": [
+    {
+      "code": "BULK001",
+      "name": "Bulk Coupon 1",
+      "description": "First bulk created coupon",
+      "type": "FixedAmount",
+      "value": 25000,
+      "minOrderAmount": 150000,
+      "usageLimit": 100,
+      "startDate": "2024-01-01T00:00:00Z",
+      "endDate": "2024-03-31T23:59:59Z",
+      "isActive": true,
+      "isPublic": true
+    },
+    {
+      "code": "BULK002",
+      "name": "Bulk Coupon 2",
+      "description": "Second bulk created coupon",
+      "type": "Percentage",
+      "value": 10,
+      "minOrderAmount": 200000,
+      "maxDiscountAmount": 50000,
+      "usageLimit": 200,
+      "startDate": "2024-01-01T00:00:00Z",
+      "endDate": "2024-03-31T23:59:59Z",
+      "isActive": true,
+      "isPublic": true
+    }
+  ]
+}
+
+### 53. ✅ Bulk Update Coupon Status
+PATCH {{baseUrl}}/api/coupon/bulk/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "couponIds": [6, 7],
+  "isActive": false
+}
+
+### 54. ✅ Bulk Extend Expiration
+PATCH {{baseUrl}}/api/coupon/bulk/extend
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "couponIds": [1, 2, 3],
+  "extendByDays": 30
+}
+
+### =================================================================
+### ADVANCED COUPON FEATURES
+### =================================================================
+
+### 55. ✅ Create Product-Specific Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "SAKE20",
+  "name": "Sake 20% Off",
+  "description": "20% off on all sake products",
+  "type": "Percentage",
+  "value": 20,
+  "minOrderAmount": 300000,
+  "maxDiscountAmount": 150000,
+  "usageLimit": 300,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-06-30T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### 56. ✅ Create Category-Specific Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "BEVERAGE15",
+  "name": "Beverage 15% Off",
+  "description": "15% off on beverage category",
+  "type": "Percentage",
+  "value": 15,
+  "minOrderAmount": 250000,
+  "maxDiscountAmount": 100000,
+  "usageLimit": 400,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-08-31T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### 57. ✅ Create Minimum Items Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "BUY3GET10",
+  "name": "Buy 3 Get 10% Off",
+  "description": "10% off when buying 3 or more items",
+  "type": "Percentage",
+  "value": 10,
+  "minOrderAmount": 200000,
+  "maxDiscountAmount": 80000,
+  "usageLimit": 500,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-12-31T23:59:59Z",
+  "isActive": true,
+  "isPublic": true
+}
+
+### =================================================================
+### COUPON ANALYTICS & REPORTING (ADMIN)
+### =================================================================
+
+### 58. ✅ Get Coupon Usage Report
+GET {{baseUrl}}/api/coupon/reports/usage?fromDate=2024-01-01&toDate=2024-01-31
+Authorization: Bearer {{adminToken}}
+
+### 59. ✅ Get Coupon Performance Metrics
+GET {{baseUrl}}/api/coupon/reports/performance?period=last30days
+Authorization: Bearer {{adminToken}}
+
+### 60. ✅ Get Top Performing Coupons
+GET {{baseUrl}}/api/coupon/reports/top-performing?limit=10
+Authorization: Bearer {{adminToken}}
+
+### 61. ✅ Get Coupon ROI Analysis
+GET {{baseUrl}}/api/coupon/reports/roi?fromDate=2024-01-01&toDate=2024-01-31
+Authorization: Bearer {{adminToken}}
+
+### 62. ✅ Get Customer Coupon Usage Patterns
+GET {{baseUrl}}/api/coupon/reports/customer-patterns
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### COUPON DELETION (ADMIN)
+### =================================================================
+
+### 63. ✅ Delete Unused Coupon
+DELETE {{baseUrl}}/api/coupon/8
+Authorization: Bearer {{adminToken}}
+
+### 64. ❌ Delete Coupon with Usage History
+DELETE {{baseUrl}}/api/coupon/1
+Authorization: Bearer {{adminToken}}
+
+### 65. ❌ Customer Trying to Delete Coupon
+DELETE {{baseUrl}}/api/coupon/5
+Authorization: Bearer {{customerToken}}
+
+### 66. ❌ Delete Non-existent Coupon
+DELETE {{baseUrl}}/api/coupon/99999
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### ERROR HANDLING TESTS
+### =================================================================
+
+### 67. ❌ Invalid Coupon Code Format
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "",
+  "orderAmount": 500000
+}
+
+### 68. ❌ Negative Order Amount
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "orderAmount": -100000
+}
+
+### 69. ❌ Zero Order Amount
+POST {{baseUrl}}/api/coupon/calculate-discount
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "FREESHIP50",
+  "orderAmount": 0
+}
+
+### 70. ❌ Missing Required Fields
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Missing Code Coupon",
+  "type": "Percentage",
+  "value": 10
+}
+
+### =================================================================
+### SECURITY TESTS
+### =================================================================
+
+### 71. 🔒 SQL Injection in Coupon Code
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "'; DROP TABLE Coupons; --",
+  "orderAmount": 500000
+}
+
+### 72. 🔒 XSS in Coupon Creation
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "XSS_TEST",
+  "name": "<script>alert('XSS')</script>",
+  "description": "<img src=x onerror=alert('XSS')>",
+  "type": "FixedAmount",
+  "value": 10000,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-01-31T23:59:59Z"
+}
+
+### 73. 🔒 Path Traversal in Coupon Code
+GET {{baseUrl}}/api/coupon/code/../../admin/users
+Authorization: Bearer {{customerToken}}
+
+### 74. 🔒 Very Long Coupon Code
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "A".repeat(1000),
+  "name": "Long Code Test",
+  "type": "FixedAmount",
+  "value": 10000,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-01-31T23:59:59Z"
+}
+
+### =================================================================
+### PERFORMANCE TESTS
+### =================================================================
+
+### 75. ⚡ Rapid Coupon Validation
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "orderAmount": 500000
+}
+
+### 76. ⚡ Rapid Discount Calculation
+POST {{baseUrl}}/api/coupon/calculate-discount
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "FREESHIP50",
+  "orderAmount": 350000
+}
+
+### 77. ⚡ Large Coupon List Query
+GET {{baseUrl}}/api/coupon?page=1&pageSize=100
+Authorization: Bearer {{adminToken}}
+
+### 78. ⚡ Complex Coupon Search
+GET {{baseUrl}}/api/coupon?search=BULK&type=Percentage&isActive=true&sortBy=usage&sortOrder=desc&page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### EDGE CASES & BOUNDARY TESTS
+### =================================================================
+
+### 79. 🔍 Zero Value Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "ZERO_VALUE",
+  "name": "Zero Value Test",
+  "description": "Coupon with zero value",
+  "type": "FixedAmount",
+  "value": 0,
+  "minOrderAmount": 100000,
+  "usageLimit": 100,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-01-31T23:59:59Z",
+  "isActive": true
+}
+
+### 80. 🔍 100% Percentage Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "FREE100",
+  "name": "100% Free",
+  "description": "Completely free order",
+  "type": "Percentage",
+  "value": 100,
+  "minOrderAmount": 500000,
+  "usageLimit": 10,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-01-31T23:59:59Z",
+  "isActive": true
+}
+
+### 81. 🔍 Very Short Validity Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "SHORT_VALID",
+  "name": "Short Validity",
+  "description": "1 hour validity test",
+  "type": "FixedAmount",
+  "value": 20000,
+  "usageLimit": 50,
+  "startDate": "2024-01-15T12:00:00Z",
+  "endDate": "2024-01-15T13:00:00Z",
+  "isActive": true
+}
+
+### 82. 🔍 Single Use Coupon
+POST {{baseUrl}}/api/coupon
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "SINGLE_USE",
+  "name": "Single Use Only",
+  "description": "Can only be used once",
+  "type": "Percentage",
+  "value": 50,
+  "minOrderAmount": 300000,
+  "usageLimit": 1,
+  "startDate": "2024-01-01T00:00:00Z",
+  "endDate": "2024-12-31T23:59:59Z",
+  "isActive": true
+}
+
+### =================================================================
+### COUPON EXPIRATION HANDLING
+### =================================================================
+
+### 83. ✅ Check Coupon Near Expiration
+GET {{baseUrl}}/api/coupon/code/SHORT_VALID
+
+### 84. ✅ Validate Near Expiration Coupon
+POST {{baseUrl}}/api/coupon/validate
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "code": "SHORT_VALID",
+  "orderAmount": 200000
+}
+
+### 85. ✅ Auto-Expire Coupons Check
+GET {{baseUrl}}/api/coupon/system/check-expiration
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### CLEANUP & FINAL VALIDATION
+### =================================================================
+
+### 86. 🧹 Verify Coupon Count
+GET {{baseUrl}}/api/coupon/stats
+Authorization: Bearer {{adminToken}}
+
+### 87. 🧹 Verify Active Coupons
+GET {{baseUrl}}/api/coupon/active?page=1&pageSize=20
+
+### 88. 🧹 Final Usage History Check
+GET {{baseUrl}}/api/coupon/my-history
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### TEST SUMMARY & VALIDATION CHECKLIST
+### =================================================================
+
+###
+### ✅ COUPON MANAGEMENT FEATURES TESTED:
+### 
+### ➕ Coupon Creation (Admin):
+### - Percentage discount coupons
+### - Fixed amount discount coupons
+### - First-time customer coupons
+### - Limited time flash coupons
+### - VIP exclusive coupons
+### - Duplicate code prevention
+### - Invalid value validation
+### - Date validation
+### - Authorization enforcement
+### 
+### 📋 Coupon Listing & Retrieval:
+### - All coupons listing (Admin)
+### - Active coupon filtering
+### - Type-based filtering
+### - Code-based searching
+### - Date range filtering
+### - Individual coupon details
+### - Non-existent coupon handling
+### 
+### ✏️ Coupon Updates (Admin):
+### - Basic information updates
+### - Status toggling (activate/deactivate)
+### - Non-existent coupon handling
+### - Customer access prevention
+### 
+### 🌍 Public Coupon Discovery:
+### - Active public coupons
+### - Coupon info by code
+### - Private coupon protection
+### - Anonymous access support
+### 
+### ✅ Coupon Validation:
+### - Valid coupon validation
+### - Minimum order amount checking
+### - Below minimum validation
+### - Invalid code handling
+### - Inactive coupon handling
+### - Expired coupon handling
+### 
+### 💰 Discount Calculation:
+### - Percentage discount calculation
+### - Fixed amount discount calculation
+### - Maximum discount cap enforcement
+### - Minimum order validation
+### - Accurate mathematical calculations
+### 
+### 🎫 Coupon Usage & Redemption:
+### - Valid coupon usage
+### - User-specific usage tracking
+### - Usage limit enforcement
+### - Multiple user handling
+### - Authentication requirements
+### 
+### 📊 Usage Tracking & History:
+### - User coupon history
+### - Usage statistics (Admin)
+### - Expired coupon reports
+### - Expiring coupon alerts
+### - Historical data maintenance
+### 
+### 🔄 Coupon Revocation:
+### - Usage reversal (Admin)
+### - Customer access prevention
+### - Non-existent usage handling
+### - Audit trail maintenance
+### 
+### 📦 Bulk Operations (Admin):
+### - Multiple coupon creation
+### - Bulk status updates
+### - Bulk expiration extension
+### - Transaction consistency
+### 
+### 🎯 Advanced Features:
+### - Product-specific coupons
+### - Category-specific coupons
+### - Minimum items coupons
+### - Complex business rules
+### 
+### 📈 Analytics & Reporting (Admin):
+### - Usage reports
+### - Performance metrics
+### - Top performing analysis
+### - ROI calculations
+### - Customer usage patterns
+### 
+### 🗑️ Coupon Deletion (Admin):
+### - Unused coupon deletion
+### - Used coupon protection
+### - Customer access prevention
+### - Non-existent handling
+### 
+### 🛡️ Security Testing:
+### - SQL injection prevention
+### - XSS attack prevention
+### - Path traversal prevention
+### - Input length validation
+### - Authorization validation
+### 
+### ⚡ Performance Testing:
+### - Rapid validation operations
+### - Quick discount calculations
+### - Large dataset handling
+### - Complex search performance
+### 
+### 🔍 Edge Cases:
+### - Zero value coupons
+### - 100% percentage coupons
+### - Very short validity periods
+### - Single use coupons
+### - Boundary value testing
+### 
+### ⏰ Expiration Handling:
+### - Near expiration detection
+### - Expiration validation
+### - Automatic expiration
+### - System cleanup processes
+### 
+### 📊 EXPECTED RESPONSE CODES:
+### 
+### ✅ Success Scenarios:
+### - 200 OK: Get operations, validation, updates
+### - 201 Created: Coupon creation
+### - 204 No Content: Deletion operations
+### 
+### ❌ Error Scenarios:
+### - 400 Bad Request: Validation errors, invalid data
+### - 401 Unauthorized: Missing authentication
+### - 403 Forbidden: Insufficient permissions
+### - 404 Not Found: Non-existent coupons
+### - 409 Conflict: Duplicate codes, usage conflicts
+### - 422 Unprocessable Entity: Business rule violations
+### 
+### 🎯 PERFORMANCE TARGETS:
+### 
+### - Coupon validation: < 100ms
+### - Discount calculation: < 50ms
+### - Coupon creation: < 300ms
+### - Coupon listing: < 200ms
+### - Usage tracking: < 150ms
+### - Bulk operations: < 2000ms
+### - Report generation: < 5000ms
+### 
+### 📋 VALIDATION CHECKLIST:
+### 
+### ✅ Functional Requirements:
+### - All CRUD operations work correctly
+### - Business rules are enforced
+### - Calculations are accurate
+### - Usage limits are respected
+### - Expiration logic works properly
+### 
+### ✅ Data Integrity:
+### - Coupon codes are unique
+### - Usage counts are accurate
+### - Discount amounts are correct
+### - Date validations work
+### - Audit trails are maintained
+### 
+### ✅ Security Requirements:
+### - Authentication is enforced
+### - Authorization rules are respected
+### - Input validation prevents attacks
+### - Sensitive operations are protected
+### - Cross-user access is prevented
+### 
+### ✅ Performance Requirements:
+### - Response times meet targets
+### - Large datasets are handled efficiently
+### - Search operations are optimized
+### - Concurrent operations are managed
+### - Memory usage is controlled
+### 
+### 🔧 TROUBLESHOOTING:
+### 
+### If tests fail:
+### 1. Verify database connectivity and schema
+### 2. Check authentication and authorization setup
+### 3. Confirm date/time configuration
+### 4. Validate business rule implementation
+### 5. Check calculation logic accuracy
+### 6. Verify usage tracking mechanism
+### 7. Confirm expiration handling
+### 8. Check bulk operation transactions
+### 
+### 📈 MONITORING RECOMMENDATIONS:
+### 
+### - Monitor coupon usage rates and patterns
+### - Track discount amounts and ROI
+### - Alert on suspicious usage patterns
+### - Monitor coupon creation frequency
+### - Track expiration and cleanup processes
+### - Alert on validation failures
+### - Monitor performance metrics
+### - Track customer satisfaction with coupons
+###

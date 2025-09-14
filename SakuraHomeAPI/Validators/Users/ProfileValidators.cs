@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using SakuraHomeAPI.DTOs.Users.Requests;
 using SakuraHomeAPI.Validators.Common;
 
@@ -69,6 +69,20 @@ namespace SakuraHomeAPI.Validators.Users
     {
         public CreateAddressRequestValidator()
         {
+            RuleFor(x => x.Name)
+                .NotEmpty()
+                .WithMessage("Recipient name is required")
+                .MaximumLength(100)
+                .WithMessage("Recipient name cannot exceed 100 characters");
+
+            RuleFor(x => x.Phone)
+                .NotEmpty()
+                .WithMessage("Phone number is required")
+                .Must(CommonValidators.BeValidPhoneNumber)
+                .WithMessage("Invalid phone number format")
+                .MaximumLength(20)
+                .WithMessage("Phone number cannot exceed 20 characters");
+
             RuleFor(x => x.AddressLine1)
                 .NotEmpty()
                 .WithMessage("Address line 1 is required")
@@ -80,41 +94,23 @@ namespace SakuraHomeAPI.Validators.Users
                 .WithMessage("Address line 2 cannot exceed 255 characters")
                 .When(x => !string.IsNullOrEmpty(x.AddressLine2));
 
-            RuleFor(x => x.City)
-                .NotEmpty()
-                .WithMessage("City is required")
-                .MaximumLength(100)
-                .WithMessage("City cannot exceed 100 characters");
+            RuleFor(x => x.ProvinceId)
+                .GreaterThan(0)
+                .WithMessage("Province is required");
 
-            RuleFor(x => x.StateProvince)
-                .NotEmpty()
-                .WithMessage("State/Province is required")
-                .MaximumLength(100)
-                .WithMessage("State/Province cannot exceed 100 characters");
+            RuleFor(x => x.WardId)
+                .GreaterThan(0)
+                .WithMessage("Ward is required");
 
             RuleFor(x => x.PostalCode)
-                .NotEmpty()
-                .WithMessage("Postal code is required")
                 .MaximumLength(20)
-                .WithMessage("Postal code cannot exceed 20 characters");
+                .WithMessage("Postal code cannot exceed 20 characters")
+                .When(x => !string.IsNullOrEmpty(x.PostalCode));
 
             RuleFor(x => x.Country)
-                .NotEmpty()
-                .WithMessage("Country is required")
                 .MaximumLength(100)
-                .WithMessage("Country cannot exceed 100 characters");
-
-            RuleFor(x => x.PhoneNumber)
-                .Must(CommonValidators.BeValidPhoneNumber)
-                .WithMessage("Invalid phone number format")
-                .MaximumLength(100)
-                .WithMessage("Phone number cannot exceed 100 characters")
-                .When(x => !string.IsNullOrEmpty(x.PhoneNumber));
-
-            RuleFor(x => x.RecipientName)
-                .MaximumLength(100)
-                .WithMessage("Recipient name cannot exceed 100 characters")
-                .When(x => !string.IsNullOrEmpty(x.RecipientName));
+                .WithMessage("Country cannot exceed 100 characters")
+                .When(x => !string.IsNullOrEmpty(x.Country));
 
             RuleFor(x => x.Notes)
                 .MaximumLength(500)
@@ -130,6 +126,18 @@ namespace SakuraHomeAPI.Validators.Users
     {
         public UpdateAddressRequestValidator()
         {
+            RuleFor(x => x.Name)
+                .MaximumLength(100)
+                .WithMessage("Recipient name cannot exceed 100 characters")
+                .When(x => !string.IsNullOrEmpty(x.Name));
+
+            RuleFor(x => x.Phone)
+                .Must(CommonValidators.BeValidPhoneNumber)
+                .WithMessage("Invalid phone number format")
+                .MaximumLength(20)
+                .WithMessage("Phone number cannot exceed 20 characters")
+                .When(x => !string.IsNullOrEmpty(x.Phone));
+
             RuleFor(x => x.AddressLine1)
                 .MaximumLength(255)
                 .WithMessage("Address line 1 cannot exceed 255 characters")
@@ -140,15 +148,15 @@ namespace SakuraHomeAPI.Validators.Users
                 .WithMessage("Address line 2 cannot exceed 255 characters")
                 .When(x => !string.IsNullOrEmpty(x.AddressLine2));
 
-            RuleFor(x => x.City)
-                .MaximumLength(100)
-                .WithMessage("City cannot exceed 100 characters")
-                .When(x => !string.IsNullOrEmpty(x.City));
+            RuleFor(x => x.ProvinceId)
+                .GreaterThan(0)
+                .WithMessage("Province ID must be greater than 0")
+                .When(x => x.ProvinceId.HasValue);
 
-            RuleFor(x => x.StateProvince)
-                .MaximumLength(100)
-                .WithMessage("State/Province cannot exceed 100 characters")
-                .When(x => !string.IsNullOrEmpty(x.StateProvince));
+            RuleFor(x => x.WardId)
+                .GreaterThan(0)
+                .WithMessage("Ward ID must be greater than 0")
+                .When(x => x.WardId.HasValue);
 
             RuleFor(x => x.PostalCode)
                 .MaximumLength(20)
@@ -159,18 +167,6 @@ namespace SakuraHomeAPI.Validators.Users
                 .MaximumLength(100)
                 .WithMessage("Country cannot exceed 100 characters")
                 .When(x => !string.IsNullOrEmpty(x.Country));
-
-            RuleFor(x => x.PhoneNumber)
-                .Must(CommonValidators.BeValidPhoneNumber)
-                .WithMessage("Invalid phone number format")
-                .MaximumLength(100)
-                .WithMessage("Phone number cannot exceed 100 characters")
-                .When(x => !string.IsNullOrEmpty(x.PhoneNumber));
-
-            RuleFor(x => x.RecipientName)
-                .MaximumLength(100)
-                .WithMessage("Recipient name cannot exceed 100 characters")
-                .When(x => !string.IsNullOrEmpty(x.RecipientName));
 
             RuleFor(x => x.Notes)
                 .MaximumLength(500)

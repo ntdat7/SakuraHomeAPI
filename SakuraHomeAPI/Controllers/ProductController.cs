@@ -545,7 +545,7 @@ namespace SakuraHomeAPI.Controllers
         }
 
         /// <summary>
-        /// Update product stock
+        /// Update product stock - Chủ yếu cho nhập hàng và quản lý kho
         /// </summary>
         [HttpPatch("{id}/stock")]
         [Authorize(Policy = "StaffOnly")]
@@ -560,17 +560,34 @@ namespace SakuraHomeAPI.Controllers
                 }
 
                 var oldStock = product.Stock;
+
+                // Simple approach: NewStock = absolute stock value
                 product.Stock = request.NewStock;
                 product.UpdatedAt = DateTime.UtcNow;
 
-                // Create inventory log
+                // Create inventory log với đầy đủ thông tin từ request
                 var inventoryLog = new InventoryLog
                 {
                     ProductId = id,
-                    Quantity = request.NewStock - oldStock,
+                    Action = request.Action,
+                    Quantity = request.NewStock - oldStock, // Số lượng thay đổi
                     PreviousStock = oldStock,
                     NewStock = request.NewStock,
-                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+
+                    // Handle nullable fields với default values phù hợp
+                    BatchNumber = request.BatchNumber ?? GenerateAutoBatchNumber(),
+                    Reason = request.Reason ?? GetDefaultReasonForAction(request.Action),
+                    Location = request.Location ?? "Main Warehouse",
+                    Notes = request.Notes ?? "",
+
+                    // Optional fields từ request
+                    UnitCost = request.UnitCost,
+                    UnitPrice = request.UnitPrice,
+                    ExpiryDate = request.ExpiryDate,
+                    ProductVariantId = request.ProductVariantId,
+
+                    // System fields
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "",
                     UserAgent = HttpContext.Request.Headers["User-Agent"].ToString(),
                     CreatedAt = DateTime.UtcNow
                 };
@@ -579,18 +596,22 @@ namespace SakuraHomeAPI.Controllers
                 await _context.SaveChangesAsync();
 
                 // Check if low stock
-                var isLowStock = product.MinStock.HasValue && product.Stock <= product.MinStock.Value && product.TrackInventory;
+                var isLowStock = product.MinStock.HasValue &&
+                                product.Stock <= product.MinStock.Value &&
+                                product.TrackInventory;
 
-                _logger.LogInformation("Stock updated for product {ProductId} from {OldStock} to {NewStock}",
-                    id, oldStock, request.NewStock);
+                _logger.LogInformation("Stock updated for product {ProductId} from {OldStock} to {NewStock} via {Action}",
+                    id, oldStock, request.NewStock, request.Action);
 
                 var response = new
                 {
                     message = "Stock updated successfully",
                     oldStock,
                     newStock = request.NewStock,
+                    action = request.Action.ToString(),
+                    stockChange = request.NewStock - oldStock,
                     isLowStock,
-                    stockChange = $"{oldStock} ? {request.NewStock}",
+                    batchNumber = inventoryLog.BatchNumber,
                     inventoryLogId = inventoryLog.Id
                 };
 
@@ -705,5 +726,43 @@ namespace SakuraHomeAPI.Controllers
         }
 
         #endregion
+
+        #region Helper Methods cho Stock Management
+
+        /// <summary>
+        /// Generate auto batch number khi không có
+        /// </summary>
+        private static string GenerateAutoBatchNumber()
+        {
+            return $"AUTO_{DateTime.Now:yyyyMMddHHmmss}";
+        }
+
+        /// <summary>
+        /// Get default reason based on inventory action
+        /// </summary>
+        private static string GetDefaultReasonForAction(InventoryAction action)
+        {
+            return action switch
+            {
+                InventoryAction.Purchase => "Nhập hàng",
+                InventoryAction.Sale => "Bán hàng", // Ít khi dùng qua API này
+                InventoryAction.Return => "Trả hàng",
+                InventoryAction.Adjustment => "Điều chỉnh tồn kho",
+                InventoryAction.Damage => "Hàng hư hỏng",
+                InventoryAction.Transfer => "Chuyển kho",
+                InventoryAction.Lost => "Mất hàng",
+                InventoryAction.Found => "Tìm thấy hàng",
+                InventoryAction.Expired => "Hàng hết hạn",
+                InventoryAction.Reserved => "Đặt trước",
+                InventoryAction.Released => "Hủy đặt trước",
+                InventoryAction.Promotion => "Khuyến mãi",
+                InventoryAction.Sample => "Lấy mẫu",
+                InventoryAction.QualityCheck => "Kiểm tra chất lượng",
+                _ => "Cập nhật tồn kho"
+            };
+        }
+
+        #endregion
+
     }
 }
