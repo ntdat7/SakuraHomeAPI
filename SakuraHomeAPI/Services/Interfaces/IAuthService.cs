@@ -1,5 +1,7 @@
 ﻿using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Users;
+using SakuraHomeAPI.DTOs.Users.Requests;
+using SakuraHomeAPI.DTOs.Users.Responses;
 using SakuraHomeAPI.Models.Entities.Identity;
 
 namespace SakuraHomeAPI.Services.Interfaces

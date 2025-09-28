@@ -1,5 +1,5 @@
-using FluentValidation;
-using SakuraHomeAPI.DTOs.Users;
+﻿using FluentValidation;
+using SakuraHomeAPI.DTOs.Users.Requests;
 using SakuraHomeAPI.Models.Enums;
 
 namespace SakuraHomeAPI.Validators.Users

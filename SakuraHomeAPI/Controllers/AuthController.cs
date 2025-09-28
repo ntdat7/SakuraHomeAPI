@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Users;
+using SakuraHomeAPI.DTOs.Users.Requests;
+using SakuraHomeAPI.DTOs.Users.Responses;
 using SakuraHomeAPI.Services.Interfaces;
 using System.Security.Claims;
 

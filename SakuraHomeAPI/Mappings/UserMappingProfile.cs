@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using SakuraHomeAPI.DTOs.Users;
-using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Users.Requests;
+using SakuraHomeAPI.DTOs.Users.Responses;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Entities;
 
@@ -8,12 +8,13 @@ namespace SakuraHomeAPI.Mappings
 {
     /// <summary>
     /// AutoMapper profile for User-related mappings
+    /// Uses only DTOs from Requests and Responses folders
     /// </summary>
     public class UserMappingProfile : Profile
     {
         public UserMappingProfile()
         {
-            // User mappings
+            // User mappings using Response DTOs
             CreateMap<User, UserSummaryDto>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}".Trim()));
 
@@ -21,7 +22,7 @@ namespace SakuraHomeAPI.Mappings
                 .IncludeBase<User, UserSummaryDto>()
                 .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.Addresses.Where(a => !a.IsDeleted).OrderByDescending(a => a.IsDefault)));
 
-            // Registration mapping
+            // Registration mapping using Request DTOs
             CreateMap<RegisterRequestDto, User>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(_ => Guid.NewGuid()))
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
@@ -31,8 +32,11 @@ namespace SakuraHomeAPI.Mappings
                 .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
                 .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+                .ForMember(dest => dest.DateOfBirth, opt => opt.MapFrom(src => src.DateOfBirth))
+                .ForMember(dest => dest.Gender, opt => opt.MapFrom(src => src.Gender))
                 .ForMember(dest => dest.PreferredLanguage, opt => opt.MapFrom(src => src.PreferredLanguage))
-                .ForMember(dest => dest.EmailNotifications, opt => opt.MapFrom(_ => true)) // Default to true
+                .ForMember(dest => dest.EmailNotifications, opt => opt.MapFrom(src => src.EmailNotifications))
+                .ForMember(dest => dest.SmsNotifications, opt => opt.MapFrom(src => src.SmsNotifications))
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(_ => Models.Enums.UserRole.Customer))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => Models.Enums.AccountStatus.Pending))
                 .ForMember(dest => dest.Tier, opt => opt.MapFrom(_ => Models.Enums.UserTier.Bronze))
@@ -64,7 +68,7 @@ namespace SakuraHomeAPI.Mappings
                 .ForMember(dest => dest.UpdatedByUser, opt => opt.Ignore())
                 .ForMember(dest => dest.DeletedByUser, opt => opt.Ignore());
 
-            // Profile update mapping
+            // Profile update mapping using Request DTOs
             CreateMap<UpdateProfileRequestDto, User>()
                 .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
                 .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
@@ -81,15 +85,24 @@ namespace SakuraHomeAPI.Mappings
                 // Ignore all other properties
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            // Address mappings
-            CreateMap<Address, AddressSummaryDto>();
+            // Address mappings using Response DTOs
+            CreateMap<Address, AddressSummaryDto>()
+                .ForMember(dest => dest.City, opt => opt.MapFrom(src => "")) // Will be populated by service layer
+                .ForMember(dest => dest.State, opt => opt.MapFrom(src => "")); // Will be populated by service layer
 
+            CreateMap<Address, AddressResponseDto>();
+
+            CreateMap<Address, AddressSimpleResponseDto>()
+                .ForMember(dest => dest.ShortAddress, opt => opt.MapFrom(src => src.AddressLine1));
+
+            // Address create/update mappings using Request DTOs
             CreateMap<CreateAddressRequestDto, Address>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
-                .ForMember(dest => dest.IsDeleted, opt => opt.MapFrom(_ => false))
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore());
 
             CreateMap<UpdateAddressRequestDto, Address>()
@@ -99,19 +112,25 @@ namespace SakuraHomeAPI.Mappings
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
                 .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.User, opt => opt.Ignore());
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
-            // User Activity mappings
+            // User Activity mappings using Response DTOs
             CreateMap<UserActivity, UserActivityDto>()
                 .ForMember(dest => dest.RelatedEntityId, opt => opt.MapFrom(src => src.RelatedEntityId))
                 .ForMember(dest => dest.RelatedEntityType, opt => opt.MapFrom(src => src.RelatedEntityType));
 
-            // Login response mapping
+            // Auth response mappings using Response DTOs
+            CreateMap<User, UserDto>()
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}".Trim()));
+
             CreateMap<User, LoginResponseDto>()
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src))
-                .ForMember(dest => dest.AccessToken, opt => opt.Ignore())
+                .ForMember(dest => dest.Token, opt => opt.Ignore())
+                .ForMember(dest => dest.ExpiresAt, opt => opt.Ignore())
                 .ForMember(dest => dest.RefreshToken, opt => opt.Ignore())
-                .ForMember(dest => dest.ExpiresAt, opt => opt.Ignore());
+                .ForMember(dest => dest.RequiresEmailVerification, opt => opt.MapFrom(src => !src.EmailVerified))
+                .ForMember(dest => dest.RequiresPhoneVerification, opt => opt.MapFrom(src => !src.PhoneVerified));
         }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Users;
 using SakuraHomeAPI.DTOs.Users.Requests;
 using SakuraHomeAPI.DTOs.Users.Responses;
 using SakuraHomeAPI.Services.Interfaces;
@@ -111,14 +112,10 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (!string.IsNullOrEmpty(request.PreferredCurrency))
                     user.PreferredCurrency = request.PreferredCurrency;
 
-                if (request.EmailNotifications.HasValue)
-                    user.EmailNotifications = request.EmailNotifications.Value;
-
-                if (request.SmsNotifications.HasValue)
-                    user.SmsNotifications = request.SmsNotifications.Value;
-
-                if (request.PushNotifications.HasValue)
-                    user.PushNotifications = request.PushNotifications.Value;
+                // Handle boolean properties directly since they are not nullable in the request
+                user.EmailNotifications = request.EmailNotifications;
+                user.SmsNotifications = request.SmsNotifications;
+                user.PushNotifications = request.PushNotifications;
 
                 user.UpdatedAt = DateTime.UtcNow;
 

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.Models.Entities;
 using SakuraHomeAPI.Models.Entities.Products;
@@ -139,22 +139,30 @@ namespace SakuraHomeAPI.Repositories.Implementations
             }
 
             // Stock filter
-            if (filter.InStockOnly)
-            {
+            if (filter.InStockOnly.HasValue && filter.InStockOnly.Value)
                 query = query.Where(p => p.Stock > 0 || p.AllowBackorder);
-            }
 
             // On sale filter
-            if (filter.OnSaleOnly)
-            {
+            if (filter.OnSaleOnly.HasValue && filter.OnSaleOnly.Value)
                 query = query.Where(p => p.OriginalPrice.HasValue && p.OriginalPrice > p.Price);
+
+            // Search in name, description, tags, brand name, category name
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                var searchTerm = filter.Search.ToLower().Trim();
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    (p.Description != null && p.Description.ToLower().Contains(searchTerm)) ||
+                    (p.Tags != null && p.Tags.ToLower().Contains(searchTerm)) ||
+                    p.Brand.Name.ToLower().Contains(searchTerm) ||
+                    p.Category.Name.ToLower().Contains(searchTerm));
             }
 
-            // Featured filter
-            if (filter.FeaturedOnly)
-            {
+            if (filter.FeaturedOnly.HasValue && filter.FeaturedOnly.Value)
                 query = query.Where(p => p.IsFeatured);
-            }
+
+            if (filter.NewOnly.HasValue && filter.NewOnly.Value)
+                query = query.Where(p => p.IsNew);
 
             // Apply sorting
             query = filter.SortBy?.ToLower() switch

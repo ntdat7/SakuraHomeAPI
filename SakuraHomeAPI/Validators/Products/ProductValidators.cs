@@ -1,16 +1,18 @@
-using FluentValidation;
-using SakuraHomeAPI.DTOs.Products;
-using SakuraHomeAPI.Models.Enums;
+ï»¿using FluentValidation;
+using SakuraHomeAPI.DTOs.Products.Requests;
+using SakuraHomeAPI.Validators.Common;
 
 namespace SakuraHomeAPI.Validators.Products
 {
     /// <summary>
-    /// Validator for product filter requests
+    /// Main product filter request validator (consolidated)
+    /// This is the main validator - others delegate to this for consistency
     /// </summary>
-    public class ProductFilterRequestValidator : AbstractValidator<ProductFilterRequestDto>
+    public class ProductFilterValidator : AbstractValidator<ProductFilterRequestDto>
     {
-        public ProductFilterRequestValidator()
+        public ProductFilterValidator()
         {
+            // Pagination validation
             RuleFor(x => x.Page)
                 .GreaterThan(0)
                 .WithMessage("Page must be greater than 0");
@@ -19,13 +21,26 @@ namespace SakuraHomeAPI.Validators.Products
                 .InclusiveBetween(1, 100)
                 .WithMessage("Page size must be between 1 and 100");
 
+            // Search validation
             RuleFor(x => x.Search)
                 .MaximumLength(100)
                 .WithMessage("Search term cannot exceed 100 characters")
-                .Must(BeValidSearchTerm)
+                .Must(CommonValidators.BeValidSearchTerm)
                 .WithMessage("Search term contains invalid characters")
                 .When(x => !string.IsNullOrEmpty(x.Search));
 
+            // Category and Brand validation
+            RuleFor(x => x.CategoryId)
+                .GreaterThan(0)
+                .WithMessage("Category ID must be greater than 0")
+                .When(x => x.CategoryId.HasValue);
+
+            RuleFor(x => x.BrandId)
+                .GreaterThan(0)
+                .WithMessage("Brand ID must be greater than 0")
+                .When(x => x.BrandId.HasValue);
+
+            // Price validation
             RuleFor(x => x.MinPrice)
                 .GreaterThanOrEqualTo(0)
                 .WithMessage("Minimum price must be greater than or equal to 0")
@@ -41,6 +56,13 @@ namespace SakuraHomeAPI.Validators.Products
                 .WithMessage("Maximum price must be greater than or equal to minimum price")
                 .When(x => x.MinPrice.HasValue && x.MaxPrice.HasValue);
 
+            // Rating validation
+            RuleFor(x => x.MinRating)
+                .InclusiveBetween(0, 5)
+                .WithMessage("Minimum rating must be between 0 and 5")
+                .When(x => x.MinRating.HasValue);
+
+            // Weight validation
             RuleFor(x => x.MinWeight)
                 .GreaterThanOrEqualTo(0)
                 .WithMessage("Minimum weight must be greater than or equal to 0")
@@ -56,42 +78,36 @@ namespace SakuraHomeAPI.Validators.Products
                 .WithMessage("Maximum weight must be greater than or equal to minimum weight")
                 .When(x => x.MinWeight.HasValue && x.MaxWeight.HasValue);
 
+            // Sorting validation
             RuleFor(x => x.SortBy)
                 .Must(BeValidSortField)
-                .WithMessage("Sort by must be one of: name, price, rating, created, sold, views, stock");
+                .WithMessage("Sort by must be one of: name, price, rating, created, updated, sold, views, stock");
 
             RuleFor(x => x.SortOrder)
                 .Must(BeValidSortOrder)
                 .WithMessage("Sort order must be either 'asc' or 'desc'");
 
-            RuleFor(x => x.CategoryId)
-                .GreaterThan(0)
-                .WithMessage("Category ID must be greater than 0")
-                .When(x => x.CategoryId.HasValue);
-
-            RuleFor(x => x.BrandId)
-                .GreaterThan(0)
-                .WithMessage("Brand ID must be greater than 0")
-                .When(x => x.BrandId.HasValue);
-
+            // Collection validation
             RuleFor(x => x.TagIds)
                 .Must(tags => tags == null || tags.All(id => id > 0))
                 .WithMessage("All tag IDs must be greater than 0")
                 .When(x => x.TagIds != null);
-        }
 
-        private bool BeValidSearchTerm(string searchTerm)
-        {
-            if (string.IsNullOrEmpty(searchTerm)) return true;
-            
-            // Không ch?a các ký t? ??c bi?t nguy hi?m
-            var invalidChars = new[] { '<', '>', '"', '\'', '&', '%', ';', '(', ')', '+', '=' };
-            return !invalidChars.Any(searchTerm.Contains);
+            // Date validation
+            RuleFor(x => x)
+                .Must(x => x.IsValidDateRange())
+                .WithMessage("Created to date must be after created from date")
+                .When(x => x.CreatedFrom.HasValue && x.CreatedTo.HasValue);
+
+            RuleFor(x => x)
+                .Must(x => x.IsValidAvailabilityRange())
+                .WithMessage("Available until date must be after available from date")
+                .When(x => x.AvailableFrom.HasValue && x.AvailableUntil.HasValue);
         }
 
         private bool BeValidSortField(string sortBy)
         {
-            var validSortFields = new[] { "name", "price", "rating", "created", "sold", "views", "stock" };
+            var validSortFields = new[] { "name", "price", "rating", "created", "updated", "sold", "views", "stock" };
             return validSortFields.Contains(sortBy.ToLower());
         }
 

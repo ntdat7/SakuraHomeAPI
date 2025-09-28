@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using SakuraHomeAPI.DTOs.Products.Responses;
 using SakuraHomeAPI.DTOs.Products.Requests;
@@ -110,7 +110,7 @@ namespace SakuraHomeAPI.Services.Implementations
                         HasNext = filter.Page * filter.PageSize < totalCount,
                         HasPrevious = filter.Page > 1
                     },
-                    Filter = _mapper.Map<ProductFilterInfoDto>(filter)
+                    Filters = _mapper.Map<ProductFilterInfoDto>(filter)
                 };
 
                 return ServiceResult<ProductListResponseDto>.Success(response);
@@ -661,7 +661,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public Task<ServiceResult<ProductImageDto>> AddImageAsync(
             int productId,
-            CreateProductImageRequestDto request,
+            CreateProductImageDto request,
             CancellationToken cancellationToken = default)
         {
             // Implementation would involve image processing and saving
@@ -671,7 +671,7 @@ namespace SakuraHomeAPI.Services.Implementations
         public Task<ServiceResult<ProductImageDto>> UpdateImageAsync(
             int productId,
             int imageId,
-            UpdateProductImageRequestDto request,
+            SakuraHomeAPI.DTOs.Products.Components.UpdateProductImageDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Image management will be implemented in a separate phase");
@@ -687,7 +687,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public Task<ServiceResult<ProductVariantDto>> AddVariantAsync(
             int productId,
-            CreateProductVariantRequestDto request,
+            CreateProductVariantDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Variant management will be implemented in a separate phase");
@@ -696,7 +696,7 @@ namespace SakuraHomeAPI.Services.Implementations
         public Task<ServiceResult<ProductVariantDto>> UpdateVariantAsync(
             int productId,
             int variantId,
-            UpdateProductVariantRequestDto request,
+            SakuraHomeAPI.DTOs.Products.Components.UpdateProductVariantDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Variant management will be implemented in a separate phase");
@@ -712,7 +712,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public Task<ServiceResult<ProductAttributeDto>> SetAttributeAsync(
             int productId,
-            SetProductAttributeRequestDto request,
+            CreateProductAttributeDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Attribute management will be implemented in a separate phase");

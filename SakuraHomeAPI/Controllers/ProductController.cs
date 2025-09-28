@@ -155,14 +155,14 @@ namespace SakuraHomeAPI.Controllers
                         ParentId = p.Category.ParentId
                     } : null,
                     // Add images for product list (optional - might want to limit to main image only)
-                    Images = p.ProductImages?.Where(pi => pi.IsActive).Select(pi => new SakuraHomeAPI.DTOs.Products.ProductImageDto
+                    Images = p.ProductImages?.Where(pi => pi.IsActive).Select(pi => new ProductImageDto
                     {
                         Id = pi.Id,
                         ImageUrl = pi.ImageUrl,
                         AltText = pi.AltText,
                         DisplayOrder = pi.DisplayOrder,
                         IsMain = pi.IsMain
-                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<SakuraHomeAPI.DTOs.Products.ProductImageDto>()
+                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<ProductImageDto>()
                 }).ToList();
 
                 // Create response directly without ApiResponseDto wrapper
@@ -232,6 +232,7 @@ namespace SakuraHomeAPI.Controllers
                     Id = product.Id,
                     Name = product.Name,
                     Slug = product.Slug,
+                    SKU = product.SKU,
                     ShortDescription = product.ShortDescription,
                     Description = product.Description,
                     MainImage = product.MainImage,
@@ -244,6 +245,7 @@ namespace SakuraHomeAPI.Controllers
                     ReviewCount = product.ReviewCount,
                     ViewCount = product.ViewCount,
                     SoldCount = product.SoldCount,
+                    WishlistCount = product.WishlistCount,
                     IsInStock = product.Stock > 0 || product.AllowBackorder,
                     IsOnSale = product.OriginalPrice.HasValue && product.OriginalPrice > product.Price,
                     IsFeatured = product.IsFeatured,
@@ -265,25 +267,46 @@ namespace SakuraHomeAPI.Controllers
                     Height = product.Height,
                     DimensionUnit = product.DimensionUnit,
                     TrackInventory = product.TrackInventory,
-                    Brand = product.Brand != null ? new BrandSummaryDto
+                    IsAvailable = product.Status == Models.Enums.ProductStatus.Active &&
+                        (!product.AvailableFrom.HasValue || product.AvailableFrom <= DateTime.UtcNow) &&
+                        (!product.AvailableUntil.HasValue || product.AvailableUntil >= DateTime.UtcNow) &&
+                        !product.IsDeleted &&
+                        product.IsActive,
+                    Brand = product.Brand != null ? new BrandDetailDto
                     {
                         Id = product.Brand.Id,
                         Name = product.Brand.Name,
                         Slug = product.Brand.Slug,
                         LogoUrl = product.Brand.LogoUrl,
-                        IsActive = product.Brand.IsActive
+                        IsActive = product.Brand.IsActive,
+                        Description = product.Brand.Description,
+                        Website = product.Brand.Website,
+                        Country = product.Brand.Country,
+                        FoundedYear = product.Brand.FoundedYear,
+                        Headquarters = product.Brand.Headquarters,
+                        IsFeatured = product.Brand.IsFeatured,
+                        IsVerified = true, // Assume verified for now
+                        ProductCount = 0, // Could be calculated if needed
+                        AverageRating = 0, // Could be calculated if needed
+                        ReviewCount = 0 // Could be calculated if needed
                     } : null,
-                    Category = product.Category != null ? new CategorySummaryDto
+                    Category = product.Category != null ? new CategoryDetailDto
                     {
                         Id = product.Category.Id,
                         Name = product.Category.Name,
                         Slug = product.Category.Slug,
                         ImageUrl = product.Category.ImageUrl,
                         IsActive = product.Category.IsActive,
-                        ParentId = product.Category.ParentId
+                        ParentId = product.Category.ParentId,
+                        Description = product.Category.Description,
+                        DisplayOrder = product.Category.DisplayOrder,
+                        Level = 0, // Could be calculated if needed
+                        ProductCount = 0, // Could be calculated if needed
+                        TotalProductCount = 0, // Could be calculated if needed
+                        ShowInMenu = product.Category.ShowInMenu,
+                        ShowInHome = product.Category.ShowInHome
                     } : null,
-                    // Add the images mapping that was missing
-                    Images = product.ProductImages?.Where(pi => pi.IsActive).Select(pi => new SakuraHomeAPI.DTOs.Products.ProductImageDto
+                    Images = product.ProductImages?.Where(pi => pi.IsActive).Select(pi => new ProductImageDto
                     {
                         Id = pi.Id,
                         ImageUrl = pi.ImageUrl,
@@ -291,7 +314,7 @@ namespace SakuraHomeAPI.Controllers
                         DisplayOrder = pi.DisplayOrder,
                         IsMain = pi.IsMain,
                         Caption = pi.Caption
-                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<SakuraHomeAPI.DTOs.Products.ProductImageDto>()
+                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<ProductImageDto>()
                 };
 
                 return Ok(ApiResponseDto<ProductDetailDto>.SuccessResult(productDto, "Product retrieved successfully"));
@@ -378,6 +401,7 @@ namespace SakuraHomeAPI.Controllers
                     Id = createdProduct.Id,
                     Name = createdProduct.Name,
                     Slug = createdProduct.Slug,
+                    SKU = createdProduct.SKU,
                     ShortDescription = createdProduct.ShortDescription,
                     Description = createdProduct.Description,
                     MainImage = createdProduct.MainImage,
@@ -390,6 +414,7 @@ namespace SakuraHomeAPI.Controllers
                     ReviewCount = createdProduct.ReviewCount,
                     ViewCount = createdProduct.ViewCount,
                     SoldCount = createdProduct.SoldCount,
+                    WishlistCount = createdProduct.WishlistCount,
                     IsInStock = createdProduct.Stock > 0 || createdProduct.AllowBackorder,
                     IsOnSale = createdProduct.OriginalPrice.HasValue && createdProduct.OriginalPrice > createdProduct.Price,
                     IsFeatured = createdProduct.IsFeatured,
@@ -411,25 +436,46 @@ namespace SakuraHomeAPI.Controllers
                     Height = createdProduct.Height,
                     DimensionUnit = createdProduct.DimensionUnit,
                     TrackInventory = createdProduct.TrackInventory,
-                    Brand = createdProduct.Brand != null ? new BrandSummaryDto
+                    IsAvailable = createdProduct.Status == Models.Enums.ProductStatus.Active &&
+                        (!createdProduct.AvailableFrom.HasValue || createdProduct.AvailableFrom <= DateTime.UtcNow) &&
+                        (!createdProduct.AvailableUntil.HasValue || createdProduct.AvailableUntil >= DateTime.UtcNow) &&
+                        !createdProduct.IsDeleted &&
+                        createdProduct.IsActive,
+                    Brand = createdProduct.Brand != null ? new BrandDetailDto
                     {
                         Id = createdProduct.Brand.Id,
                         Name = createdProduct.Brand.Name,
                         Slug = createdProduct.Brand.Slug,
                         LogoUrl = createdProduct.Brand.LogoUrl,
-                        IsActive = createdProduct.Brand.IsActive
+                        IsActive = createdProduct.Brand.IsActive,
+                        Description = createdProduct.Brand.Description,
+                        Website = createdProduct.Brand.Website,
+                        Country = createdProduct.Brand.Country,
+                        FoundedYear = createdProduct.Brand.FoundedYear,
+                        Headquarters = createdProduct.Brand.Headquarters,
+                        IsFeatured = createdProduct.Brand.IsFeatured,
+                        IsVerified = true, // Assume verified for now
+                        ProductCount = 0, // Could be calculated if needed
+                        AverageRating = 0, // Could be calculated if needed
+                        ReviewCount = 0 // Could be calculated if needed
                     } : null,
-                    Category = createdProduct.Category != null ? new CategorySummaryDto
+                    Category = createdProduct.Category != null ? new CategoryDetailDto
                     {
                         Id = createdProduct.Category.Id,
                         Name = createdProduct.Category.Name,
                         Slug = createdProduct.Category.Slug,
                         ImageUrl = createdProduct.Category.ImageUrl,
                         IsActive = createdProduct.Category.IsActive,
-                        ParentId = createdProduct.Category.ParentId
+                        ParentId = createdProduct.Category.ParentId,
+                        Description = createdProduct.Category.Description,
+                        DisplayOrder = createdProduct.Category.DisplayOrder,
+                        Level = 0, // Could be calculated if needed
+                        ProductCount = 0, // Could be calculated if needed
+                        TotalProductCount = 0, // Could be calculated if needed
+                        ShowInMenu = createdProduct.Category.ShowInMenu,
+                        ShowInHome = createdProduct.Category.ShowInHome
                     } : null,
-                    // Add images mapping for created product
-                    Images = createdProduct.ProductImages?.Where(pi => pi.IsActive).Select(pi => new SakuraHomeAPI.DTOs.Products.ProductImageDto
+                    Images = createdProduct.ProductImages?.Where(pi => pi.IsActive).Select(pi => new ProductImageDto
                     {
                         Id = pi.Id,
                         ImageUrl = pi.ImageUrl,
@@ -437,7 +483,7 @@ namespace SakuraHomeAPI.Controllers
                         DisplayOrder = pi.DisplayOrder,
                         IsMain = pi.IsMain,
                         Caption = pi.Caption
-                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<SakuraHomeAPI.DTOs.Products.ProductImageDto>()
+                    }).OrderBy(pi => pi.DisplayOrder).ToList() ?? new List<ProductImageDto>()
                 };
 
                 return CreatedAtAction(
@@ -640,10 +686,10 @@ namespace SakuraHomeAPI.Controllers
             if (request.MaxPrice.HasValue)
                 query = query.Where(p => p.Price <= request.MaxPrice.Value);
 
-            if (request.InStockOnly)
+            if (request.InStockOnly.HasValue && request.InStockOnly.Value)
                 query = query.Where(p => p.Stock > 0 || p.AllowBackorder);
 
-            if (request.OnSaleOnly)
+            if (request.OnSaleOnly.HasValue && request.OnSaleOnly.Value)
                 query = query.Where(p => p.OriginalPrice.HasValue && p.OriginalPrice > p.Price);
 
             if (!string.IsNullOrWhiteSpace(request.Search))
@@ -657,10 +703,10 @@ namespace SakuraHomeAPI.Controllers
                     p.Category.Name.ToLower().Contains(searchTerm));
             }
 
-            if (request.FeaturedOnly)
+            if (request.FeaturedOnly.HasValue && request.FeaturedOnly.Value)
                 query = query.Where(p => p.IsFeatured);
 
-            if (request.NewOnly)
+            if (request.NewOnly.HasValue && request.NewOnly.Value)
                 query = query.Where(p => p.IsNew);
 
             return query;

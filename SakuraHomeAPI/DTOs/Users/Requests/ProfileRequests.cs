@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using SakuraHomeAPI.Models.Enums;
+using SakuraHomeAPI.DTOs.Common;
 
 namespace SakuraHomeAPI.DTOs.Users.Requests
 {
@@ -8,18 +9,21 @@ namespace SakuraHomeAPI.DTOs.Users.Requests
     /// </summary>
     public class UpdateProfileRequestDto
     {
+        [Required(ErrorMessage = "First name is required")]
         [MaxLength(100, ErrorMessage = "First name cannot exceed 100 characters")]
-        public string? FirstName { get; set; }
+        [MinLength(1, ErrorMessage = "First name is required")]
+        public string FirstName { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Last name is required")]
         [MaxLength(100, ErrorMessage = "Last name cannot exceed 100 characters")]
-        public string? LastName { get; set; }
+        [MinLength(1, ErrorMessage = "Last name is required")]
+        public string LastName { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "Invalid phone number")]
+        [Phone(ErrorMessage = "Invalid phone number format")]
         [MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters")]
         public string? PhoneNumber { get; set; }
 
         public DateTime? DateOfBirth { get; set; }
-
         public Gender? Gender { get; set; }
 
         [MaxLength(500, ErrorMessage = "Avatar URL cannot exceed 500 characters")]
@@ -27,18 +31,18 @@ namespace SakuraHomeAPI.DTOs.Users.Requests
         public string? Avatar { get; set; }
 
         [MaxLength(5, ErrorMessage = "Language code cannot exceed 5 characters")]
-        public string? PreferredLanguage { get; set; }
+        public string PreferredLanguage { get; set; } = "vi";
 
         [MaxLength(3, ErrorMessage = "Currency code cannot exceed 3 characters")]
-        public string? PreferredCurrency { get; set; }
+        public string PreferredCurrency { get; set; } = "VND";
 
-        public bool? EmailNotifications { get; set; }
-        public bool? SmsNotifications { get; set; }
-        public bool? PushNotifications { get; set; }
+        public bool EmailNotifications { get; set; } = true;
+        public bool SmsNotifications { get; set; } = false;
+        public bool PushNotifications { get; set; } = true;
     }
 
     /// <summary>
-    /// Create address request - Vietnam address structure only
+    /// Create address request - Vietnam address structure
     /// </summary>
     public class CreateAddressRequestDto
     {
@@ -76,16 +80,10 @@ namespace SakuraHomeAPI.DTOs.Users.Requests
 
         [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
         public string? Notes { get; set; }
-
-        // Backward compatibility properties - will be ignored but prevent compilation errors
-        public string? RecipientName { get => Name; set => Name = value ?? string.Empty; }
-        public string? PhoneNumber { get => Phone; set => Phone = value ?? string.Empty; }
-        public string? City { get; set; } // Will be ignored
-        public string? StateProvince { get; set; } // Will be ignored
     }
 
     /// <summary>
-    /// Update address request - Vietnam address structure only
+    /// Update address request - Vietnam address structure
     /// </summary>
     public class UpdateAddressRequestDto
     {
@@ -118,11 +116,67 @@ namespace SakuraHomeAPI.DTOs.Users.Requests
 
         [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
         public string? Notes { get; set; }
+    }
 
-        // Backward compatibility properties - will be ignored but prevent compilation errors
-        public string? RecipientName { get => Name; set => Name = value; }
-        public string? PhoneNumber { get => Phone; set => Phone = value; }
-        public string? City { get; set; } // Will be ignored
-        public string? StateProvince { get; set; } // Will be ignored
+    /// <summary>
+    /// User filter request for admin lists
+    /// </summary>
+    public class UserFilterRequestDto : PaginationRequestDto
+    {
+        [MaxLength(100, ErrorMessage = "Search term cannot exceed 100 characters")]
+        public string? Search { get; set; }
+
+        public UserRole? Role { get; set; }
+        public AccountStatus? Status { get; set; }
+        public UserTier? Tier { get; set; }
+        public LoginProvider? Provider { get; set; }
+        public bool? IsActive { get; set; }
+        public bool? EmailVerified { get; set; }
+        public bool? PhoneVerified { get; set; }
+
+        public DateTime? CreatedFrom { get; set; }
+        public DateTime? CreatedTo { get; set; }
+        public DateTime? LastLoginFrom { get; set; }
+        public DateTime? LastLoginTo { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Min total spent must be greater than or equal to 0")]
+        public decimal? MinTotalSpent { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Max total spent must be greater than or equal to 0")]
+        public decimal? MaxTotalSpent { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "Min total orders must be greater than or equal to 0")]
+        public int? MinTotalOrders { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "Max total orders must be greater than or equal to 0")]
+        public int? MaxTotalOrders { get; set; }
+
+        [RegularExpression("^(name|email|created|lastLogin|totalSpent|totalOrders)$",
+            ErrorMessage = "SortBy must be one of: name, email, created, lastLogin, totalSpent, totalOrders")]
+        public string SortBy { get; set; } = "created";
+
+        [RegularExpression("^(asc|desc)$", ErrorMessage = "SortOrder must be either 'asc' or 'desc'")]
+        public string SortOrder { get; set; } = "desc";
+
+        // Validation methods
+        public bool IsValidCreatedDateRange()
+        {
+            return !CreatedFrom.HasValue || !CreatedTo.HasValue || CreatedFrom <= CreatedTo;
+        }
+
+        public bool IsValidLastLoginDateRange()
+        {
+            return !LastLoginFrom.HasValue || !LastLoginTo.HasValue || LastLoginFrom <= LastLoginTo;
+        }
+
+        public bool IsValidTotalSpentRange()
+        {
+            return !MinTotalSpent.HasValue || !MaxTotalSpent.HasValue || MinTotalSpent <= MaxTotalSpent;
+        }
+
+        public bool IsValidTotalOrdersRange()
+        {
+            return !MinTotalOrders.HasValue || !MaxTotalOrders.HasValue || MinTotalOrders <= MaxTotalOrders;
+        }
     }
 }

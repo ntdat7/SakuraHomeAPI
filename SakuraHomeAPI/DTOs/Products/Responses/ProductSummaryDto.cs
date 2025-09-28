@@ -1,5 +1,6 @@
-using SakuraHomeAPI.Models.Enums;
+﻿using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Products.Components;
 
 namespace SakuraHomeAPI.DTOs.Products.Responses
 {
@@ -11,6 +12,7 @@ namespace SakuraHomeAPI.DTOs.Products.Responses
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
+        public string SKU { get; set; } = string.Empty;
         public string? ShortDescription { get; set; }
         public string? MainImage { get; set; }
         public decimal Price { get; set; }
@@ -75,7 +77,9 @@ namespace SakuraHomeAPI.DTOs.Products.Responses
         public int? MaxStock { get; set; }
         public decimal? CostPrice { get; set; }
 
-        // Collections
+        // Collections - Override parent with detailed entities
+        public new BrandDetailDto? Brand { get; set; }
+        public new CategoryDetailDto? Category { get; set; }
         public List<ProductVariantDto> Variants { get; set; } = new();
         public List<ProductAttributeDto> Attributes { get; set; } = new();
         public List<TagDto> ProductTags { get; set; } = new();
