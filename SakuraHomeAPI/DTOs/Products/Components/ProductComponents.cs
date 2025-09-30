@@ -49,6 +49,26 @@ namespace SakuraHomeAPI.DTOs.Products.Components
     }
 
     /// <summary>
+    /// Product statistics information
+    /// </summary>
+    public class ProductStatisticsDto
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public int ViewCount { get; set; }
+        public int SoldCount { get; set; }
+        public int ReviewCount { get; set; }
+        public decimal AverageRating { get; set; }
+        public int WishlistCount { get; set; }
+        public int CartCount { get; set; }
+        public decimal Revenue { get; set; }
+        public DateTime LastSold { get; set; }
+        public DateTime LastViewed { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    /// <summary>
     /// Create product image request DTO
     /// </summary>
     public class CreateProductImageDto

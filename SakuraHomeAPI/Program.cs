@@ -263,7 +263,10 @@ builder.Services.AddScoped<IShippingService, ShippingService>();
 
 builder.Services.AddScoped<IAdminService, AdminService>();
 
-//builder.Services.AddScoped<IProductService, ProductService>();
+// Product services - ENABLED for refactoring
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<SakuraHomeAPI.Repositories.Interfaces.IProductRepository, SakuraHomeAPI.Repositories.Implementations.ProductRepository>();
+
 //builder.Services.AddScoped<ICategoryService, CategoryService>();
 //builder.Services.AddScoped<IBrandService, BrandService>();
 //builder.Services.AddScoped<IFileService, FileService>();

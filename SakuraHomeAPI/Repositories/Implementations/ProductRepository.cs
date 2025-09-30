@@ -5,6 +5,7 @@ using SakuraHomeAPI.Models.Entities.Products;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Repositories.Interfaces;
 using SakuraHomeAPI.DTOs.Products.Requests;
+using SakuraHomeAPI.DTOs.Products.Components;
 
 namespace SakuraHomeAPI.Repositories.Implementations
 {
