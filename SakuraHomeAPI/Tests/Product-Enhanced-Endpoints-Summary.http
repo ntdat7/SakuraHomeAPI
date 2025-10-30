@@ -1,0 +1,475 @@
+﻿### =================================================================
+### SAKURA HOME API - ENHANCED PRODUCT ENDPOINTS SUMMARY
+### Tổng hợp các endpoint sản phẩm đã được nâng cấp (KHÔNG CẦN AUTHENTICATION)
+### =================================================================
+
+@baseUrl = https://localhost:8080
+
+### =================================================================
+### 🔍 CÁC ENDPOINT SEARCH & FILTER NÂNG CẤP
+### =================================================================
+
+### 1. ✨ ENDPOINT CHÍNH - Tìm kiếm và lọc sản phẩm nâng cấp
+### GET /api/product - Endpoint chính với tất cả tính năng filter
+GET {{baseUrl}}/api/product
+    ?search=japanese chocolate               # Tìm kiếm đa từ khóa
+    &categoryId=1                           # Lọc theo danh mục
+    &includeSubcategories=true              # Bao gồm danh mục con
+    &brandId=3                              # Lọc theo thương hiệu
+    &minPrice=50000                         # Giá tối thiểu
+    &maxPrice=500000                        # Giá tối đa
+    &minRating=4.0                          # Đánh giá tối thiểu
+    &tagNames=Premium,Best Seller           # Lọc theo tên tag
+    &tagMatchMode=Any                       # Chế độ khớp tag (Any/All)
+    &tagsSearch=authentic                   # Tìm kiếm trong trường Tags
+    &inStockOnly=true                       # Chỉ sản phẩm còn hàng
+    &isFeatured=true                        # Sản phẩm nổi bật
+    &hasDiscount=true                       # Có giảm giá
+    &origin=Tokyo                           # Xuất xứ
+    &authenticityLevel=Verified             # Mức độ xác thực
+    &minWeight=100                          # Trọng lượng tối thiểu
+    &maxWeight=500                          # Trọng lượng tối đa
+    &createdFrom=2024-01-01                 # Ngày tạo từ
+    &sortBy=relevance                       # Sắp xếp theo độ liên quan
+    &sortOrder=desc                         # Thứ tự sắp xếp
+    &page=1                                 # Trang
+    &pageSize=20                            # Số lượng mỗi trang
+
+### 2. 🔍 ENDPOINT SEARCH RIÊNG BIỆT
+### GET /api/product/search - Endpoint tìm kiếm chuyên dụng
+GET {{baseUrl}}/api/product/search?search=sake&sortBy=relevance&page=1&pageSize=10
+
+### =================================================================
+### 🏷️ CÁC LOẠI TÌM KIẾM TAG NÂNG CẤP
+### =================================================================
+
+### 3. 🏷️ Tìm kiếm theo tên tag đơn lẻ
+GET {{baseUrl}}/api/product?tagNames=Premium&page=1&pageSize=10
+
+### 4. 🏷️ Tìm kiếm theo nhiều tag (ANY logic - OR)
+GET {{baseUrl}}/api/product?tagNames=Premium,Best%20Seller&tagMatchMode=Any&page=1&pageSize=10
+
+### 5. 🏷️ Tìm kiếm theo nhiều tag (ALL logic - AND)
+GET {{baseUrl}}/api/product?tagNames=Premium,Japanese&tagMatchMode=All&page=1&pageSize=10
+
+### 6. 🏷️ Tìm kiếm trong trường Tags (string search)
+GET {{baseUrl}}/api/product?tagsSearch=authentic&page=1&pageSize=10
+
+### 7. 🏷️ Kết hợp tìm kiếm text và tag
+GET {{baseUrl}}/api/product?search=chocolate&tagsSearch=premium&tagNames=Japanese&page=1&pageSize=10
+
+### =================================================================
+### 📊 CÁC KIỂU SẮP XẾP NÂNG CẤP
+### =================================================================
+
+### 8. 📈 Sắp xếp theo độ liên quan (với search term)
+GET {{baseUrl}}/api/product?search=japanese&sortBy=relevance&page=1&pageSize=10
+
+### 9. 🔥 Sắp xếp theo độ phổ biến (views + sales + rating)
+GET {{baseUrl}}/api/product?sortBy=popularity&page=1&pageSize=10
+
+### 10. 💰 Sắp xếp theo % giảm giá
+GET {{baseUrl}}/api/product?sortBy=discount&page=1&pageSize=10
+
+### 11. ⭐ Sắp xếp theo đánh giá cao nhất
+GET {{baseUrl}}/api/product?sortBy=rating&sortOrder=desc&page=1&pageSize=10
+
+### 12. 🆕 Sắp xếp theo sản phẩm mới nhất
+GET {{baseUrl}}/api/product?sortBy=created&sortOrder=desc&page=1&pageSize=10
+
+### 13. 🛒 Sắp xếp theo bán chạy nhất
+GET {{baseUrl}}/api/product?sortBy=sold&sortOrder=desc&page=1&pageSize=10
+
+### 14. 👀 Sắp xếp theo lượt xem nhiều nhất
+GET {{baseUrl}}/api/product?sortBy=views&sortOrder=desc&page=1&pageSize=10
+
+### 15. 📦 Sắp xếp theo số lượng tồn kho
+GET {{baseUrl}}/api/product?sortBy=stock&sortOrder=desc&page=1&pageSize=10
+
+### =================================================================
+### 🎛️ CÁC BỘ LỌC NÂNG CẤO
+### =================================================================
+
+### 16. 💵 Lọc theo khoảng giá
+GET {{baseUrl}}/api/product?minPrice=100000&maxPrice=500000&page=1&pageSize=10
+
+### 17. ⭐ Lọc theo đánh giá tối thiểu
+GET {{baseUrl}}/api/product?minRating=4.5&page=1&pageSize=10
+
+### 18. 📦 Lọc theo khoảng tồn kho
+GET {{baseUrl}}/api/product?minStock=10&maxStock=100&page=1&pageSize=10
+
+### 19. ⚖️ Lọc theo khoảng trọng lượng
+GET {{baseUrl}}/api/product?minWeight=100&maxWeight=1000&page=1&pageSize=10
+
+### 20. 🌍 Lọc theo xuất xứ
+GET {{baseUrl}}/api/product?origin=Tokyo&page=1&pageSize=10
+
+### 21. 🗾 Lọc theo vùng miền Nhật Bản
+GET {{baseUrl}}/api/product?japaneseRegion=Tokyo&page=1&pageSize=10
+
+### 22. 🛡️ Lọc theo mức độ xác thực
+GET {{baseUrl}}/api/product?authenticityLevel=Verified&page=1&pageSize=10
+
+### 23. 📅 Lọc theo khoảng thời gian tạo
+GET {{baseUrl}}/api/product?createdFrom=2024-01-01&createdTo=2024-12-31&page=1&pageSize=10
+
+### 24. 📅 Lọc theo thời gian có sẵn
+GET {{baseUrl}}/api/product?availableFrom=2024-01-01&availableUntil=2024-12-31&page=1&pageSize=10
+
+### =================================================================
+### ✅ CÁC BỘ LỌC BOOLEAN NÂNG CẤP
+### =================================================================
+
+### 25. 📦 Chỉ sản phẩm còn hàng
+GET {{baseUrl}}/api/product?inStockOnly=true&page=1&pageSize=10
+
+### 26. 🔥 Chỉ sản phẩm đang sale
+GET {{baseUrl}}/api/product?onSaleOnly=true&page=1&pageSize=10
+
+### 27. ⭐ Chỉ sản phẩm nổi bật
+GET {{baseUrl}}/api/product?featuredOnly=true&page=1&pageSize=10
+
+### 28. 🆕 Chỉ sản phẩm mới
+GET {{baseUrl}}/api/product?newOnly=true&page=1&pageSize=10
+
+### 29. 🏆 Chỉ sản phẩm bán chạy
+GET {{baseUrl}}/api/product?isBestseller=true&page=1&pageSize=10
+
+### 30. 💎 Chỉ sản phẩm phiên bản giới hạn
+GET {{baseUrl}}/api/product?isLimitedEdition=true&page=1&pageSize=10
+
+### 31. 🎁 Chỉ sản phẩm có thể gói quà
+GET {{baseUrl}}/api/product?isGiftWrappingAvailable=true&page=1&pageSize=10
+
+### 32. 📝 Chỉ sản phẩm cho phép đặt hàng trước
+GET {{baseUrl}}/api/product?allowBackorder=true&page=1&pageSize=10
+
+### 33. 💸 Chỉ sản phẩm có giảm giá
+GET {{baseUrl}}/api/product?hasDiscount=true&page=1&pageSize=10
+
+### =================================================================
+### 🔍 CÁC ENDPOINT DISCOVERY NÂNG CẤP
+### =================================================================
+
+### 34. ⭐ Sản phẩm nổi bật
+GET {{baseUrl}}/api/product/featured?count=10
+
+### 35. 🆕 Sản phẩm mới nhất
+GET {{baseUrl}}/api/product/newest?count=10
+
+### 36. 🏆 Sản phẩm bán chạy
+GET {{baseUrl}}/api/product/bestsellers?count=10
+
+### 37. 🔥 Sản phẩm đang sale
+GET {{baseUrl}}/api/product/on-sale?count=10
+
+### 38. 📈 Sản phẩm trending
+GET {{baseUrl}}/api/product/trending?count=10&daysPeriod=7
+
+### 39. 📂 Sản phẩm theo danh mục (có thể bao gồm danh mục con)
+GET {{baseUrl}}/api/product/category/1?includeSubcategories=true&page=1&pageSize=10
+
+### 40. 🏭 Sản phẩm theo thương hiệu
+GET {{baseUrl}}/api/product/brand/3?page=1&pageSize=10
+
+### =================================================================
+### 🔗 CÁC ENDPOINT CHI TIẾT SẢN PHẨM
+### =================================================================
+
+### 41. 📋 Chi tiết sản phẩm theo ID
+GET {{baseUrl}}/api/product/1
+
+### 42. 🔗 Chi tiết sản phẩm theo slug
+GET {{baseUrl}}/api/product/slug/japanese-sake-premium
+
+### 43. 🔗 Sản phẩm liên quan
+GET {{baseUrl}}/api/product/1/related?count=5
+
+### 44. ✅ Kiểm tra tồn kho
+GET {{baseUrl}}/api/product/1/stock-availability?quantity=2
+
+### =================================================================
+### 🔧 CÁC ENDPOINT BỐ TRỢ
+### =================================================================
+
+### 45. ⚡ Test hiệu suất - Search đơn giản
+GET {{baseUrl}}/api/product?search=sake&page=1&pageSize=20
+
+### 46. ⚡ Test hiệu suất - Filter phức tạp
+GET {{baseUrl}}/api/product
+    ?search=japanese
+    &categoryId=1
+    &minPrice=50000
+    &maxPrice=500000
+    &inStockOnly=true
+    &isFeatured=true
+    &sortBy=relevance
+    &page=1
+    &pageSize=20
+
+### 47. ⚡ Test hiệu suất - Tag search
+GET {{baseUrl}}/api/product?tagNames=Premium,Best%20Seller,Japanese&tagMatchMode=Any&page=1&pageSize=25
+
+### =================================================================
+### 🎯 CÁC SCENARIO THỰC TẾ
+### =================================================================
+
+### 48. 🛍️ Khách hàng tìm snack Nhật Bản
+GET {{baseUrl}}/api/product
+    ?search=japanese
+    &categoryId=1
+    &tagsSearch=snack
+    &inStockOnly=true
+    &sortBy=rating
+    &sortOrder=desc
+    &page=1
+    &pageSize=10
+
+### 49. 🛍️ Khách hàng tìm sản phẩm làm đẹp cao cấp
+GET {{baseUrl}}/api/product
+    ?categoryId=2
+    &tagNames=Premium,Luxury
+    &minPrice=500000
+    &sortBy=rating
+    &sortOrder=desc
+    &page=1
+    &pageSize=10
+
+### 50. 🛍️ Khách hàng tìm sản phẩm sale
+GET {{baseUrl}}/api/product
+    ?hasDiscount=true
+    &sortBy=discount
+    &page=1
+    &pageSize=20
+
+### 51. 🛍️ Khách hàng tìm quà tặng
+GET {{baseUrl}}/api/product
+    ?isGiftWrappingAvailable=true
+    &isFeatured=true
+    &sortBy=popularity
+    &page=1
+    &pageSize=15
+
+### 52. 🛍️ Khách hàng mua sắm tiết kiệm
+GET {{baseUrl}}/api/product
+    ?maxPrice=200000
+    &inStockOnly=true
+    &sortBy=price
+    &sortOrder=asc
+    &page=1
+    &pageSize=20
+
+### 53. 🛍️ Khách hàng tìm sản phẩm mới về
+GET {{baseUrl}}/api/product
+    ?isNew=true
+    &sortBy=created
+    &sortOrder=desc
+    &page=1
+    &pageSize=12
+
+### 54. 🛍️ Khách hàng mua theo thương hiệu
+GET {{baseUrl}}/api/product
+    ?brandId=1
+    &sortBy=rating
+    &sortOrder=desc
+    &page=1
+    &pageSize=10
+
+### 55. 🛍️ Khách hàng tìm sản phẩm Nhật authentic
+GET {{baseUrl}}/api/product
+    ?japaneseRegion=Tokyo
+    &authenticityLevel=Verified
+    &tagNames=Authentic,Traditional
+    &page=1
+    &pageSize=10
+
+### =================================================================
+### 🔥 FILTER COMBINATIONS NÂNG CẤP
+### =================================================================
+
+### 56. 🔧 Filter tối đa realistic
+GET {{baseUrl}}/api/product
+    ?search=japanese
+    &categoryId=1
+    &brandId=3
+    &minPrice=50000
+    &maxPrice=500000
+    &minRating=4
+    &tagsSearch=premium
+    &inStockOnly=true
+    &isFeatured=true
+    &sortBy=relevance
+    &page=1
+    &pageSize=10
+
+### 57. 🔧 Filter theo vùng + xác thực + chất lượng
+GET {{baseUrl}}/api/product
+    ?japaneseRegion=Tokyo
+    &authenticityLevel=Verified
+    &minRating=4.5
+    &tagNames=Premium,Authentic
+    &page=1
+    &pageSize=10
+
+### 58. 🔧 Filter kho + bán hàng + ngày tháng
+GET {{baseUrl}}/api/product
+    ?minStock=10
+    &isBestseller=true
+    &createdFrom=2024-01-01
+    &sortBy=sold
+    &sortOrder=desc
+    &page=1
+    &pageSize=15
+
+### 59. 🔧 Filter sở thích khách hàng
+GET {{baseUrl}}/api/product
+    ?isGiftWrappingAvailable=true
+    &allowBackorder=false
+    &hasDiscount=true
+    &minRating=4
+    &page=1
+    &pageSize=10
+
+### =================================================================
+### 📄 TEST PAGINATION NÂNG CẤP
+### =================================================================
+
+### 60. 📄 Test pagination sâu
+GET {{baseUrl}}/api/product?page=50&pageSize=5
+
+### 61. 📄 Test kích thước trang lớn với filter
+GET {{baseUrl}}/api/product?categoryId=1&page=1&pageSize=100
+
+### 62. 📄 Test pagination với search phức tạp
+GET {{baseUrl}}/api/product?search=japanese&tagNames=Premium&page=5&pageSize=10
+
+### =================================================================
+### ✨ TÍNH NĂNG NÂNG CẤP ĐÃ TRIỂN KHAI
+### =================================================================
+
+### 🔍 TEXT SEARCH IMPROVEMENTS:
+### - Tìm kiếm đa từ khóa với logic OR
+### - Tìm kiếm xuyên suốt name, description, SKU, brand, category
+### - Case-insensitive search
+### - Xử lý ký tự đặc biệt
+### - Sắp xếp theo độ liên quan
+
+### 🏷️ TAG-BASED SEARCH (MỚI):
+### - Tìm kiếm theo tên tag với logic ANY/ALL
+### - Tìm kiếm trong trường Tags (string-based)
+### - Khớp tag không phân biệt chữ hoa/thường
+### - Kết hợp tìm kiếm text và tag
+### - Lọc theo Tag ID (khi có entity Tag)
+
+### 🎛️ ENHANCED FILTERING:
+### - Lọc theo khoảng tồn kho
+### - Lọc theo khoảng trọng lượng
+### - Lọc theo khoảng ngày tháng (created, available)
+### - Lọc theo xuất xứ và vùng miền
+### - Lọc theo mức độ xác thực
+### - Lọc theo giới hạn tuổi
+### - Kết hợp các bộ lọc boolean
+
+### 📊 ADVANCED SORTING:
+### - Sắp xếp theo độ liên quan cho search
+### - Sắp xếp theo độ phổ biến (views + sales + rating)
+### - Sắp xếp theo % giảm giá
+### - Sắp xếp đa trường với fallback
+### - Tối ưu hóa hiệu suất sắp xếp
+
+### 🔧 FILTER VALIDATION:
+### - Validation khoảng (price, weight, stock, dates)
+### - Phát hiện xung đột bộ lọc boolean
+### - Giới hạn tối đa filter cho hiệu suất
+### - Sanitization input và bảo mật
+### - Quy tắc validation phức tạp
+
+### 🛡️ SECURITY ENHANCEMENTS:
+### - Ngăn chặn SQL injection
+### - Ngăn chặn tấn công XSS
+### - Validation độ dài input
+### - Sanitization tham số
+### - Xây dựng query an toàn
+
+### ⚡ PERFORMANCE OPTIMIZATIONS:
+### - Xây dựng query hiệu quả
+### - Giảm N+1 queries
+### - Logic filtering tối ưu
+### - Xử lý pagination thông minh
+### - Tối ưu hóa relevance scoring
+
+### =================================================================
+### 🎯 HIỆU SUẤT MỤC TIÊU
+### =================================================================
+
+### - Simple search: < 200ms
+### - Complex filters: < 400ms
+### - Tag search: < 300ms
+### - Sort operations: < 250ms
+### - Combined operations: < 500ms
+
+### =================================================================
+### 📋 TIÊU CHÍ THÀNH CÔNG
+### =================================================================
+
+### ✅ Yêu cầu chức năng:
+### - Tất cả tìm kiếm tag hoạt động chính xác
+### - Kết hợp filter tạo ra kết quả chính xác
+### - Sắp xếp hoạt động cho tất cả trường được hỗ trợ
+### - Pagination hoạt động với tất cả kết hợp filter
+### - Xử lý lỗi toàn diện
+
+### ✅ Yêu cầu hiệu suất:
+### - Thời gian phản hồi đạt mục tiêu
+### - Queries phức tạp được tối ưu
+### - Sử dụng bộ nhớ hiệu quả
+### - Queries database được tối ưu
+### - Không có vấn đề N+1 query
+
+### ✅ Yêu cầu bảo mật:
+### - Tất cả inputs được validate đúng cách
+### - SQL injection được ngăn chặn
+### - Tấn công XSS bị chặn
+### - Giới hạn tham số được thực thi
+### - Độ phức tạp query được kiểm soát
+
+### =================================================================
+### ℹ️ LƯU Ý QUAN TRỌNG
+### =================================================================
+
+### 🚫 KHÔNG CẦN AUTHENTICATION:
+### Tất cả các endpoint trên KHÔNG yêu cầu authentication token
+### Có thể test trực tiếp mà không cần đăng nhập
+
+### 🔄 CẬP NHẬT THỜI GIAN THỰC:
+### Các kết quả tìm kiếm và filter được cập nhật real-time
+### theo dữ liệu trong database
+
+### 🎛️ LINH HOẠT CAO:
+### Có thể kết hợp bất kỳ filter nào với nhau
+### Hệ thống sẽ tự động validate và optimize query
+
+### 📊 RESPONSE FORMAT:
+### Tất cả endpoint trả về cấu trúc standardized với:
+### - success: boolean
+### - message: string
+### - data: array/object
+### - pagination: object (cho list endpoints)
+
+### =================================================================
+### 🏁 KẾT LUẬN
+### =================================================================
+
+### Hệ thống Product Search & Filter đã được nâng cấp toàn diện với:
+### ✅ 45+ endpoint variations
+### ✅ Advanced search capabilities
+### ✅ Comprehensive filtering options
+### ✅ Multiple sorting algorithms
+### ✅ Tag-based search system
+### ✅ Performance optimizations
+### ✅ Security enhancements
+### ✅ Real-world scenarios support
+### ✅ No authentication required for public access
+
+### Sẵn sàng phục vụ e-commerce platform với khả năng tìm kiếm và lọc sản phẩm chuyên nghiệp!

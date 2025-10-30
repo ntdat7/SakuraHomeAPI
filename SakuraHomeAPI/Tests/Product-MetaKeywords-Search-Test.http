@@ -1,0 +1,225 @@
+﻿### =================================================================
+### ENHANCED PRODUCT SEARCH - METAKEYWORDS FUNCTIONALITY TEST
+### =================================================================
+@baseUrl = https://localhost:8080
+
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiI5N2Y2ZTY5OC1kMWQyLTQ3ZmEtYjg2My04NjlhNDkxZmE5NGIiLCJpYXQiOjE3NTkyNDQ4MjMsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NTkyNDQ4MjMsImV4cCI6MTc1OTI0ODQyMywiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.QLSE3MuMz-CwkAlp8sfwhJIdigNKC2ZXc3ixFVY0zbI
+
+### =================================================================
+### METAKEYWORDS SEARCH FUNCTIONALITY TESTS
+### =================================================================
+
+### 1. ✅ Search by MetaKeywords - "pocky" (from Pocky product)
+# Expected: Should find Pocky Chocolate Sticks product
+# MetaKeywords: "pocky, chocolate, japanese snack, biscuit sticks, glico"
+GET {{baseUrl}}/api/product?search=japanese-snack&page=1&pageSize=10
+
+
+### 2. ✅ Search by MetaKeywords - "glico" (from Pocky MetaKeywords)
+# Expected: Should find Pocky product which has "glico" in MetaKeywords
+GET {{baseUrl}}/api/product?search=glico&page=1&pageSize=10
+
+
+### 3. ✅ Search by MetaKeywords - "biscuit sticks" (multi-word from MetaKeywords)
+# Expected: Should find Pocky product
+GET {{baseUrl}}/api/product?search=biscuit sticks&page=1&pageSize=10
+
+### 4. ✅ Search by MetaKeywords - "matcha" (from Matcha product)
+# Expected: Should find Matcha Green Tea Powder product
+# MetaKeywords: "matcha, green tea, ceremonial grade, uji, kyoto, japanese tea"
+GET {{baseUrl}}/api/product?search=matcha&page=1&pageSize=10
+
+
+### 5. ✅ Search by MetaKeywords - "ceremonial grade" (from Matcha MetaKeywords)
+# Expected: Should find Matcha product
+GET {{baseUrl}}/api/product?search=ceremonial grade&page=1&pageSize=10
+
+
+### 6. ✅ Search by MetaKeywords - "uji" (from Matcha MetaKeywords)
+# Expected: Should find Matcha product from Uji, Kyoto
+GET {{baseUrl}}/api/product?search=uji&page=1&pageSize=10
+
+### 7. ✅ Search by MetaKeywords - "shiseido" (from Shiseido product)
+# Expected: Should find Shiseido Ultimune product
+# MetaKeywords: "shiseido, ultimune, anti-aging, serum, skincare, japanese cosmetics"
+GET {{baseUrl}}/api/product?search=ultimune&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 8. ✅ Search by MetaKeywords - "japanese cosmetics" (from Shiseido MetaKeywords)
+# Expected: Should find Shiseido product
+GET {{baseUrl}}/api/product?search=japanese cosmetics&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 9. ✅ Search by MetaKeywords - "anti-aging" (from Shiseido MetaKeywords)
+# Expected: Should find Shiseido anti-aging serum
+GET {{baseUrl}}/api/product?search=anti-aging&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 10. ✅ Search by MetaKeywords - "marine collagen" (from Collagen product)
+# Expected: Should find Marine Collagen Supplement
+# MetaKeywords: "marine collagen, supplement, japanese, skin health, joint health, beauty"
+GET {{baseUrl}}/api/product?search=marine collagen&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 11. ✅ Search by MetaKeywords - "joint health" (from Collagen MetaKeywords)
+# Expected: Should find Marine Collagen product
+GET {{baseUrl}}/api/product?search=joint health&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 12. ✅ Search by MetaKeywords - "beauty from within" (if exists in MetaKeywords)
+# Expected: Should find health/beauty products
+GET {{baseUrl}}/api/product?search=beauty&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 13. ✅ Search by MetaKeywords - "sony" (from Sony product)
+# Expected: Should find Sony WH-1000XM5 headphones
+# MetaKeywords: "sony, headphones, wireless, noise canceling, WH-1000XM5, premium audio"
+GET {{baseUrl}}/api/product?search=premium audio&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 14. ✅ Search by MetaKeywords - "noise canceling" (from Sony MetaKeywords)
+# Expected: Should find Sony headphones
+GET {{baseUrl}}/api/product?search=noise canceling&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 15. ✅ Search by MetaKeywords - "WH-1000XM5" (specific model from Sony MetaKeywords)
+# Expected: Should find Sony WH-1000XM5 product
+GET {{baseUrl}}/api/product?search=WH-1000XM5&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### RELEVANCE SCORING TESTS WITH METAKEYWORDS
+### =================================================================
+
+### 16. ✅ Relevance Test - "pocky" (should prioritize name match over MetaKeywords)
+# Expected: Pocky product should rank highest due to name match
+# Then products with "pocky" in MetaKeywords should follow
+GET {{baseUrl}}/api/product?search=pocky&sortBy=relevance&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 17. ✅ Relevance Test - "japanese" (appears in multiple MetaKeywords)
+# Expected: Products should be ranked by relevance including MetaKeywords matches
+GET {{baseUrl}}/api/product?search=japanese&sortBy=relevance&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 18. ✅ Relevance Test - "premium" (appears in multiple MetaKeywords)
+# Expected: Products with "premium" in MetaKeywords should be found and ranked
+GET {{baseUrl}}/api/product?search=premium&sortBy=relevance&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### COMBINED SEARCH TESTS (MetaKeywords + Other Fields)
+### =================================================================
+
+### 19. ✅ Combined Search - Term in both Name and MetaKeywords
+# Search for "chocolate" - should find products with chocolate in name OR MetaKeywords
+GET {{baseUrl}}/api/product?search=chocolate&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 20. ✅ Combined Search - Term in MetaKeywords but not in Name
+# Search for "glico" - only in MetaKeywords, not in product names
+GET {{baseUrl}}/api/product?search=glico&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 21. ✅ Combined Search - Multi-word search with MetaKeywords
+# Search for "green tea" - should match both description and MetaKeywords
+GET {{baseUrl}}/api/product?search=green tea&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### EDGE CASES AND VALIDATION
+### =================================================================
+
+### 22. ✅ Case Insensitive MetaKeywords Search
+# Search for "POCKY" (uppercase) - should still find the product
+GET {{baseUrl}}/api/product?search=POCKY&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 23. ✅ Partial MetaKeywords Match
+# Search for "cosmet" - should match "cosmetics" in MetaKeywords
+GET {{baseUrl}}/api/product?search=cosmet&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 24. ✅ MetaKeywords with Special Characters
+# Search for terms that might have special characters in MetaKeywords
+GET {{baseUrl}}/api/product?search=anti-aging&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 25. ✅ Empty MetaKeywords Handling
+# Search should still work for products without MetaKeywords
+GET {{baseUrl}}/api/product?search=traditional&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PERFORMANCE TESTS WITH METAKEYWORDS
+### =================================================================
+
+### 26. ⚡ Performance Test - MetaKeywords Search
+# Test response time for MetaKeywords-based search
+GET {{baseUrl}}/api/product?search=japanese snack&page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 27. ⚡ Performance Test - Complex Search with MetaKeywords
+# Test performance with multiple filters including MetaKeywords search
+GET {{baseUrl}}/api/product?search=premium&categoryId=1&minPrice=50000&maxPrice=500000&sortBy=relevance&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### EXPECTED RESULTS SUMMARY
+### =================================================================
+
+###
+### ✅ METAKEYWORDS SEARCH ENHANCEMENT SUMMARY:
+### 
+### 🎯 NEW FUNCTIONALITY ADDED:
+### 1. MetaKeywords field is now included in text search
+### 2. Both single-term and multi-term searches work with MetaKeywords
+### 3. Case-insensitive matching for MetaKeywords
+### 4. Relevance scoring includes MetaKeywords matches
+### 5. MetaKeywords search works with all existing filters
+### 
+### 🔍 SEARCH FIELDS NOW INCLUDE:
+### - Name (highest priority)
+### - Description
+### - ShortDescription  
+### - SKU
+### - Tags
+### - Brand.Name
+### - Category.Name
+### - ✅ MetaKeywords (NEW - medium-high priority in relevance)
+### 
+### 📊 RELEVANCE SCORING ORDER:
+### 1. Exact match in Name (Priority 5)
+### 2. Name starts with search term (Priority 4)  
+### 3. ✅ Exact match in MetaKeywords (Priority 3) - NEW
+### 4. Name contains search term (Priority 2)
+### 5. Other fields contain search term (Priority 1)
+### 
+### 🎯 EXPECTED TEST RESULTS:
+### 
+### ✅ Pocky Product (ID=1):
+### - MetaKeywords: "pocky, chocolate, japanese snack, biscuit sticks, glico"
+### - Should be found by: pocky, glico, biscuit sticks, japanese snack
+### 
+### ✅ Matcha Product (ID=2):  
+### - MetaKeywords: "matcha, green tea, ceremonial grade, uji, kyoto, japanese tea"
+### - Should be found by: matcha, ceremonial grade, uji, kyoto, japanese tea
+### 
+### ✅ Shiseido Product (ID=3):
+### - MetaKeywords: "shiseido, ultimune, anti-aging, serum, skincare, japanese cosmetics"  
+### - Should be found by: ultimune, anti-aging, japanese cosmetics, skincare
+### 
+### ✅ Marine Collagen (ID=4):
+### - MetaKeywords: "marine collagen, supplement, japanese, skin health, joint health, beauty"
+### - Should be found by: marine collagen, joint health, skin health
+### 
+### ✅ Sony Headphones (ID=5):
+### - MetaKeywords: "sony, headphones, wireless, noise canceling, WH-1000XM5, premium audio"
+### - Should be found by: noise canceling, WH-1000XM5, premium audio
+### 
+### 🚀 PERFORMANCE EXPECTATIONS:
+### - Search response time: < 300ms
+### - Relevance scoring works correctly
+### - No impact on existing search functionality
+### - Backward compatibility maintained
+###

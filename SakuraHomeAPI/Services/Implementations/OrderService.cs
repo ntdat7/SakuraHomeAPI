@@ -902,12 +902,160 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public async Task<ApiResponse<OrderStatsDto>> GetOrderStatsAsync(Guid? userId = null, DateTime? fromDate = null, DateTime? toDate = null)
         {
-            return ApiResponse.ErrorResult<OrderStatsDto>("Feature not implemented yet");
+            try
+            {
+                _logger.LogInformation("Getting order statistics. UserId: {UserId}, FromDate: {FromDate}, ToDate: {ToDate}",
+                    userId, fromDate, toDate);
+
+                var query = _context.Orders.AsQueryable();
+
+                // Filter by user if specified
+                if (userId.HasValue)
+                {
+                    query = query.Where(o => o.UserId == userId.Value);
+                }
+
+                // Apply date filters
+                if (fromDate.HasValue)
+                {
+                    query = query.Where(o => o.CreatedAt >= fromDate.Value);
+                }
+
+                if (toDate.HasValue)
+                {
+                    query = query.Where(o => o.CreatedAt <= toDate.Value);
+                }
+
+                // Get all orders for calculation
+                var orders = await query.ToListAsync();
+
+                if (!orders.Any())
+                {
+                    return ApiResponse.SuccessResult(new OrderStatsDto
+                    {
+                        TotalOrders = 0,
+                        TotalRevenue = 0,
+                        AverageOrderValue = 0,
+                        FromDate = fromDate ?? DateTime.UtcNow.AddDays(-30),
+                        ToDate = toDate ?? DateTime.UtcNow,
+                        TopProducts = new List<TopProductDto>()
+                    }, "Order statistics retrieved successfully (no data)");
+                }
+
+                // Calculate basic statistics
+                var totalOrders = orders.Count;
+                var totalRevenue = orders.Sum(o => o.TotalAmount);
+                var averageOrderValue = totalRevenue / totalOrders;
+
+                // Count by status
+                var pendingOrders = orders.Count(o => o.Status == OrderStatus.Pending);
+                var confirmedOrders = orders.Count(o => o.Status == OrderStatus.Confirmed);
+                var processingOrders = orders.Count(o => o.Status == OrderStatus.Processing);
+                var shippedOrders = orders.Count(o => o.Status == OrderStatus.Shipped);
+                var deliveredOrders = orders.Count(o => o.Status == OrderStatus.Delivered);
+                var cancelledOrders = orders.Count(o => o.Status == OrderStatus.Cancelled);
+                var returnedOrders = orders.Count(o => o.Status == OrderStatus.Returned);
+
+                // Count by payment status
+                var paidOrders = orders.Count(o => o.PaymentStatus == PaymentStatus.Paid);
+                var pendingPaymentOrders = orders.Count(o => o.PaymentStatus == PaymentStatus.Pending);
+                var failedPaymentOrders = orders.Count(o => o.PaymentStatus == PaymentStatus.Failed);
+
+                // Calculate trends (compare with previous period)
+                var periodDays = (toDate ?? DateTime.UtcNow).Subtract(fromDate ?? DateTime.UtcNow.AddDays(-30)).Days;
+                var previousFromDate = (fromDate ?? DateTime.UtcNow.AddDays(-30)).AddDays(-periodDays);
+                var previousToDate = fromDate ?? DateTime.UtcNow.AddDays(-30);
+
+                var previousPeriodQuery = _context.Orders.AsQueryable();
+                if (userId.HasValue)
+                {
+                    previousPeriodQuery = previousPeriodQuery.Where(o => o.UserId == userId.Value);
+                }
+                previousPeriodQuery = previousPeriodQuery.Where(o => o.CreatedAt >= previousFromDate && o.CreatedAt <= previousToDate);
+
+                var previousOrders = await previousPeriodQuery.ToListAsync();
+                var previousRevenue = previousOrders.Sum(o => o.TotalAmount);
+                var previousOrderCount = previousOrders.Count;
+
+                var revenueGrowth = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+                var orderGrowth = previousOrderCount > 0 ? ((totalOrders - previousOrderCount) / (decimal)previousOrderCount) * 100 : 0;
+
+                var cancellationRate = totalOrders > 0 ? (cancelledOrders / (double)totalOrders) * 100 : 0;
+                var returnRate = deliveredOrders > 0 ? (returnedOrders / (double)deliveredOrders) * 100 : 0;
+
+                // Get top products from order items
+                var topProducts = await GetTopProductsFromOrdersAsync(orders.Select(o => o.Id).ToList());
+
+                var stats = new OrderStatsDto
+                {
+                    TotalOrders = totalOrders,
+                    TotalRevenue = totalRevenue,
+                    AverageOrderValue = averageOrderValue,
+
+                    // Status breakdown
+                    PendingOrders = pendingOrders,
+                    ConfirmedOrders = confirmedOrders,
+                    ProcessingOrders = processingOrders,
+                    ShippedOrders = shippedOrders,
+                    DeliveredOrders = deliveredOrders,
+                    CancelledOrders = cancelledOrders,
+                    ReturnedOrders = returnedOrders,
+
+                    // Payment status
+                    PaidOrders = paidOrders,
+                    PendingPaymentOrders = pendingPaymentOrders,
+                    FailedPaymentOrders = failedPaymentOrders,
+
+                    // Time period
+                    FromDate = fromDate ?? DateTime.UtcNow.AddDays(-30),
+                    ToDate = toDate ?? DateTime.UtcNow,
+
+                    // Trends
+                    RevenueGrowth = revenueGrowth,
+                    OrderGrowth = orderGrowth,
+                    CancellationRate = cancellationRate,
+                    ReturnRate = returnRate,
+
+                    // Top products
+                    TopProducts = topProducts
+                };
+
+                _logger.LogInformation("Order statistics calculated successfully. Total orders: {TotalOrders}, Total revenue: {TotalRevenue}",
+                    totalOrders, totalRevenue);
+
+                return ApiResponse.SuccessResult(stats, "Order statistics retrieved successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting order statistics");
+                return ApiResponse.ErrorResult<OrderStatsDto>("Failed to retrieve order statistics");
+            }
         }
 
         public async Task<ApiResponse<List<OrderSummaryDto>>> GetRecentOrdersAsync(int count = 10)
         {
-            return ApiResponse.ErrorResult<List<OrderSummaryDto>>("Feature not implemented yet");
+            try
+            {
+                _logger.LogInformation("Getting {Count} recent orders", count);
+
+                var orders = await _context.Orders
+                    .Include(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Product)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .Take(count)
+                    .ToListAsync();
+
+                var orderSummaries = orders.Select(MapOrderToSummaryDto).ToList();
+
+                _logger.LogInformation("Retrieved {Count} recent orders", orderSummaries.Count);
+
+                return ApiResponse.SuccessResult(orderSummaries, "Recent orders retrieved successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting recent orders");
+                return ApiResponse.ErrorResult<List<OrderSummaryDto>>("Failed to retrieve recent orders");
+            }
         }
 
         public async Task<ApiResponse<OrderValidationDto>> ValidateOrderAsync(CreateOrderRequestDto request, Guid userId)
@@ -1183,6 +1331,42 @@ namespace SakuraHomeAPI.Services.Implementations
             {
                 _logger.LogError(ex, "Error getting status history for order {OrderId}", orderId);
                 return ApiResponse.ErrorResult<List<OrderStatusHistoryDto>>("Failed to retrieve order status history");
+            }
+        }
+
+        /// <summary>
+        /// Get top products from a list of orders
+        /// </summary>
+        private async Task<List<TopProductDto>> GetTopProductsFromOrdersAsync(List<int> orderIds)
+        {
+            try
+            {
+                if (!orderIds.Any())
+                {
+                    return new List<TopProductDto>();
+                }
+
+                var topProducts = await _context.OrderItems
+                    .Where(oi => orderIds.Contains(oi.OrderId))
+                    .GroupBy(oi => oi.ProductId)
+                    .Select(g => new TopProductDto
+                    {
+                        ProductId = g.Key,
+                        ProductName = g.First().ProductName,
+                        TotalQuantitySold = g.Sum(oi => oi.Quantity),
+                        TotalRevenue = g.Sum(oi => oi.TotalPrice),
+                        TotalOrders = g.Count()
+                    })
+                    .OrderByDescending(tp => tp.TotalRevenue)
+                    .Take(5)
+                    .ToListAsync();
+
+                return topProducts;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top products from orders");
+                return new List<TopProductDto>();
             }
         }
 

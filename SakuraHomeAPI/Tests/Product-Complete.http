@@ -3,6 +3,7 @@
 ### =================================================================
 @baseUrl = https://localhost:8080
 
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiIzODk5ZThhYi1mOTlhLTQ4ODUtYjcxMi01M2EzMzdiMTljM2YiLCJpYXQiOjE3NjAxNDM1MTYsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NjAxNDM1MTYsImV4cCI6MTc2MDE0NzExNiwiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.scKh6AHhkzu8Fi32GKnujRSqHMxUKbLSH7NiRxnNbwc
 ### Quick Login to get tokens
 # @name adminLogin
 POST {{baseUrl}}/api/auth/login
@@ -14,9 +15,8 @@ Content-Type: application/json
   "rememberMe": true
 }
 
-@adminToken = {{adminLogin.response.body.data.token}}
 
-# @name customerLogin
+### @name customerLogin
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -109,25 +109,146 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-  "name": "Test Sake Premium",
-  "description": "High-quality test sake for API testing",
-  "sku": "TEST_SAKE_001",
-  "price": 450000,
-  "compareAtPrice": 500000,
-  "costPrice": 300000,
-  "categoryId": 1,
+  "name": "Premium Japanese Sake Dassai 39 Junmai Daiginjo",
+  "sku": "DASSAI-39-720ML-2024",
+  "shortDescription": "Premium Japanese sake crafted with traditional brewing techniques",
+  "description": "Dassai 39 Junmai Daiginjo is a premium Japanese sake made from highly polished rice (39% remaining). This exceptional sake offers a delicate, fruity aroma with hints of apple and pear, balanced by a clean, smooth finish. Perfect for special occasions or as a gift for sake enthusiasts.",
+  "mainImage": "https://example.com/images/dassai-39-main.jpg",
+  "price": 850000,
+  "originalPrice": 950000,
+  "costPrice": 650000,
+  "stock": 50,
+  "minStock": 5,
+  "maxStock": 200,
+  "trackInventory": true,
+  "allowBackorder": false,
+  "allowPreorder": true,
   "brandId": 1,
-  "weight": 750,
-  "dimensions": "30x10x10",
-  "stockQuantity": 100,
-  "lowStockThreshold": 10,
-  "isActive": true,
-  "isFeatured": false,
-  "tags": ["premium", "test", "sake"],
-  "metaTitle": "Test Sake Premium - High Quality",
-  "metaDescription": "Premium test sake for the finest taste experience"
+  "categoryId": 1,
+  "origin": "Japan",
+  "japaneseRegion": 6,
+  "authenticityLevel": 3,
+  "authenticityInfo": "Certified by Japanese Sake Association with official import documentation",
+  "usageGuide": "Best served chilled at 8-12°C. Can be enjoyed as an aperitif or paired with sushi, sashimi, or light Japanese cuisine.",
+  "ingredients": "Rice, Water, Koji, Yeast (Rice polishing ratio: 39%)",
+  "expiryDate": "2025-12-31T23:59:59Z",
+  "manufactureDate": "2024-01-15T00:00:00Z",
+  "batchNumber": "DASSAI-2024-001",
+  "ageRestriction": 18,
+  "weight": 1200,
+  "weightUnit": 2,
+  "dimensions": "8.5x8.5x32.0",
+  "length": 8.5,
+  "width": 8.5,
+  "height": 32.0,
+  "dimensionUnit": 1,
+  "status": 1,
+  "condition": 1,
+  "visibility": 1,
+  "isFeatured": true,
+  "isNew": true,
+  "isBestseller": false,
+  "isLimitedEdition": true,
+  "isGiftWrappingAvailable": true,
+  "giftWrappingFee": 25000,
+  "tags": "premium, japanese, sake, dassai, junmai daiginjo, authentic, gift, limited edition",
+  "marketingDescription": "Experience the pinnacle of Japanese sake craftsmanship with Dassai 39 - a masterpiece that represents centuries of brewing tradition",
+  "availableFrom": "2024-01-01T00:00:00Z",
+  "availableUntil": "2024-12-31T23:59:59Z",
+  "images": [
+    {
+      "imageUrl": "https://example.com/images/dassai-39-main.jpg",
+      "altText": "Dassai 39 Junmai Daiginjo Main Bottle",
+      "isMain": true,
+      "displayOrder": 1
+    },
+    {
+      "imageUrl": "https://example.com/images/dassai-39-label.jpg",
+      "altText": "Dassai 39 Label Close-up",
+      "isMain": false,
+      "displayOrder": 2
+    },
+    {
+      "imageUrl": "https://example.com/images/dassai-39-serving.jpg",
+      "altText": "Dassai 39 Serving Suggestion",
+      "isMain": false,
+      "displayOrder": 3
+    },
+    {
+      "imageUrl": "https://example.com/images/dassai-39-gift-box.jpg",
+      "altText": "Dassai 39 Gift Box",
+      "isMain": false,
+      "displayOrder": 4
+    }
+  ],
+  "variants": [
+    {
+      "sku": "DASSAI-39-720ML-GIFT",
+      "name": "Gift Box Edition",
+      "price": 950000,
+      "stock": 20,
+      "attributes": {
+        "Package Type": "Premium Gift Box",
+        "Volume": "720ml",
+        "Gift Card": "Included"
+      }
+    },
+    {
+      "sku": "DASSAI-39-300ML-MINI",
+      "name": "Mini Bottle",
+      "price": 450000,
+      "stock": 30,
+      "attributes": {
+        "Package Type": "Standard Box",
+        "Volume": "300ml",
+        "Perfect For": "Tasting"
+      }
+    }
+  ],
+  "attributes": [
+    {
+      "attributeId": 1,
+      "value": "16%"
+    },
+    {
+      "attributeId": 2,
+      "value": "720ml"
+    },
+    {
+      "attributeId": 3,
+      "value": "Junmai Daiginjo"
+    },
+    {
+      "attributeId": 4,
+      "value": "39%"
+    },
+    {
+      "attributeId": 5,
+      "value": "Yamaguchi"
+    },
+    {
+      "attributeId": 6,
+      "value": "Asahi Shuzo"
+    },
+    {
+      "attributeId": 7,
+      "value": "8-12°C"
+    },
+    {
+      "attributeId": 8,
+      "value": "Fruity, Clean, Smooth"
+    },
+    {
+      "attributeId": 9,
+      "value": "Apple, Pear, Floral"
+    },
+    {
+      "attributeId": 10,
+      "value": "Sushi, Sashimi, Light Japanese Cuisine"
+    }
+  ],
+  "tagIds": [1, 2, 3, 5, 8]
 }
-
 ### 18. ✅ Create Product with Variants
 POST {{baseUrl}}/api/product
 Authorization: Bearer {{adminToken}}

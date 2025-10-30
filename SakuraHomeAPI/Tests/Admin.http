@@ -57,7 +57,7 @@ Content-Type: application/json
 
 ### 4. DÁN TOKEN ADMIN ĐÃ ĐĂNG NHẬP THÀNH CÔNG VÀO ĐÂY
 # Lưu ý: Token phải là token mới nhất, copy từ response login thành công
-@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzODU5MWYwOC1jZWRjLTQ3MjctYTZkNC1iYmFlMTY5YjljZGIiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBVc2VyIiwicm9sZSI6IkN1c3RvbWVyIiwiZmlyc3ROYW1lIjoiQWRtaW4iLCJsYXN0TmFtZSI6IlVzZXIiLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IkZhbHNlIiwicGhvbmVWZXJpZmllZCI6IkZhbHNlIiwicG9pbnRzIjoiMCIsInRvdGFsU3BlbnQiOiIwLjAwIiwicHJlZmVycmVkTGFuZ3VhZ2UiOiJ2aSIsInByZWZlcnJlZEN1cnJlbmN5IjoiVk5EIiwianRpIjoiYjdiNDE2NzEtZTU4OS00NDE3LTlhMGItM2EyOGJhYjdjZWJmIiwiaWF0IjoxNzU0NTM1ODc0LCJnZW5kZXIiOiJVbmtub3duIiwibmJmIjoxNzU0NTM1ODc0LCJleHAiOjE3NTQ1Mzk0NzQsImlzcyI6IlNha3VyYUhvbWVBUEkiLCJhdWQiOiJTYWt1cmFIb21lVXNlcnMifQ.HAVZtpUKml6J8SGxiwjCRoHX_J4DQwDDjbfi-s8Lycg
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiIxNjgyNGI3OS01M2MzLTRmYWItYjE1Yy1lN2RmYzM5M2ExYmUiLCJpYXQiOjE3NTk4NTQxNDMsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NTk4NTQxNDMsImV4cCI6MTc1OTg1Nzc0MywiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.fGBBaDpY_H-VGR8RUqt7E2MznswM0NIOcK832KvkUPg
 
 ### =============================================================
 ### 5. USER MANAGEMENT
@@ -136,11 +136,9 @@ Authorization: Bearer {{adminToken}}
 GET {{baseUrl}}/order?page=1&pageSize=20&status=Pending
 Authorization: Bearer {{adminToken}}
 
-# Lấy chi tiết đơn hàng
 GET {{baseUrl}}/order/{{orderId}}
 Authorization: Bearer {{adminToken}}
 
-# Cập nhật trạng thái đơn hàng
 PATCH {{baseUrl}}/order/{{orderId}}/status
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json

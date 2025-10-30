@@ -134,8 +134,10 @@ namespace SakuraHomeAPI.Data
             // These entities inherit from AuditableEntity (int-based) but have Guid foreign keys
             ConfigureAuditNavigationProperties(builder);
 
-            // Seed master data using external seeder
-            DatabaseSeeder.SeedData(builder);
+            // SEED DATA DISABLED FOR CLEAN PROJECT DISTRIBUTION
+            // Use SQL scripts in Scripts/SeedData/ folder instead
+            // Uncomment the line below only for development if needed
+            // DatabaseSeeder.SeedData(builder);
         }
 
         /// <summary>

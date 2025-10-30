@@ -28,6 +28,12 @@ namespace SakuraHomeAPI.DTOs.Admin.Responses
         public bool PhoneNumberConfirmed { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
+        
+        // New statistical fields for admin dashboard
+        public decimal TotalSpent { get; set; }
+        public int TotalOrders { get; set; }
+        public int Points { get; set; }
+        public DateTime? LastOrderDate { get; set; }
     }
 
     public class AdminUserStatisticsDto
