@@ -17,7 +17,7 @@ using SakuraHomeAPI.Data;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.Services.Implementations;
-using SakuraHomeAPI.Tools; // THÊM DÒNG NÀY
+using SakuraHomeAPI.Tools; 
 using Serilog;
 using System;
 using System.IO;
@@ -28,7 +28,16 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var localConfigPath = @"C:\SakuraHome\appsettings.Local.json";
+if (File.Exists(localConfigPath))
+{
+    builder.Configuration.AddJsonFile(localConfigPath, optional: true, reloadOnChange: true);
+    Log.Information("Loaded local configuration from: {Path}", localConfigPath);
+}
+else
+{
+    Log.Warning("Local configuration file not found at: {Path}", localConfigPath);
+}
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
