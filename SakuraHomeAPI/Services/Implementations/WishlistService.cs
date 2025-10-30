@@ -1,12 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
-using SakuraHomeAPI.Services.Interfaces;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Wishlist.Requests;
 using SakuraHomeAPI.DTOs.Wishlist.Responses;
 using SakuraHomeAPI.Models.Entities.UserWishlist;
 using SakuraHomeAPI.Models.Entities.UserCart;
-using AutoMapper;
+using SakuraHomeAPI.Services.Interfaces;
 
 namespace SakuraHomeAPI.Services.Implementations
 {

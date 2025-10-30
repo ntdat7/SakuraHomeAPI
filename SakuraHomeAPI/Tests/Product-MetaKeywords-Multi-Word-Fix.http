@@ -1,0 +1,161 @@
+﻿### =================================================================
+### METAKEYWORDS MULTI-WORD SEARCH FIX VERIFICATION
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### =================================================================
+### EXACT PHRASE SEARCH TESTS (FIXED)
+### =================================================================
+
+### 1. 🔧 FIXED: Search for "bim bim" (exact phrase in MetaKeywords)
+# Expected: Should find Pocky product 
+# Database has: "pocky, chocolate, japanese snack, biscuit sticks, glico, bim bim"
+GET {{baseUrl}}/api/product?search=bim bim&page=1&pageSize=10
+
+### 2. 🔧 FIXED: Search for "japanese snack" (exact phrase in MetaKeywords)
+# Expected: Should find Pocky product
+# Database has: "pocky, chocolate, japanese snack, biscuit sticks, glico, bim bim"
+GET {{baseUrl}}/api/product?search=japanese snack&page=1&pageSize=10
+
+### 3. ✅ Working: Search for "japanese snacks" (plural form in Brand MetaKeywords)
+# Expected: Should find products from Pocky brand
+# Brand has: "pocky, japanese snacks, glico, biscuit sticks"
+GET {{baseUrl}}/api/product?search=japanese snacks&page=1&pageSize=10
+
+### 4. 🔧 FIXED: Search for "biscuit sticks" (exact phrase in MetaKeywords)
+# Expected: Should find Pocky product
+GET {{baseUrl}}/api/product?search=biscuit sticks&page=1&pageSize=10
+
+### =================================================================
+### INDIVIDUAL TERM MATCHING TESTS
+### =================================================================
+
+### 5. ✅ Search for "glico" (single term - should work)
+# Expected: Should find Pocky products
+GET {{baseUrl}}/api/product?search=glico&page=1&pageSize=10
+
+### 6. ✅ Search for "chocolate" (single term - should work)
+# Expected: Should find Pocky products
+GET {{baseUrl}}/api/product?search=chocolate&page=1&pageSize=10
+
+### 7. 🔧 IMPROVED: Search for "japanese tea" 
+# Expected: Should find Matcha products (individual terms: "japanese" + "tea")
+GET {{baseUrl}}/api/product?search=japanese tea&page=1&pageSize=10
+
+### 8. 🔧 IMPROVED: Search for "green tea"
+# Expected: Should find Matcha products
+GET {{baseUrl}}/api/product?search=green tea&page=1&pageSize=10
+
+### =================================================================
+### RELEVANCE SCORING VERIFICATION
+### =================================================================
+
+### 9. 🔧 Relevance Test: "bim bim" with sorting
+# Expected: Products with exact phrase match should rank higher
+GET {{baseUrl}}/api/product?search=bim bim&sortBy=relevance&sortOrder=desc&page=1&pageSize=10
+
+### 10. 🔧 Relevance Test: "japanese snack" with sorting  
+# Expected: Products with exact phrase match should rank higher than individual term matches
+GET {{baseUrl}}/api/product?search=japanese snack&sortBy=relevance&sortOrder=desc&page=1&pageSize=10
+
+### 11. ✅ Relevance Test: "pocky" (name match should rank highest)
+# Expected: Exact name match should rank highest
+GET {{baseUrl}}/api/product?search=pocky&sortBy=relevance&sortOrder=desc&page=1&pageSize=10
+
+### =================================================================
+### CASE SENSITIVITY TESTS
+### =================================================================
+
+### 12. 🔧 Case Test: "BIM BIM" (uppercase)
+# Expected: Should find Pocky product (case insensitive)
+GET {{baseUrl}}/api/product?search=BIM BIM&page=1&pageSize=10
+
+### 13. 🔧 Case Test: "Japanese Snack" (mixed case)
+# Expected: Should find Pocky product
+GET {{baseUrl}}/api/product?search=Japanese Snack&page=1&pageSize=10
+
+### =================================================================
+### EDGE CASES & VALIDATION
+### =================================================================
+
+### 14. 🔧 Partial Match: "japanese sna" (incomplete second word)
+# Expected: Should still find products via individual term matching
+GET {{baseUrl}}/api/product?search=japanese sna&page=1&pageSize=10
+
+### 15. 🔧 Extra Spaces: "  bim   bim  " (multiple spaces)
+# Expected: Should handle and find Pocky product
+GET {{baseUrl}}/api/product?search=  bim   bim  &page=1&pageSize=10
+
+### 16. 🔧 Single Character: "j s" (very short terms)
+# Expected: Should handle gracefully (might not find anything due to length filter)
+GET {{baseUrl}}/api/product?search=j s&page=1&pageSize=10
+
+### =================================================================
+### OTHER METAKEYWORDS PHRASES TO TEST
+### =================================================================
+
+### 17. 🔧 Test: "ceremonial grade" (from Matcha MetaKeywords)
+# Expected: Should find Matcha products
+GET {{baseUrl}}/api/product?search=ceremonial grade&page=1&pageSize=10
+
+### 18. 🔧 Test: "marine collagen" (from supplement MetaKeywords)  
+# Expected: Should find supplement products
+GET {{baseUrl}}/api/product?search=marine collagen&page=1&pageSize=10
+
+### 19. 🔧 Test: "noise canceling" (from Sony MetaKeywords)
+# Expected: Should find Sony headphone products  
+GET {{baseUrl}}/api/product?search=noise canceling&page=1&pageSize=10
+
+### 20. 🔧 Test: "skin health" (from collagen MetaKeywords)
+# Expected: Should find health/beauty products
+GET {{baseUrl}}/api/product?search=skin health&page=1&pageSize=10
+
+### =================================================================
+### PERFORMANCE & DEBUGGING
+### =================================================================
+
+### 21. 📊 Debug: Get all products to verify data exists
+GET {{baseUrl}}/api/product?page=1&pageSize=5
+
+### 22. 📊 Debug: Search with very specific single term
+GET {{baseUrl}}/api/product?search=pocky&page=1&pageSize=5
+
+### 23. ⚡ Performance: Complex multi-word search with filters
+GET {{baseUrl}}/api/product?search=japanese snack&categoryId=1&inStockOnly=true&sortBy=relevance&page=1&pageSize=10
+
+### =================================================================
+### EXPECTED IMPROVEMENTS SUMMARY
+### =================================================================
+
+### 🔧 CHANGES MADE:
+### 
+### ✅ FIXED ISSUES:
+### 1. "bim bim" search now works (exact phrase matching)
+### 2. "japanese snack" search now works (exact phrase matching)  
+### 3. "biscuit sticks" search improved
+### 4. Better handling of multi-word phrases
+### 5. Improved relevance scoring for phrase vs individual terms
+### 
+### 🎯 NEW SEARCH BEHAVIOR:
+### 1. Exact phrase matching gets priority (e.g., "bim bim")
+### 2. Individual term matching as fallback (e.g., "japanese" + "snack") 
+### 3. Case insensitive search maintained
+### 4. Better relevance scoring:
+###    - Priority 6: Exact phrase in Name
+###    - Priority 5: Name starts with phrase  
+###    - Priority 4: Exact phrase in MetaKeywords
+###    - Priority 3: Name contains phrase
+###    - Priority 2: Description fields contain phrase
+###    - Priority 1: Other fields contain phrase
+### 
+### 🔍 SEARCH LOGIC:
+### - Try exact phrase first: "japanese snack"
+### - If no results, try individual terms: "japanese" AND "snack"
+### - Combine both approaches for best coverage
+### 
+### ✅ EXPECTED TEST RESULTS:
+### - "bim bim" → ✅ Returns Pocky product
+### - "japanese snack" → ✅ Returns Pocky product  
+### - "glico" → ✅ Returns Pocky product (still works)
+### - "chocolate" → ✅ Returns Pocky product (still works)
+### - All relevance sorting improved

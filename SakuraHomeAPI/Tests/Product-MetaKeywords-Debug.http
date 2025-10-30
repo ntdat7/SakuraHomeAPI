@@ -1,0 +1,22 @@
+﻿### =================================================================
+### METAKEYWORDS SEARCH DEBUG TEST
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### 1. Test search for "bim-bim" (exact value from database MetaKeywords)
+GET {{baseUrl}}/api/product?search=bim-bim&page=1&pageSize=10
+
+### 2. Test search for "bim bim" (without hyphen)
+GET {{baseUrl}}/api/product?search=bim bim&page=1&pageSize=10
+
+### 3. Test search for "pocky" (should match both name and MetaKeywords)
+GET {{baseUrl}}/api/product?search=pocky&page=1&pageSize=10
+
+### 4. Test search for "glico" (should only match MetaKeywords)
+GET {{baseUrl}}/api/product?search=glico&page=1&pageSize=10
+
+### 5. Test simple get all products to verify data exists
+GET {{baseUrl}}/api/product?page=1&pageSize=10
+
+### 6. Test relevance sorting with "pocky" search
+GET {{baseUrl}}/api/product?search=pocky&sortBy=relevance&sortOrder=desc&page=1&pageSize=10

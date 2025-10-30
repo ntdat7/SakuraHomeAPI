@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.Services.Interfaces;
+using SakuraHomeAPI.DTOs.Users;
 using SakuraHomeAPI.DTOs.Users.Requests;
 using SakuraHomeAPI.DTOs.Users.Responses;
 using SakuraHomeAPI.DTOs.Common;

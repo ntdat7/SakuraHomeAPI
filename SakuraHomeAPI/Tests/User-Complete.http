@@ -1,0 +1,932 @@
+﻿### =================================================================
+### USER MANAGEMENT API - COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### Quick Login to get tokens
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+@adminToken = {{adminLogin.response.body.data.token}}
+
+# @name customerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+@customerToken = {{customerLogin.response.body.data.token}}
+
+### =================================================================
+### USER PROFILE MANAGEMENT
+### =================================================================
+
+### 1. ✅ Get Current User Profile
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+
+### 2. ✅ Update User Profile - Full Update
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Updated First",
+  "lastName": "Updated Last",
+  "phoneNumber": "+84987654321",
+  "dateOfBirth": "1990-05-15",
+  "gender": "Male",
+  "preferredLanguage": "en",
+  "preferredCurrency": "USD"
+}
+
+### 3. ✅ Partial Profile Update
+PATCH {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Partially Updated",
+  "phoneNumber": "+84123456789"
+}
+
+### 4. ❌ Update Profile with Invalid Phone
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User",
+  "phoneNumber": "invalid-phone",
+  "dateOfBirth": "1990-05-15",
+  "gender": "Male"
+}
+
+### 5. ❌ Update Profile with Future Birth Date
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User",
+  "dateOfBirth": "2030-01-01",
+  "gender": "Male"
+}
+
+### 6. ❌ Update Profile Without Authorization
+PUT {{baseUrl}}/api/user/profile
+Content-Type: application/json
+
+{
+  "firstName": "Unauthorized",
+  "lastName": "Update"
+}
+
+### =================================================================
+### ADDRESS MANAGEMENT
+### =================================================================
+
+### 7. ✅ Get User Addresses
+GET {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{customerToken}}
+
+### 8. ✅ Add New Address
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "title": "Home Address",
+  "recipientName": "John Doe",
+  "phoneNumber": "+84987654321",
+  "addressLine1": "123 Main Street",
+  "addressLine2": "Apartment 4B",
+  "district": "District 1",
+  "city": "Ho Chi Minh City",
+  "province": "Ho Chi Minh",
+  "postalCode": "70000",
+  "country": "Vietnam",
+  "addressType": "Home",
+  "isDefault": true
+}
+
+### 9. ✅ Add Work Address
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "title": "Office Address",
+  "recipientName": "John Doe",
+  "phoneNumber": "+84987654321",
+  "addressLine1": "456 Business Avenue",
+  "district": "District 3",
+  "city": "Ho Chi Minh City",
+  "province": "Ho Chi Minh",
+  "postalCode": "70000",
+  "country": "Vietnam",
+  "addressType": "Work",
+  "isDefault": false
+}
+
+### 10. ✅ Update Address
+PUT {{baseUrl}}/api/user/addresses/1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "title": "Updated Home Address",
+  "recipientName": "John Updated Doe",
+  "phoneNumber": "+84987654321",
+  "addressLine1": "789 Updated Street",
+  "addressLine2": "Updated Apartment 5C",
+  "district": "District 2",
+  "city": "Ho Chi Minh City",
+  "province": "Ho Chi Minh",
+  "postalCode": "70000",
+  "country": "Vietnam",
+  "addressType": "Home",
+  "isDefault": true
+}
+
+### 11. ✅ Set Default Address
+PATCH {{baseUrl}}/api/user/addresses/2/set-default
+Authorization: Bearer {{customerToken}}
+
+### 12. ✅ Get Specific Address
+GET {{baseUrl}}/api/user/addresses/1
+Authorization: Bearer {{customerToken}}
+
+### 13. ✅ Delete Address
+DELETE {{baseUrl}}/api/user/addresses/2
+Authorization: Bearer {{customerToken}}
+
+### 14. ❌ Add Address with Missing Required Fields
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "recipientName": "",
+  "addressLine1": "",
+  "city": "",
+  "province": ""
+}
+
+### 15. ❌ Update Non-existent Address
+PUT {{baseUrl}}/api/user/addresses/999
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "title": "Non-existent Address",
+  "recipientName": "Test User",
+  "addressLine1": "Test Street",
+  "city": "Test City",
+  "province": "Test Province"
+}
+
+### =================================================================
+### USER PREFERENCES & SETTINGS
+### =================================================================
+
+### 16. ✅ Get User Preferences
+GET {{baseUrl}}/api/user/preferences
+Authorization: Bearer {{customerToken}}
+
+### 17. ✅ Update Notification Preferences
+PUT {{baseUrl}}/api/user/preferences/notifications
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "emailNotifications": true,
+  "smsNotifications": false,
+  "pushNotifications": true,
+  "marketingEmails": false,
+  "orderUpdates": true,
+  "promotionAlerts": true,
+  "securityAlerts": true,
+  "newsletterSubscription": false
+}
+
+### 18. ✅ Update Privacy Settings
+PUT {{baseUrl}}/api/user/preferences/privacy
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "profileVisibility": "Private",
+  "showOnlineStatus": false,
+  "allowDataCollection": true,
+  "thirdPartySharing": false
+}
+
+### 19. ✅ Update Display Preferences
+PUT {{baseUrl}}/api/user/preferences/display
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "theme": "Dark",
+  "language": "en",
+  "currency": "USD",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "dateFormat": "DD/MM/YYYY",
+  "numberFormat": "1,000.00"
+}
+
+### =================================================================
+### USER STATISTICS & ANALYTICS
+### =================================================================
+
+### 20. ✅ Get User Statistics
+GET {{baseUrl}}/api/user/statistics
+Authorization: Bearer {{customerToken}}
+
+### 21. ✅ Get Order History Summary
+GET {{baseUrl}}/api/user/statistics/orders
+Authorization: Bearer {{customerToken}}
+
+### 22. ✅ Get Spending Analytics
+GET {{baseUrl}}/api/user/statistics/spending?period=last12months
+Authorization: Bearer {{customerToken}}
+
+### 23. ✅ Get User Activity Summary
+GET {{baseUrl}}/api/user/statistics/activity?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{customerToken}}
+
+### 24. ✅ Get Loyalty Points Summary
+GET {{baseUrl}}/api/user/statistics/loyalty
+Authorization: Bearer {{customerToken}}
+
+### 25. ✅ Get User Tier Information
+GET {{baseUrl}}/api/user/tier
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### ACCOUNT SECURITY
+### =================================================================
+
+### 26. ✅ Get Security Overview
+GET {{baseUrl}}/api/user/security
+Authorization: Bearer {{customerToken}}
+
+### 27. ✅ Get Login History
+GET {{baseUrl}}/api/user/security/login-history?page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 28. ✅ Get Active Sessions
+GET {{baseUrl}}/api/user/security/active-sessions
+Authorization: Bearer {{customerToken}}
+
+### 29. ✅ Revoke Specific Session
+DELETE {{baseUrl}}/api/user/security/sessions/session-id-123
+Authorization: Bearer {{customerToken}}
+
+### 30. ✅ Enable Two-Factor Authentication
+POST {{baseUrl}}/api/user/security/2fa/enable
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "method": "SMS",
+  "phoneNumber": "+84987654321"
+}
+
+### 31. ✅ Disable Two-Factor Authentication
+POST {{baseUrl}}/api/user/security/2fa/disable
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "confirmationCode": "123456"
+}
+
+### 32. ✅ Update Security Questions
+PUT {{baseUrl}}/api/user/security/questions
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "questions": [
+    {
+      "question": "What was the name of your first pet?",
+      "answer": "Fluffy"
+    },
+    {
+      "question": "What city were you born in?",
+      "answer": "Ho Chi Minh City"
+    }
+  ]
+}
+
+### =================================================================
+### USER DATA EXPORT & PRIVACY
+### =================================================================
+
+### 33. ✅ Request Data Export
+POST {{baseUrl}}/api/user/data/export
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "format": "JSON",
+  "includeOrders": true,
+  "includeReviews": true,
+  "includePreferences": true,
+  "includeActivity": false
+}
+
+### 34. ✅ Get Data Export Status
+GET {{baseUrl}}/api/user/data/export/status
+Authorization: Bearer {{customerToken}}
+
+### 35. ✅ Download Data Export
+GET {{baseUrl}}/api/user/data/export/download/export-id-123
+Authorization: Bearer {{customerToken}}
+
+### 36. ✅ Request Account Deletion
+POST {{baseUrl}}/api/user/account/deletion-request
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "reason": "No longer need the service",
+  "feedback": "The service was good, but I'm moving to a different platform",
+  "confirmDeletion": true
+}
+
+### 37. ✅ Cancel Account Deletion
+DELETE {{baseUrl}}/api/user/account/deletion-request
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PHONE & EMAIL VERIFICATION
+### =================================================================
+
+### 38. ✅ Send Phone Verification Code
+POST {{baseUrl}}/api/user/verify/phone/send-code
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "phoneNumber": "+84987654321"
+}
+
+### 39. ✅ Verify Phone Number
+POST {{baseUrl}}/api/user/verify/phone/confirm
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "phoneNumber": "+84987654321",
+  "verificationCode": "123456"
+}
+
+### 40. ✅ Send Email Verification
+POST {{baseUrl}}/api/user/verify/email/send
+Authorization: Bearer {{customerToken}}
+
+### 41. ✅ Verify Email Address
+POST {{baseUrl}}/api/user/verify/email/confirm
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "verificationToken": "email-verification-token-123"
+}
+
+### =================================================================
+### ADMIN USER MANAGEMENT
+### =================================================================
+
+### 42. ✅ Get All Users (Admin)
+GET {{baseUrl}}/api/admin/users?page=1&pageSize=20&role=Customer&status=Active
+Authorization: Bearer {{adminToken}}
+
+### 43. ✅ Search Users (Admin)
+GET {{baseUrl}}/api/admin/users/search?query=john&page=1&pageSize=10
+Authorization: Bearer {{adminToken}}
+
+### 44. ✅ Get User Details (Admin)
+GET {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}
+Authorization: Bearer {{adminToken}}
+
+### 45. ✅ Create User (Admin)
+POST {{baseUrl}}/api/admin/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "email": "newuser@sakurahome.com",
+  "firstName": "New",
+  "lastName": "User",
+  "phoneNumber": "+84987654321",
+  "role": "Customer",
+  "status": "Active",
+  "sendWelcomeEmail": true,
+  "temporaryPassword": "TempPass123!"
+}
+
+### 46. ✅ Update User (Admin)
+PUT {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Updated by Admin",
+  "lastName": "Admin Updated",
+  "phoneNumber": "+84987654321",
+  "status": "Active",
+  "role": "Customer",
+  "tier": "Silver",
+  "isEmailVerified": true,
+  "isPhoneVerified": true
+}
+
+### 47. ✅ Change User Status (Admin)
+PATCH {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "Suspended",
+  "reason": "Policy violation"
+}
+
+### 48. ✅ Reset User Password (Admin)
+POST {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}/reset-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "newPassword": "AdminReset123!",
+  "sendEmailNotification": true
+}
+
+### 49. ✅ Unlock User Account (Admin)
+POST {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}/unlock
+Authorization: Bearer {{adminToken}}
+
+### 50. ✅ Verify User Email (Admin)
+POST {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}/verify-email
+Authorization: Bearer {{adminToken}}
+
+### 51. ✅ Verify User Phone (Admin)
+POST {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}/verify-phone
+Authorization: Bearer {{adminToken}}
+
+### 52. ✅ Delete User (Admin - Soft Delete)
+DELETE {{baseUrl}}/api/admin/users/{{customerLogin.response.body.data.user.id}}
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### USER STATISTICS (ADMIN)
+### =================================================================
+
+### 53. ✅ Get User Statistics Overview (Admin)
+GET {{baseUrl}}/api/admin/users/stats
+Authorization: Bearer {{adminToken}}
+
+### 54. ✅ Get User Registration Trends (Admin)
+GET {{baseUrl}}/api/admin/users/registration-trends?period=last6months
+Authorization: Bearer {{adminToken}}
+
+### 55. ✅ Get User Activity Report (Admin)
+GET {{baseUrl}}/api/admin/users/activity-report?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{adminToken}}
+
+### 56. ✅ Get User Demographics (Admin)
+GET {{baseUrl}}/api/admin/users/demographics
+Authorization: Bearer {{adminToken}}
+
+### 57. ✅ Export User List (Admin)
+POST {{baseUrl}}/api/admin/users/export
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "format": "Excel",
+  "filters": {
+    "status": "Active",
+    "registrationDateFrom": "2024-01-01",
+    "registrationDateTo": "2024-12-31"
+  },
+  "includePersonalData": false
+}
+
+### =================================================================
+### ERROR HANDLING TESTS
+### =================================================================
+
+### 58. ❌ Access User Profile Without Token
+GET {{baseUrl}}/api/user/profile
+
+### 59. ❌ Update Profile with Invalid Token
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer invalid-token
+Content-Type: application/json
+
+{
+  "firstName": "Invalid Token Test"
+}
+
+### 60. ❌ Customer Trying to Access Admin Endpoints
+GET {{baseUrl}}/api/admin/users
+Authorization: Bearer {{customerToken}}
+
+### 61. ❌ Update Another User's Profile
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "userId": "another-user-id",
+  "firstName": "Malicious Update"
+}
+
+### 62. ❌ Invalid Date Format
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "dateOfBirth": "invalid-date-format"
+}
+
+### 63. ❌ Extremely Long Input Values
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "ThisIsAnExtremelyLongFirstNameThatExceedsNormalLimitsAndShouldBeRejectedByTheSystemValidation",
+  "lastName": "ThisIsAnExtremelyLongLastNameThatExceedsNormalLimitsAndShouldBeRejectedByTheSystemValidation"
+}
+
+### =================================================================
+### SECURITY TESTS
+### =================================================================
+
+### 64. 🔒 XSS Attempt in Profile Update
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "<script>alert('XSS')</script>",
+  "lastName": "<img src=x onerror=alert('XSS')>"
+}
+
+### 65. 🔒 SQL Injection Attempt in Search
+GET {{baseUrl}}/api/admin/users/search?query=' OR 1=1--
+Authorization: Bearer {{adminToken}}
+
+### 66. 🔒 Path Traversal Attempt
+GET {{baseUrl}}/api/user/data/export/download/../../etc/passwd
+Authorization: Bearer {{customerToken}}
+
+### 67. 🔒 Cross-User Data Access Attempt
+GET {{baseUrl}}/api/user/addresses/../other-user-id/addresses
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PERFORMANCE TESTS
+### =================================================================
+
+### 68. ⚡ Rapid Profile Updates
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Performance Test 1"
+}
+
+### 69. ⚡ Rapid Profile Updates (2)
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Performance Test 2"
+}
+
+### 70. ⚡ Large Page Size Request
+GET {{baseUrl}}/api/admin/users?page=1&pageSize=1000
+Authorization: Bearer {{adminToken}}
+
+### 71. ⚡ Complex Search Query
+GET {{baseUrl}}/api/admin/users/search?query=john&status=Active&role=Customer&tier=Gold&verified=true
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### DATA CONSISTENCY TESTS
+### =================================================================
+
+### 72. 🔄 Concurrent Profile Updates
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Concurrent Update 1",
+  "version": 1
+}
+
+### 73. 🔄 Concurrent Profile Updates (Conflict)
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Concurrent Update 2",
+  "version": 1
+}
+
+### 74. 🔄 Address Operations Sequence
+POST {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "title": "Sequence Test",
+  "recipientName": "Test User",
+  "addressLine1": "Test Address",
+  "city": "Test City",
+  "province": "Test Province",
+  "isDefault": false
+}
+
+### 75. 🔄 Set Multiple Default Addresses (Should Handle Conflict)
+PATCH {{baseUrl}}/api/user/addresses/1/set-default
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### EDGE CASES & BOUNDARY TESTS
+### =================================================================
+
+### 76. 🔍 Empty Profile Update
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{}
+
+### 77. 🔍 Null Values in Profile
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": null,
+  "lastName": null,
+  "phoneNumber": null
+}
+
+### 78. 🔍 Unicode Characters in Profile
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Nguyễn Văn",
+  "lastName": "Đức",
+  "preferredLanguage": "vi"
+}
+
+### 79. 🔍 Very Large Phone Number
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "phoneNumber": "+1234567890123456789012345678901234567890"
+}
+
+### 80. 🔍 Special Characters in Names
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "O'Connor-Smith",
+  "lastName": "Müller-González"
+}
+
+### =================================================================
+### CLEANUP & FINAL VALIDATION
+### =================================================================
+
+### 81. 🧹 Restore Original Profile
+PUT {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Customer",
+  "lastName": "User",
+  "phoneNumber": "+84987654321",
+  "preferredLanguage": "en",
+  "preferredCurrency": "USD"
+}
+
+### 82. ✅ Final Profile Validation
+GET {{baseUrl}}/api/user/profile
+Authorization: Bearer {{customerToken}}
+
+### 83. ✅ Final Address List Validation
+GET {{baseUrl}}/api/user/addresses
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### TEST SUMMARY & VALIDATION CHECKLIST
+### =================================================================
+
+###
+### ✅ USER MANAGEMENT FEATURES TESTED:
+### 
+### 👤 Profile Management:
+### - Get current user profile
+### - Full profile updates
+### - Partial profile updates
+### - Profile validation (phone, email, dates)
+### - Invalid data handling
+### - Unicode character support
+### 
+### 🏠 Address Management:
+### - List user addresses
+### - Add new addresses (home, work, custom)
+### - Update existing addresses
+### - Set default address
+### - Delete addresses
+### - Address validation
+### - Missing field handling
+### 
+### ⚙️ Preferences & Settings:
+### - Notification preferences
+### - Privacy settings
+### - Display preferences (theme, language, currency)
+### - Preference persistence
+### - Invalid preference handling
+### 
+### 📊 Statistics & Analytics:
+### - User statistics overview
+### - Order history summary
+### - Spending analytics
+### - Activity tracking
+### - Loyalty points summary
+### - User tier information
+### 
+### 🔒 Security Features:
+### - Security overview
+### - Login history tracking
+### - Active session management
+### - Session revocation
+### - Two-factor authentication
+### - Security questions
+### 
+### 📋 Data Management:
+### - Data export requests
+### - Export status tracking
+### - Data download
+### - Account deletion requests
+### - Deletion cancellation
+### 
+### ✅ Verification:
+### - Phone number verification
+### - Email address verification
+### - Verification code handling
+### - Invalid verification handling
+### 
+### 👨‍💼 Admin Operations:
+### - User listing with filters
+### - User search functionality
+### - User detail access
+### - User creation
+### - User updates
+### - Status changes
+### - Password resets
+### - Account unlocking
+### - Manual verification
+### - User deletion
+### 
+### 📈 Admin Analytics:
+### - User statistics overview
+### - Registration trends
+### - Activity reports
+### - Demographics data
+### - Data export capabilities
+### 
+### 🛡️ Security Testing:
+### - Authorization validation
+### - XSS prevention
+### - SQL injection prevention
+### - Path traversal prevention
+### - Cross-user access prevention
+### 
+### ⚡ Performance Testing:
+### - Rapid update handling
+### - Large data set handling
+### - Complex query performance
+### - Concurrent operation handling
+### 
+### 🔄 Data Consistency:
+### - Concurrent update handling
+### - Version conflict resolution
+### - Sequential operation integrity
+### - Default value conflicts
+### 
+### 🔍 Edge Cases:
+### - Empty request handling
+### - Null value handling
+### - Unicode character support
+### - Boundary value testing
+### - Special character handling
+### 
+### 📊 EXPECTED RESPONSE CODES:
+### 
+### ✅ Success Scenarios:
+### - 200 OK: Get operations, updates
+### - 201 Created: New address, user creation
+### - 204 No Content: Deletion operations
+### 
+### ❌ Error Scenarios:
+### - 400 Bad Request: Validation errors
+### - 401 Unauthorized: Missing/invalid token
+### - 403 Forbidden: Insufficient permissions
+### - 404 Not Found: Non-existent resources
+### - 409 Conflict: Concurrent update conflicts
+### - 422 Unprocessable Entity: Business rule violations
+### 
+### 🎯 PERFORMANCE TARGETS:
+### 
+### - Profile operations: < 300ms
+### - Address operations: < 200ms
+### - Statistics queries: < 500ms
+### - Admin operations: < 1000ms
+### - Search operations: < 800ms
+### - Data export: < 5000ms
+### 
+### 📋 VALIDATION CHECKLIST:
+### 
+### ✅ Functional Requirements:
+### - All CRUD operations work correctly
+### - Validation rules are enforced
+### - Business logic operates properly
+### - Error messages are clear
+### - Data integrity is maintained
+### 
+### ✅ Security Requirements:
+### - Authentication is enforced
+### - Authorization rules are respected
+### - Input sanitization prevents attacks
+### - Personal data is protected
+### - Cross-user access is prevented
+### 
+### ✅ Performance Requirements:
+### - Response times meet targets
+### - Large datasets are handled efficiently
+### - Concurrent operations are managed
+### - Memory usage is optimized
+### - Database queries are efficient
+### 
+### 🔧 TROUBLESHOOTING:
+### 
+### If tests fail:
+### 1. Verify user exists in database
+### 2. Check authentication token validity
+### 3. Confirm user roles and permissions
+### 4. Validate database connections
+### 5. Check validation rules configuration
+### 6. Verify email/SMS service configuration
+### 7. Confirm address data structure
+### 8. Check preference default values
+### 
+### 📈 MONITORING RECOMMENDATIONS:
+### 
+### - Monitor user registration rates
+### - Track profile update frequency
+### - Alert on failed authentication attempts
+### - Monitor data export requests
+### - Track verification success rates
+### - Alert on admin operation patterns
+### - Monitor user deletion requests
+### - Track preference change patterns
+###

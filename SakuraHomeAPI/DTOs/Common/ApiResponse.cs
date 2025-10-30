@@ -1,4 +1,4 @@
-namespace SakuraHomeAPI.Models.DTOs
+Ôªønamespace SakuraHomeAPI.DTOs.Common
 {
     /// <summary>
     /// Generic API response wrapper
@@ -44,12 +44,12 @@ namespace SakuraHomeAPI.Models.DTOs
         {
         }
 
-        public static ApiResponse SuccessResult(string message = "Th‡nh cÙng")
+        public static ApiResponse SuccessResult(string message = "Th√†nh c√¥ng")
         {
             return new ApiResponse { Success = true, Message = message };
         }
 
-        public static ApiResponse<T> SuccessResult<T>(T data, string message = "Th‡nh cÙng")
+        public static ApiResponse<T> SuccessResult<T>(T data, string message = "Th√†nh c√¥ng")
         {
             return new ApiResponse<T>(data, message);
         }

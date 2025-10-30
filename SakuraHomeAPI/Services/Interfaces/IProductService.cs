@@ -1,4 +1,4 @@
-using SakuraHomeAPI.DTOs.Products.Responses;
+﻿using SakuraHomeAPI.DTOs.Products.Responses;
 using SakuraHomeAPI.DTOs.Products.Requests;
 using SakuraHomeAPI.DTOs.Products.Components;
 using SakuraHomeAPI.DTOs.Common;
@@ -227,7 +227,7 @@ namespace SakuraHomeAPI.Services.Interfaces
         /// </summary>
         Task<ServiceResult<ProductImageDto>> AddImageAsync(
             int productId,
-            CreateProductImageRequestDto request,
+            CreateProductImageDto request,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace SakuraHomeAPI.Services.Interfaces
         Task<ServiceResult<ProductImageDto>> UpdateImageAsync(
             int productId,
             int imageId,
-            UpdateProductImageRequestDto request,
+            SakuraHomeAPI.DTOs.Products.Components.UpdateProductImageDto request,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -252,7 +252,7 @@ namespace SakuraHomeAPI.Services.Interfaces
         /// </summary>
         Task<ServiceResult<ProductVariantDto>> AddVariantAsync(
             int productId,
-            CreateProductVariantRequestDto request,
+            CreateProductVariantDto request,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -261,7 +261,7 @@ namespace SakuraHomeAPI.Services.Interfaces
         Task<ServiceResult<ProductVariantDto>> UpdateVariantAsync(
             int productId,
             int variantId,
-            UpdateProductVariantRequestDto request,
+            SakuraHomeAPI.DTOs.Products.Components.UpdateProductVariantDto request,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -277,7 +277,7 @@ namespace SakuraHomeAPI.Services.Interfaces
         /// </summary>
         Task<ServiceResult<ProductAttributeDto>> SetAttributeAsync(
             int productId,
-            SetProductAttributeRequestDto request,
+            CreateProductAttributeDto request,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -414,7 +414,7 @@ namespace SakuraHomeAPI.Services.Interfaces
     /// <summary>
     /// Update product image request DTO
     /// </summary>
-    public class UpdateProductImageRequestDto
+    public class UpdateProductImageDto
     {
         public string? AltText { get; set; }
         public string? Caption { get; set; }
@@ -425,7 +425,7 @@ namespace SakuraHomeAPI.Services.Interfaces
     /// <summary>
     /// Update product variant request DTO
     /// </summary>
-    public class UpdateProductVariantRequestDto
+    public class UpdateProductVariantDto
     {
         public string? Name { get; set; }
         public string? SKU { get; set; }

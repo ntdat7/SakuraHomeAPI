@@ -1,0 +1,439 @@
+﻿### =================================================================
+### SAKURA HOME API - MASTER TEST EXECUTION GUIDE
+### =================================================================
+
+## 📋 COMPLETE TEST SUITE OVERVIEW
+
+This guide provides a comprehensive overview of all test files and execution strategies for the SakuraHome API system. Each test file covers specific aspects of the e-commerce platform.
+
+### 🗂️ TEST FILE STRUCTURE
+
+```
+SakuraHomeAPI/Tests/
+├── Auth-Complete.http              # Authentication & Security
+├── User-Complete.http              # User Management & Profiles  
+├── Product-Complete.http           # Product Management & Catalog
+├── Cart-Complete.http              # Shopping Cart & Persistence
+├── Order-Complete.http             # Order Management & Lifecycle
+├── Coupon-Complete.http            # Coupon & Promotion System
+├── Integration-Complete.http       # End-to-End Workflow Testing
+├── Complete-API-Suite.http         # Original comprehensive suite
+└── Master-Test-Guide.http          # This file - execution guide
+```
+
+### 🎯 EXECUTION STRATEGIES
+
+#### 1. 🚀 QUICK SMOKE TEST
+For rapid validation of core functionality:
+```bash
+# Run these files in order:
+1. Auth-Complete.http (Tests 1-15 only)
+2. Product-Complete.http (Tests 1-20 only) 
+3. Cart-Complete.http (Tests 1-30 only)
+4. Order-Complete.http (Tests 1-25 only)
+```
+
+#### 2. 🔧 DEVELOPMENT TESTING
+For development and debugging:
+```bash
+# Run individual components as needed:
+- Auth-Complete.http (Full authentication testing)
+- User-Complete.http (User management validation)
+- Product-Complete.http (Product system testing)
+- Cart-Complete.http (Shopping cart validation)
+```
+
+#### 3. 🧪 REGRESSION TESTING
+For comprehensive system validation:
+```bash
+# Run all files in sequence:
+1. Auth-Complete.http (All tests)
+2. User-Complete.http (All tests)
+3. Product-Complete.http (All tests)
+4. Cart-Complete.http (All tests)
+5. Order-Complete.http (All tests)
+6. Coupon-Complete.http (All tests)
+```
+
+#### 4. 🎪 INTEGRATION TESTING
+For end-to-end workflow validation:
+```bash
+# Run integration test:
+- Integration-Complete.http (Complete workflow)
+```
+
+#### 5. 🚀 PRODUCTION READINESS
+For pre-deployment validation:
+```bash
+# Run all tests + performance monitoring:
+1. Complete-API-Suite.http (Legacy comprehensive)
+2. Integration-Complete.http (End-to-end validation)
+3. Monitor performance metrics
+4. Validate security measures
+```
+
+### 📊 TEST COVERAGE BREAKDOWN
+
+#### 🔐 Authentication System (Auth-Complete.http)
+- **55 Tests Total**
+- User registration & validation
+- Login & logout workflows  
+- Password management
+- Token management & refresh
+- Email verification
+- Security tests (XSS, SQL injection)
+- Rate limiting validation
+- Edge cases & error handling
+
+#### 👤 User Management (User-Complete.http)  
+- **83 Tests Total**
+- Profile management (CRUD)
+- Address management
+- Preferences & settings
+- Security features (2FA, sessions)
+- Data export & privacy
+- Admin user operations
+- Analytics & reporting
+- Performance & security tests
+
+#### 📦 Product Management (Product-Complete.http)
+- **97 Tests Total**
+- Product discovery & browsing
+- Product creation & updates (Admin)
+- Advanced search & filtering
+- Product variants & options
+- Review integration
+- Recommendations engine
+- Analytics & statistics
+- Bulk operations & import/export
+
+#### 🛒 Shopping Cart (Cart-Complete.http)
+- **96 Tests Total**
+- Cart initialization & persistence
+- Item management (add/update/remove)
+- Bulk operations
+- Calculations & totals
+- Coupon integration
+- Cart validation & checking
+- Sharing & wishlist integration
+- Mobile & guest support
+
+#### 📋 Order Management (Order-Complete.http)
+- **88 Tests Total**  
+- Order creation & placement
+- Customer order management
+- Admin order processing
+- Return & refund workflows
+- Analytics & reporting
+- Communication & notifications
+- Bulk operations
+- Special order types
+
+#### 🎫 Coupon System (Coupon-Complete.http)
+- **88 Tests Total**
+- Coupon creation & management (Admin)
+- Public coupon discovery
+- Validation & calculation
+- Usage & redemption tracking
+- Bulk operations
+- Analytics & reporting
+- Advanced features & business rules
+- Performance & security
+
+#### 🔗 Integration Testing (Integration-Complete.http)
+- **80 Tests Total**
+- Complete e-commerce workflow
+- Cross-system integration
+- User journey validation
+- Admin operation workflows
+- Data consistency verification
+- Performance under load
+- Error recovery testing
+- Security validation
+
+### 🎯 TESTING PRIORITIES
+
+#### 🚨 CRITICAL PATH TESTS (Must Pass)
+1. User authentication (Auth tests 1-20)
+2. Product browsing (Product tests 1-15)
+3. Cart management (Cart tests 1-25)
+4. Order creation (Order tests 1-20)
+5. Payment processing (Integration tests 20-25)
+
+#### ⚠️ HIGH PRIORITY TESTS (Should Pass)
+1. User profile management
+2. Product search & filtering
+3. Coupon application
+4. Order status updates
+5. Admin operations
+
+#### 📊 NICE-TO-HAVE TESTS (Can Debug Later)
+1. Advanced analytics
+2. Bulk operations
+3. Export functionality
+4. Mobile-specific features
+5. Edge case scenarios
+
+### 🔧 PREREQUISITES & SETUP
+
+#### 💾 Database Requirements
+```sql
+-- Ensure these tables exist with seed data:
+- Users (Admin, Customer accounts)
+- Products (At least 20 products)
+- Categories (At least 5 categories) 
+- Brands (At least 3 brands)
+- Coupons (At least 5 active coupons)
+- Addresses (Sample addresses)
+```
+
+#### 🔑 Authentication Setup
+```bash
+# Required user accounts:
+- admin@sakurahome.com (Password: Admin123!)
+- customer@sakurahome.com (Password: Customer123!)
+- customer2@sakurahome.com (Password: Customer123!)
+```
+
+#### ⚙️ Configuration Validation
+```json
+// Verify appsettings.json contains:
+{
+  "ConnectionStrings": { "DefaultConnection": "..." },
+  "JwtSettings": { "SecretKey": "...", "Issuer": "..." },
+  "EmailSettings": { "SmtpServer": "...", "Port": "..." },
+  "PaymentGateways": { "VNPay": "...", "MoMo": "..." }
+}
+```
+
+### 📈 PERFORMANCE TARGETS
+
+#### ⚡ Response Time Targets
+- Authentication: < 500ms
+- Product listing: < 300ms  
+- Cart operations: < 200ms
+- Order creation: < 2000ms
+- Search queries: < 500ms
+- Admin operations: < 1000ms
+
+#### 📊 Throughput Targets
+- Concurrent users: 100+
+- Requests per second: 500+
+- Database connections: 50+
+- Memory usage: < 2GB
+- CPU usage: < 70%
+
+### 🛡️ SECURITY VALIDATION
+
+#### 🔒 Security Test Categories
+1. **Authentication Security**
+   - Token validation
+   - Session management
+   - Password policies
+   - Rate limiting
+
+2. **Authorization Security**  
+   - Role-based access
+   - Resource permissions
+   - Cross-user protection
+   - Admin privilege escalation
+
+3. **Input Security**
+   - SQL injection prevention
+   - XSS attack prevention
+   - CSRF protection
+   - Input validation
+
+4. **Data Security**
+   - Sensitive data encryption
+   - Personal data protection
+   - Audit trail logging
+   - Data export controls
+
+### 📋 EXECUTION CHECKLIST
+
+#### 🚀 Pre-Execution Checklist
+- [ ] Database is running and accessible
+- [ ] Application is running (dotnet run)
+- [ ] Seed data is loaded
+- [ ] Required user accounts exist
+- [ ] Email service is configured
+- [ ] Payment gateways are configured
+- [ ] File storage is accessible
+- [ ] Logging is enabled
+
+#### 🧪 During Execution
+- [ ] Monitor response times
+- [ ] Check error logs
+- [ ] Verify database changes
+- [ ] Validate email notifications
+- [ ] Check file uploads/downloads
+- [ ] Monitor memory usage
+- [ ] Track API performance
+
+#### ✅ Post-Execution Validation
+- [ ] All critical tests passed
+- [ ] No memory leaks detected
+- [ ] Database integrity maintained
+- [ ] Security tests passed
+- [ ] Performance targets met
+- [ ] Error handling verified
+- [ ] Data consistency confirmed
+
+### 🔍 TROUBLESHOOTING GUIDE
+
+#### 🐛 Common Issues & Solutions
+
+**Authentication Failures:**
+```bash
+# Check JWT configuration
+# Verify user accounts exist
+# Validate password policies
+# Check token expiration settings
+```
+
+**Database Connection Issues:**
+```bash
+# Verify connection string
+# Check database server status
+# Validate migration status
+# Confirm seed data exists
+```
+
+**Performance Issues:**
+```bash
+# Check database query performance
+# Verify caching configuration
+# Monitor memory usage
+# Check for N+1 query problems
+```
+
+**Permission Errors:**
+```bash
+# Verify user roles are assigned
+# Check authorization policies
+# Validate JWT claims
+# Confirm admin permissions
+```
+
+### 📊 REPORTING & METRICS
+
+#### 📈 Test Execution Report Template
+```markdown
+## Test Execution Summary
+- **Total Tests**: X
+- **Passed**: X  
+- **Failed**: X
+- **Skipped**: X
+- **Success Rate**: X%
+- **Average Response Time**: Xms
+- **Peak Memory Usage**: XMB
+- **Critical Issues**: X
+```
+
+#### 🎯 KPI Tracking
+- Test coverage percentage
+- Bug detection rate  
+- Performance regression
+- Security vulnerability count
+- User experience scores
+
+### 🚀 CONTINUOUS INTEGRATION
+
+#### 🔄 CI/CD Pipeline Integration
+```yaml
+# Example GitHub Actions workflow
+name: API Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Authentication Tests
+        run: newman run Auth-Complete.http
+      - name: Run Core Feature Tests  
+        run: newman run Integration-Complete.http
+      - name: Generate Report
+        run: newman run --reporters cli,htmlextra
+```
+
+### 🎓 BEST PRACTICES
+
+#### 📝 Test Writing Guidelines
+1. **Use descriptive test names**
+2. **Include both positive and negative tests**
+3. **Test boundary conditions**
+4. **Validate error responses**
+5. **Check data consistency**
+6. **Include performance assertions**
+7. **Document expected behaviors**
+8. **Use realistic test data**
+
+#### 🔄 Test Maintenance
+1. **Update tests when features change**
+2. **Remove obsolete tests**
+3. **Refactor duplicate test logic**
+4. **Keep test data current**
+5. **Monitor test execution times**
+6. **Review test coverage regularly**
+
+### 📞 SUPPORT & RESOURCES
+
+#### 🆘 When Tests Fail
+1. Check application logs
+2. Verify database state
+3. Review configuration settings
+4. Test individual endpoints
+5. Check network connectivity
+6. Validate test environment
+7. Contact development team
+
+#### 📚 Additional Resources
+- API Documentation: `/swagger`
+- Database Schema: `/docs/database`
+- Configuration Guide: `/docs/setup`
+- Troubleshooting: `/docs/troubleshooting`
+
+---
+
+### 🎯 QUICK START COMMANDS
+
+```bash
+# 1. Start the application
+dotnet run
+
+# 2. Verify health
+curl https://localhost:8080/api/health
+
+# 3. Run smoke tests
+# Execute Auth-Complete.http tests 1-15
+# Execute Integration-Complete.http tests 1-30
+
+# 4. Full regression
+# Execute all test files in sequence
+
+# 5. Monitor results
+# Check logs: tail -f logs/sakurahome.log
+# Check performance: curl https://localhost:8080/api/admin/metrics
+```
+
+### 🏆 SUCCESS CRITERIA
+
+**✅ Tests are considered successful when:**
+- All critical path tests pass (95%+ success rate)
+- Response times meet performance targets  
+- Security tests show no vulnerabilities
+- Data integrity is maintained
+- Error handling works correctly
+- User experience flows complete successfully
+
+**🎉 System is production-ready when:**
+- All test suites pass consistently
+- Performance targets are met under load
+- Security measures are validated
+- Monitoring and alerting work properly
+- Documentation is complete and accurate
+
+---
+
+*This master test guide ensures comprehensive validation of the SakuraHome API system across all functional areas, providing confidence for production deployment.*

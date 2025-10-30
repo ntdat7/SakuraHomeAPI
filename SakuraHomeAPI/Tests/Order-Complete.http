@@ -1,0 +1,1054 @@
+﻿### =================================================================
+### ORDER MANAGEMENT API - COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### Quick Login to get tokens
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+@adminToken = {{adminLogin.response.body.data.token}}
+
+# @name customerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+@customerToken = {{customerLogin.response.body.data.token}}
+
+### =================================================================
+### ORDER CREATION & PLACEMENT
+### =================================================================
+
+### 1. ✅ Create Order from Cart
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "billingAddressId": 1,
+  "paymentMethod": "COD",
+  "shippingMethod": "STANDARD",
+  "couponCode": "WELCOME10",
+  "customerNotes": "Please handle with care. Gift wrapping requested.",
+  "useRewardPoints": false
+}
+
+### 2. ✅ Create Order with Direct Items
+POST {{baseUrl}}/api/orders/direct
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "variantId": null,
+      "quantity": 2,
+      "unitPrice": 450000
+    },
+    {
+      "productId": 3,
+      "variantId": 1,
+      "quantity": 1,
+      "unitPrice": 250000
+    }
+  ],
+  "shippingAddress": {
+    "recipientName": "John Doe",
+    "phoneNumber": "+84987654321",
+    "addressLine1": "123 Main Street",
+    "district": "District 1",
+    "city": "Ho Chi Minh City",
+    "province": "Ho Chi Minh",
+    "postalCode": "70000",
+    "country": "Vietnam"
+  },
+  "paymentMethod": "CREDIT_CARD",
+  "shippingMethod": "EXPRESS",
+  "customerNotes": "Direct order creation test"
+}
+
+### 3. ✅ Create Order with Reward Points
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "CREDIT_CARD",
+  "shippingMethod": "STANDARD",
+  "useRewardPoints": true,
+  "rewardPointsToUse": 1000,
+  "customerNotes": "Using reward points for discount"
+}
+
+### 4. ✅ Create Order with Gift Options
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "BANK_TRANSFER",
+  "shippingMethod": "STANDARD",
+  "isGift": true,
+  "giftMessage": "Happy Birthday! Hope you enjoy this special sake.",
+  "giftWrapType": "Premium",
+  "customerNotes": "Gift order with special wrapping"
+}
+
+### 5. ❌ Create Order with Empty Cart
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "COD",
+  "shippingMethod": "STANDARD"
+}
+
+### 6. ❌ Create Order with Invalid Address
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 99999,
+  "paymentMethod": "COD",
+  "shippingMethod": "STANDARD"
+}
+
+### 7. ❌ Create Order with Invalid Payment Method
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "INVALID_METHOD",
+  "shippingMethod": "STANDARD"
+}
+
+### 8. ❌ Create Order without Authentication
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "COD",
+  "shippingMethod": "STANDARD"
+}
+
+### =================================================================
+### ORDER RETRIEVAL & LISTING
+### =================================================================
+
+### 9. ✅ Get User's Orders
+GET {{baseUrl}}/api/orders?page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 10. ✅ Get Orders with Status Filter
+GET {{baseUrl}}/api/orders?status=Pending&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 11. ✅ Get Orders with Date Range
+GET {{baseUrl}}/api/orders?fromDate=2024-01-01&toDate=2024-12-31&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 12. ✅ Get Orders Sorted by Date
+GET {{baseUrl}}/api/orders?sortBy=CreatedDate&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 13. ✅ Get Specific Order Details
+GET {{baseUrl}}/api/orders/1
+Authorization: Bearer {{customerToken}}
+
+### 14. ✅ Get Order Summary
+GET {{baseUrl}}/api/orders/1/summary
+Authorization: Bearer {{customerToken}}
+
+### 15. ✅ Get Order Timeline
+GET {{baseUrl}}/api/orders/1/timeline
+Authorization: Bearer {{customerToken}}
+
+### 16. ❌ Get Non-existent Order
+GET {{baseUrl}}/api/orders/99999
+Authorization: Bearer {{customerToken}}
+
+### 17. ❌ Get Another User's Order
+GET {{baseUrl}}/api/orders/2
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### ORDER STATUS MANAGEMENT (CUSTOMER)
+### =================================================================
+
+### 18. ✅ Cancel Order (Pending)
+POST {{baseUrl}}/api/orders/1/cancel
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "reason": "Changed my mind",
+  "details": "Found a better deal elsewhere"
+}
+
+### 19. ✅ Request Order Return
+POST {{baseUrl}}/api/orders/2/return-request
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "orderItemId": 1,
+      "quantity": 1,
+      "reason": "Defective",
+      "description": "Product arrived damaged"
+    }
+  ],
+  "returnType": "REFUND",
+  "customerNotes": "Package was damaged during shipping"
+}
+
+### 20. ✅ Track Order Shipping
+GET {{baseUrl}}/api/orders/1/tracking
+Authorization: Bearer {{customerToken}}
+
+### 21. ❌ Cancel Already Shipped Order
+POST {{baseUrl}}/api/orders/3/cancel
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "reason": "No longer needed"
+}
+
+### 22. ❌ Return Order Outside Return Window
+POST {{baseUrl}}/api/orders/4/return-request
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [{"orderItemId": 4, "quantity": 1, "reason": "Other"}],
+  "returnType": "REFUND"
+}
+
+### =================================================================
+### ORDER MANAGEMENT (ADMIN/STAFF)
+### =================================================================
+
+### 23. ✅ Get All Orders (Admin)
+GET {{baseUrl}}/api/orders/admin?page=1&pageSize=20&status=All
+Authorization: Bearer {{adminToken}}
+
+### 24. ✅ Search Orders by Customer
+GET {{baseUrl}}/api/orders/admin/search?customerEmail=customer@sakurahome.com&page=1&pageSize=10
+Authorization: Bearer {{adminToken}}
+
+### 25. ✅ Search Orders by Number
+GET {{baseUrl}}/api/orders/admin/search?orderNumber=ORD-2024&page=1&pageSize=10
+Authorization: Bearer {{adminToken}}
+
+### 26. ✅ Get Orders by Status (Admin)
+GET {{baseUrl}}/api/orders/admin?status=Pending&page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 27. ✅ Get Orders Requiring Attention
+GET {{baseUrl}}/api/orders/admin/attention-required
+Authorization: Bearer {{adminToken}}
+
+### 28. ✅ Update Order Status (Admin)
+PATCH {{baseUrl}}/api/orders/1/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "Processing",
+  "notes": "Order confirmed and being prepared for shipment",
+  "notifyCustomer": true
+}
+
+### 29. ✅ Process Order (Admin)
+POST {{baseUrl}}/api/orders/1/process
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "processedBy": "admin",
+  "notes": "All items in stock, ready for fulfillment",
+  "estimatedShipDate": "2024-01-15"
+}
+
+### 30. ✅ Ship Order (Admin)
+POST {{baseUrl}}/api/orders/1/ship
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "carrier": "GHN",
+  "trackingNumber": "GHN123456789",
+  "shippedDate": "2024-01-15T10:00:00Z",
+  "estimatedDeliveryDate": "2024-01-17T18:00:00Z",
+  "notes": "Shipped via express delivery"
+}
+
+### 31. ✅ Complete Order (Admin)
+POST {{baseUrl}}/api/orders/1/complete
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "completedDate": "2024-01-17T15:30:00Z",
+  "notes": "Order delivered successfully"
+}
+
+### 32. ✅ Add Order Note (Admin)
+POST {{baseUrl}}/api/orders/1/notes
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "note": "Customer requested expedited processing",
+  "isInternal": false,
+  "notifyCustomer": true
+}
+
+### 33. ✅ Update Order Items (Admin)
+PUT {{baseUrl}}/api/orders/1/items
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "orderItemId": 1,
+      "quantity": 3,
+      "unitPrice": 450000,
+      "notes": "Quantity updated per customer request"
+    }
+  ],
+  "recalculateTotals": true
+}
+
+### 34. ✅ Apply Discount (Admin)
+POST {{baseUrl}}/api/orders/1/discount
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "discountType": "FixedAmount",
+  "discountValue": 50000,
+  "reason": "Customer service compensation",
+  "notes": "Discount applied for delivery delay"
+}
+
+### =================================================================
+### RETURN & REFUND MANAGEMENT (ADMIN)
+### =================================================================
+
+### 35. ✅ Get Return Requests (Admin)
+GET {{baseUrl}}/api/orders/returns?page=1&pageSize=20&status=Pending
+Authorization: Bearer {{adminToken}}
+
+### 36. ✅ Approve Return Request (Admin)
+POST {{baseUrl}}/api/orders/returns/1/approve
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "approvedBy": "admin",
+  "returnMethod": "PICKUP",
+  "refundAmount": 450000,
+  "notes": "Return approved - defective product confirmed"
+}
+
+### 37. ✅ Reject Return Request (Admin)
+POST {{baseUrl}}/api/orders/returns/2/reject
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "rejectedBy": "admin",
+  "rejectionReason": "Outside return window",
+  "notes": "Return period has expired (30 days)"
+}
+
+### 38. ✅ Process Return (Admin)
+POST {{baseUrl}}/api/orders/returns/1/process
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "processedBy": "admin",
+  "returnedItems": [
+    {
+      "orderItemId": 1,
+      "quantity": 1,
+      "condition": "Defective",
+      "restockable": false
+    }
+  ],
+  "refundAmount": 450000,
+  "restockItems": false
+}
+
+### 39. ✅ Issue Refund (Admin)
+POST {{baseUrl}}/api/orders/1/refund
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "refundAmount": 450000,
+  "refundMethod": "ORIGINAL_PAYMENT",
+  "reason": "Product return",
+  "notes": "Full refund processed for defective item"
+}
+
+### =================================================================
+### ORDER ANALYTICS & REPORTING (ADMIN)
+### =================================================================
+
+### 40. ✅ Get Order Statistics
+GET {{baseUrl}}/api/orders/stats?period=last30days
+Authorization: Bearer {{adminToken}}
+
+### 41. ✅ Get Sales Report
+GET {{baseUrl}}/api/orders/reports/sales?fromDate=2024-01-01&toDate=2024-01-31&groupBy=day
+Authorization: Bearer {{adminToken}}
+
+### 42. ✅ Get Order Performance Metrics
+GET {{baseUrl}}/api/orders/metrics/performance?period=last7days
+Authorization: Bearer {{adminToken}}
+
+### 43. ✅ Get Top Products Report
+GET {{baseUrl}}/api/orders/reports/top-products?period=last30days&limit=10
+Authorization: Bearer {{adminToken}}
+
+### 44. ✅ Get Customer Order History
+GET {{baseUrl}}/api/orders/admin/customer/{{customerLogin.response.body.data.user.id}}/history
+Authorization: Bearer {{adminToken}}
+
+### 45. ✅ Get Revenue Analytics
+GET {{baseUrl}}/api/orders/analytics/revenue?period=last12months&groupBy=month
+Authorization: Bearer {{adminToken}}
+
+### 46. ✅ Get Order Status Distribution
+GET {{baseUrl}}/api/orders/analytics/status-distribution
+Authorization: Bearer {{adminToken}}
+
+### 47. ✅ Get Average Order Value
+GET {{baseUrl}}/api/orders/analytics/average-order-value?period=last6months
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### ORDER EXPORT & REPORTING
+### =================================================================
+
+### 48. ✅ Export Orders
+POST {{baseUrl}}/api/orders/export
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "format": "Excel",
+  "filters": {
+    "fromDate": "2024-01-01",
+    "toDate": "2024-01-31",
+    "status": "Completed",
+    "minAmount": 100000
+  },
+  "includeItems": true,
+  "includeCustomerInfo": true
+}
+
+### 49. ✅ Get Export Status
+GET {{baseUrl}}/api/orders/export/status/export-id-123
+Authorization: Bearer {{adminToken}}
+
+### 50. ✅ Download Export File
+GET {{baseUrl}}/api/orders/export/download/export-id-123
+Authorization: Bearer {{adminToken}}
+
+### 51. ✅ Generate Invoice
+POST {{baseUrl}}/api/orders/1/invoice
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "includeDetails": true,
+  "format": "PDF"
+}
+
+### 52. ✅ Download Invoice
+GET {{baseUrl}}/api/orders/1/invoice/download
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### ORDER COMMUNICATION
+### =================================================================
+
+### 53. ✅ Send Order Confirmation Email
+POST {{baseUrl}}/api/orders/1/notifications/confirmation
+Authorization: Bearer {{adminToken}}
+
+### 54. ✅ Send Shipping Notification
+POST {{baseUrl}}/api/orders/1/notifications/shipping
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "trackingNumber": "GHN123456789",
+  "carrier": "GHN",
+  "estimatedDelivery": "2024-01-17T18:00:00Z"
+}
+
+### 55. ✅ Send Delivery Confirmation
+POST {{baseUrl}}/api/orders/1/notifications/delivered
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "deliveredDate": "2024-01-17T15:30:00Z",
+  "deliveredTo": "John Doe"
+}
+
+### 56. ✅ Send Order Update
+POST {{baseUrl}}/api/orders/1/notifications/update
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "subject": "Order Update",
+  "message": "Your order is being processed and will ship soon.",
+  "includeOrderDetails": true
+}
+
+### =================================================================
+### SPECIAL ORDER TYPES
+### =================================================================
+
+### 57. ✅ Create Pre-order
+POST {{baseUrl}}/api/orders/pre-order
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 5,
+  "quantity": 1,
+  "expectedAvailabilityDate": "2024-03-01",
+  "depositAmount": 100000,
+  "shippingAddressId": 1,
+  "customerNotes": "Pre-order for limited edition item"
+}
+
+### 58. ✅ Create Backorder
+POST {{baseUrl}}/api/orders/backorder
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 6,
+  "quantity": 2,
+  "maxWaitTime": 30,
+  "notifyWhenAvailable": true,
+  "shippingAddressId": 1
+}
+
+### 59. ✅ Create Subscription Order
+POST {{baseUrl}}/api/orders/subscription
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 1,
+  "frequency": "Monthly",
+  "startDate": "2024-02-01",
+  "endDate": "2024-12-01",
+  "shippingAddressId": 1,
+  "paymentMethod": "CREDIT_CARD"
+}
+
+### =================================================================
+### ORDER BULK OPERATIONS (ADMIN)
+### =================================================================
+
+### 60. ✅ Bulk Update Order Status
+PATCH {{baseUrl}}/api/orders/bulk/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderIds": [1, 2, 3],
+  "status": "Processing",
+  "notes": "Bulk processing initiated",
+  "notifyCustomers": true
+}
+
+### 61. ✅ Bulk Cancel Orders
+POST {{baseUrl}}/api/orders/bulk/cancel
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "orderIds": [4, 5],
+  "reason": "Inventory shortage",
+  "refundMethod": "ORIGINAL_PAYMENT",
+  "notifyCustomers": true
+}
+
+### 62. ✅ Bulk Ship Orders
+POST {{baseUrl}}/api/orders/bulk/ship
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "shipments": [
+    {
+      "orderId": 6,
+      "carrier": "GHN",
+      "trackingNumber": "GHN111111111"
+    },
+    {
+      "orderId": 7,
+      "carrier": "GHTK",
+      "trackingNumber": "GHTK222222222"
+    }
+  ],
+  "notifyCustomers": true
+}
+
+### =================================================================
+### ERROR HANDLING TESTS
+### =================================================================
+
+### 63. ❌ Invalid Order ID
+GET {{baseUrl}}/api/orders/invalid-id
+Authorization: Bearer {{customerToken}}
+
+### 64. ❌ Negative Page Number
+GET {{baseUrl}}/api/orders?page=-1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 65. ❌ Extremely Large Page Size
+GET {{baseUrl}}/api/orders?page=1&pageSize=10000
+Authorization: Bearer {{customerToken}}
+
+### 66. ❌ Invalid Date Format
+GET {{baseUrl}}/api/orders?fromDate=invalid-date&toDate=2024-12-31
+Authorization: Bearer {{customerToken}}
+
+### 67. ❌ Future Date Range
+GET {{baseUrl}}/api/orders?fromDate=2030-01-01&toDate=2030-12-31
+Authorization: Bearer {{customerToken}}
+
+### 68. ❌ Invalid Status Filter
+GET {{baseUrl}}/api/orders?status=InvalidStatus
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### SECURITY TESTS
+### =================================================================
+
+### 69. 🔒 SQL Injection in Search
+GET {{baseUrl}}/api/orders/admin/search?orderNumber=' OR 1=1--
+Authorization: Bearer {{adminToken}}
+
+### 70. 🔒 XSS in Order Notes
+POST {{baseUrl}}/api/orders/1/notes
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "note": "<script>alert('XSS')</script>",
+  "isInternal": false
+}
+
+### 71. 🔒 Path Traversal in Export Download
+GET {{baseUrl}}/api/orders/export/download/../../etc/passwd
+Authorization: Bearer {{adminToken}}
+
+### 72. 🔒 Cross-User Order Access
+GET {{baseUrl}}/api/orders/1
+Authorization: Bearer {{customerToken}}
+
+### 73. 🔒 Customer Accessing Admin Endpoints
+GET {{baseUrl}}/api/orders/admin
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PERFORMANCE TESTS
+### =================================================================
+
+### 74. ⚡ Rapid Order Queries
+GET {{baseUrl}}/api/orders?page=1&pageSize=50
+Authorization: Bearer {{customerToken}}
+
+### 75. ⚡ Complex Order Search
+GET {{baseUrl}}/api/orders/admin/search?customerEmail=customer&orderNumber=ORD&status=Completed&fromDate=2024-01-01&toDate=2024-12-31&minAmount=100000&maxAmount=1000000
+Authorization: Bearer {{adminToken}}
+
+### 76. ⚡ Large Dataset Query
+GET {{baseUrl}}/api/orders/admin?page=1&pageSize=100
+Authorization: Bearer {{adminToken}}
+
+### 77. ⚡ Concurrent Order Access
+GET {{baseUrl}}/api/orders/1
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### DATA CONSISTENCY TESTS
+### =================================================================
+
+### 78. 🔄 Concurrent Order Updates
+PATCH {{baseUrl}}/api/orders/1/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "Shipped",
+  "version": 1
+}
+
+### 79. 🔄 Concurrent Item Updates
+PUT {{baseUrl}}/api/orders/1/items
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "orderItemId": 1,
+      "quantity": 2
+    }
+  ],
+  "version": 1
+}
+
+### 80. 🔄 Stock Validation During Order
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 1000000
+    }
+  ],
+  "shippingAddressId": 1,
+  "paymentMethod": "COD"
+}
+
+### =================================================================
+### EDGE CASES & BOUNDARY TESTS
+### =================================================================
+
+### 81. 🔍 Empty Order Creation
+POST {{baseUrl}}/api/orders/direct
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [],
+  "shippingAddressId": 1,
+  "paymentMethod": "COD"
+}
+
+### 82. 🔍 Zero Quantity Items
+POST {{baseUrl}}/api/orders/direct
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 0,
+      "unitPrice": 450000
+    }
+  ],
+  "shippingAddressId": 1,
+  "paymentMethod": "COD"
+}
+
+### 83. 🔍 Negative Quantity Items
+POST {{baseUrl}}/api/orders/direct
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": -1,
+      "unitPrice": 450000
+    }
+  ],
+  "shippingAddressId": 1,
+  "paymentMethod": "COD"
+}
+
+### 84. 🔍 Very Long Order Notes
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "shippingAddressId": 1,
+  "paymentMethod": "COD",
+  "shippingMethod": "STANDARD",
+  "customerNotes": "A".repeat(5000)
+}
+
+### 85. 🔍 Unicode Characters in Notes
+POST {{baseUrl}}/api/orders/1/notes
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "note": "Khách hàng yêu cầu giao hàng sớm - ưu tiên 🚚✨",
+  "isInternal": false
+}
+
+### =================================================================
+### CLEANUP & VALIDATION
+### =================================================================
+
+### 86. 🧹 Verify Final Order State
+GET {{baseUrl}}/api/orders/1
+Authorization: Bearer {{customerToken}}
+
+### 87. 🧹 Verify Order Statistics
+GET {{baseUrl}}/api/orders/stats
+Authorization: Bearer {{adminToken}}
+
+### 88. 🧹 Verify Order List
+GET {{baseUrl}}/api/orders?page=1&pageSize=5
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### TEST SUMMARY & VALIDATION CHECKLIST
+### =================================================================
+
+###
+### ✅ ORDER MANAGEMENT FEATURES TESTED:
+### 
+### 📝 Order Creation:
+### - Order from cart
+### - Direct order creation
+### - Order with reward points
+### - Gift orders with special options
+### - Empty cart validation
+### - Invalid address handling
+### - Payment method validation
+### - Authentication requirements
+### 
+### 📋 Order Retrieval:
+### - User order listing
+### - Status-based filtering
+### - Date range filtering
+### - Sorting options
+### - Order details access
+### - Order summary
+### - Order timeline
+### - Non-existent order handling
+### - Cross-user access prevention
+### 
+### 👤 Customer Order Management:
+### - Order cancellation
+### - Return requests
+### - Order tracking
+### - Status restrictions
+### - Return window validation
+### 
+### 👨‍💼 Admin Order Management:
+### - All orders access
+### - Customer-based search
+### - Order number search
+### - Status-based filtering
+### - Attention-required orders
+### - Status updates
+### - Order processing
+### - Shipping management
+### - Order completion
+### - Note additions
+### - Item updates
+### - Discount applications
+### 
+### 🔄 Return & Refund Management:
+### - Return request listing
+### - Return approval/rejection
+### - Return processing
+### - Refund issuance
+### - Refund method handling
+### 
+### 📊 Analytics & Reporting:
+### - Order statistics
+### - Sales reports
+### - Performance metrics
+### - Top products analysis
+### - Customer order history
+### - Revenue analytics
+### - Status distribution
+### - Average order value
+### 
+### 📤 Export & Documentation:
+### - Order data export
+### - Export status tracking
+### - File downloads
+### - Invoice generation
+### - Invoice downloads
+### 
+### 📧 Communication:
+### - Order confirmation emails
+### - Shipping notifications
+### - Delivery confirmations
+### - Order updates
+### - Customer notifications
+### 
+### 🎯 Special Order Types:
+### - Pre-orders
+### - Backorders
+### - Subscription orders
+### - Recurring deliveries
+### 
+### 📦 Bulk Operations:
+### - Bulk status updates
+### - Bulk cancellations
+### - Bulk shipping
+### - Notification management
+### 
+### 🛡️ Security Testing:
+### - SQL injection prevention
+### - XSS attack prevention
+### - Path traversal prevention
+### - Cross-user access prevention
+### - Authorization validation
+### 
+### ⚡ Performance Testing:
+### - Rapid query handling
+### - Complex search performance
+### - Large dataset handling
+### - Concurrent access management
+### 
+### 🔄 Data Consistency:
+### - Concurrent update handling
+### - Version conflict resolution
+### - Stock validation
+### - Transaction integrity
+### 
+### 🔍 Edge Cases:
+### - Empty order validation
+### - Zero/negative quantities
+### - Long text handling
+### - Unicode character support
+### - Boundary value testing
+### 
+### 📊 EXPECTED RESPONSE CODES:
+### 
+### ✅ Success Scenarios:
+### - 200 OK: Get operations, updates
+### - 201 Created: Order creation
+### - 204 No Content: Cancellations, deletions
+### - 202 Accepted: Async operations (export, processing)
+### 
+### ❌ Error Scenarios:
+### - 400 Bad Request: Validation errors, invalid data
+### - 401 Unauthorized: Missing authentication
+### - 403 Forbidden: Insufficient permissions
+### - 404 Not Found: Non-existent orders
+### - 409 Conflict: Status conflicts, stock issues
+### - 422 Unprocessable Entity: Business rule violations
+### 
+### 🎯 PERFORMANCE TARGETS:
+### 
+### - Order creation: < 2000ms
+### - Order retrieval: < 300ms
+### - Order listing: < 500ms
+### - Status updates: < 800ms
+### - Search operations: < 1000ms
+### - Bulk operations: < 5000ms
+### - Report generation: < 10000ms
+### - Export operations: < 30000ms
+### 
+### 📋 VALIDATION CHECKLIST:
+### 
+### ✅ Functional Requirements:
+### - Order lifecycle management works correctly
+### - Status transitions follow business rules
+### - Payment processing integrates properly
+### - Inventory updates are accurate
+### - Customer notifications are sent
+### - Return/refund processes work
+### - Analytics provide accurate data
+### - Export functionality works properly
+### 
+### ✅ Security Requirements:
+### - Authentication is enforced
+### - Authorization rules are respected
+### - Customer data is protected
+### - Cross-user access is prevented
+### - Input validation prevents attacks
+### - Audit trails are maintained
+### 
+### ✅ Data Integrity:
+### - Order totals are calculated correctly
+### - Stock levels are updated accurately
+### - Status changes are logged
+### - Financial data is precise
+### - Customer information is consistent
+### - Relationship integrity is maintained
+### 
+### ✅ Performance Requirements:
+### - Response times meet targets
+### - Large order lists load efficiently
+### - Search operations are optimized
+### - Concurrent operations are handled
+### - Database queries are efficient
+### - Memory usage is controlled
+### 
+### 🔧 TROUBLESHOOTING:
+### 
+### If tests fail:
+### 1. Verify database connectivity and schema
+### 2. Check authentication and authorization setup
+### 3. Confirm customer and product seed data
+### 4. Validate address and payment configurations
+### 5. Check email/notification service setup
+### 6. Verify shipping integration
+### 7. Confirm inventory calculation logic
+### 8. Check order status workflow
+### 9. Validate return/refund policies
+### 10. Verify export/report generation
+### 
+### 📈 MONITORING RECOMMENDATIONS:
+### 
+### - Monitor order creation success rates
+### - Track order processing times
+### - Alert on failed payments
+### - Monitor return request patterns
+### - Track shipping delivery rates
+### - Alert on inventory shortages
+### - Monitor customer satisfaction scores
+### - Track revenue and conversion metrics
+### - Alert on fraud detection patterns
+### - Monitor system performance under load
+###

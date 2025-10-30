@@ -1,6 +1,7 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Products.Components;
 
 namespace SakuraHomeAPI.DTOs.Products.Requests
 {
@@ -124,13 +125,13 @@ namespace SakuraHomeAPI.DTOs.Products.Requests
         public DateTime? AvailableUntil { get; set; }
 
         // Images to upload
-        public List<CreateProductImageRequestDto>? Images { get; set; }
+        public List<CreateProductImageDto>? Images { get; set; }
 
         // Variants to create
-        public List<CreateProductVariantRequestDto>? Variants { get; set; }
+        public List<CreateProductVariantDto>? Variants { get; set; }
 
         // Attributes to set
-        public List<SetProductAttributeRequestDto>? Attributes { get; set; }
+        public List<CreateProductAttributeDto>? Attributes { get; set; }
 
         // Tags to assign
         public List<int>? TagIds { get; set; }
@@ -155,71 +156,5 @@ namespace SakuraHomeAPI.DTOs.Products.Requests
         {
             return !ManufactureDate.HasValue || !ExpiryDate.HasValue || ManufactureDate <= ExpiryDate;
         }
-    }
-
-    /// <summary>
-    /// Create product image request
-    /// </summary>
-    public class CreateProductImageRequestDto
-    {
-        [Required(ErrorMessage = "Image URL is required")]
-        [MaxLength(500, ErrorMessage = "Image URL cannot exceed 500 characters")]
-        [Url(ErrorMessage = "Image URL must be valid")]
-        public string ImageUrl { get; set; } = string.Empty;
-
-        [MaxLength(255, ErrorMessage = "Alt text cannot exceed 255 characters")]
-        public string? AltText { get; set; }
-
-        [MaxLength(500, ErrorMessage = "Caption cannot exceed 500 characters")]
-        public string? Caption { get; set; }
-
-        [Range(0, 999, ErrorMessage = "Display order must be between 0 and 999")]
-        public int DisplayOrder { get; set; } = 0;
-
-        public bool IsMain { get; set; } = false;
-    }
-
-    /// <summary>
-    /// Create product variant request
-    /// </summary>
-    public class CreateProductVariantRequestDto
-    {
-        [Required(ErrorMessage = "Variant name is required")]
-        [MaxLength(255, ErrorMessage = "Variant name cannot exceed 255 characters")]
-        public string Name { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Variant SKU is required")]
-        [MaxLength(100, ErrorMessage = "Variant SKU cannot exceed 100 characters")]
-        [RegularExpression(@"^[A-Z0-9\-_]+$", ErrorMessage = "Variant SKU can only contain uppercase letters, numbers, hyphens, and underscores")]
-        public string SKU { get; set; } = string.Empty;
-
-        [Range(0, 999999999, ErrorMessage = "Variant price must be between 0 and 999,999,999")]
-        public decimal Price { get; set; }
-
-        [Range(0, int.MaxValue, ErrorMessage = "Variant stock must be greater than or equal to 0")]
-        public int Stock { get; set; }
-
-        [MaxLength(500, ErrorMessage = "Image URL cannot exceed 500 characters")]
-        [Url(ErrorMessage = "Image URL must be valid")]
-        public string? ImageUrl { get; set; }
-
-        public Dictionary<string, string> Attributes { get; set; } = new();
-    }
-
-    /// <summary>
-    /// Set product attribute request
-    /// </summary>
-    public class SetProductAttributeRequestDto
-    {
-        [Required(ErrorMessage = "Attribute ID is required")]
-        [Range(1, int.MaxValue, ErrorMessage = "Attribute ID must be greater than 0")]
-        public int AttributeId { get; set; }
-
-        [Required(ErrorMessage = "Attribute value is required")]
-        [MaxLength(1000, ErrorMessage = "Attribute value cannot exceed 1000 characters")]
-        public string Value { get; set; } = string.Empty;
-
-        [MaxLength(255, ErrorMessage = "Display value cannot exceed 255 characters")]
-        public string? DisplayValue { get; set; }
     }
 }

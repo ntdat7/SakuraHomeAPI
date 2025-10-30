@@ -1,5 +1,6 @@
-using AutoMapper;
-using SakuraHomeAPI.DTOs.Products;
+﻿using AutoMapper;
+using SakuraHomeAPI.DTOs.Products.Responses;
+using SakuraHomeAPI.DTOs.Products.Components;
 using ProductRequests = SakuraHomeAPI.DTOs.Products.Requests;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities;
@@ -85,7 +86,7 @@ namespace SakuraHomeAPI.Mappings
 
             // Product Image mappings
             CreateMap<ProductImage, ProductImageDto>();
-            CreateMap<ProductRequests.CreateProductImageRequestDto, ProductImage>()
+            CreateMap<CreateProductImageDto, ProductImage>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductId, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(_ => true))
@@ -97,7 +98,7 @@ namespace SakuraHomeAPI.Mappings
             CreateMap<ProductVariant, ProductVariantDto>()
                 .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => new Dictionary<string, string>()));
             
-            CreateMap<ProductRequests.CreateProductVariantRequestDto, ProductVariant>()
+            CreateMap<CreateProductVariantDto, ProductVariant>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductId, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(_ => true))
@@ -112,7 +113,7 @@ namespace SakuraHomeAPI.Mappings
                 .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.Attribute.Type))
                 .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => src.Attribute.Unit));
 
-            CreateMap<ProductRequests.SetProductAttributeRequestDto, ProductAttributeValue>()
+            CreateMap<CreateProductAttributeDto, ProductAttributeValue>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductId, opt => opt.Ignore())
                 .ForMember(dest => dest.Product, opt => opt.Ignore())

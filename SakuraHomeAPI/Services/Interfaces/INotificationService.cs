@@ -1,6 +1,6 @@
-using SakuraHomeAPI.DTOs.Notifications.Requests;
+﻿using SakuraHomeAPI.DTOs.Notifications.Requests;
 using SakuraHomeAPI.DTOs.Notifications.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Enums;
 
 namespace SakuraHomeAPI.Services.Interfaces

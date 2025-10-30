@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using SakuraHomeAPI.DTOs.Products.Responses;
 using SakuraHomeAPI.DTOs.Products.Requests;
@@ -97,6 +97,48 @@ namespace SakuraHomeAPI.Services.Implementations
                 var (products, totalCount) = await _productRepository.SearchAsync(filter, cancellationToken);
                 
                 var productDtos = _mapper.Map<IEnumerable<ProductSummaryDto>>(products);
+
+                // Calculate aggregates for better filtering UX
+                var aggregates = new ProductAggregateInfoDto();
+                if (productDtos.Any())
+                {
+                    aggregates.MinPrice = productDtos.Min(p => p.Price);
+                    aggregates.MaxPrice = productDtos.Max(p => p.Price);
+                    aggregates.AvgPrice = Math.Round(productDtos.Average(p => p.Price), 2);
+                    aggregates.TotalProducts = totalCount;
+                    aggregates.InStockProducts = productDtos.Count(p => p.IsInStock);
+                    aggregates.OutOfStockProducts = productDtos.Count(p => !p.IsInStock);
+                    aggregates.OnSaleProducts = productDtos.Count(p => p.IsOnSale);
+                    aggregates.FeaturedProducts = productDtos.Count(p => p.IsFeatured);
+                    aggregates.NewProducts = productDtos.Count(p => p.IsNew);
+                    aggregates.AvgRating = productDtos.Any() ? Math.Round(productDtos.Average(p => (double)p.Rating), 2) : 0;
+
+                    // Top brands in results
+                    aggregates.TopBrands = productDtos
+                        .GroupBy(p => new { p.Brand.Id, p.Brand.Name })
+                        .Select(g => new BrandCountDto
+                        {
+                            BrandId = g.Key.Id,
+                            BrandName = g.Key.Name,
+                            ProductCount = g.Count()
+                        })
+                        .OrderByDescending(b => b.ProductCount)
+                        .Take(5)
+                        .ToList();
+
+                    // Top categories in results
+                    aggregates.TopCategories = productDtos
+                        .GroupBy(p => new { p.Category.Id, p.Category.Name })
+                        .Select(g => new CategoryCountDto
+                        {
+                            CategoryId = g.Key.Id,
+                            CategoryName = g.Key.Name,
+                            ProductCount = g.Count()
+                        })
+                        .OrderByDescending(c => c.ProductCount)
+                        .Take(5)
+                        .ToList();
+                }
                 
                 var response = new ProductListResponseDto
                 {
@@ -110,8 +152,12 @@ namespace SakuraHomeAPI.Services.Implementations
                         HasNext = filter.Page * filter.PageSize < totalCount,
                         HasPrevious = filter.Page > 1
                     },
-                    Filter = _mapper.Map<ProductFilterInfoDto>(filter)
+                    Filters = _mapper.Map<ProductFilterInfoDto>(filter),
+                    Aggregates = aggregates
                 };
+
+                // Add applied filters count to filters
+                response.Filters.TotalFiltersApplied = GetAppliedFiltersCount(filter);
 
                 return ServiceResult<ProductListResponseDto>.Success(response);
             }
@@ -661,7 +707,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public Task<ServiceResult<ProductImageDto>> AddImageAsync(
             int productId,
-            CreateProductImageRequestDto request,
+            CreateProductImageDto request,
             CancellationToken cancellationToken = default)
         {
             // Implementation would involve image processing and saving
@@ -671,7 +717,7 @@ namespace SakuraHomeAPI.Services.Implementations
         public Task<ServiceResult<ProductImageDto>> UpdateImageAsync(
             int productId,
             int imageId,
-            UpdateProductImageRequestDto request,
+            SakuraHomeAPI.DTOs.Products.Components.UpdateProductImageDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Image management will be implemented in a separate phase");
@@ -687,7 +733,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public Task<ServiceResult<ProductVariantDto>> AddVariantAsync(
             int productId,
-            CreateProductVariantRequestDto request,
+            CreateProductVariantDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Variant management will be implemented in a separate phase");
@@ -696,7 +742,7 @@ namespace SakuraHomeAPI.Services.Implementations
         public Task<ServiceResult<ProductVariantDto>> UpdateVariantAsync(
             int productId,
             int variantId,
-            UpdateProductVariantRequestDto request,
+            SakuraHomeAPI.DTOs.Products.Components.UpdateProductVariantDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Variant management will be implemented in a separate phase");
@@ -712,7 +758,7 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public Task<ServiceResult<ProductAttributeDto>> SetAttributeAsync(
             int productId,
-            SetProductAttributeRequestDto request,
+            CreateProductAttributeDto request,
             CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("Attribute management will be implemented in a separate phase");
@@ -927,6 +973,36 @@ namespace SakuraHomeAPI.Services.Implementations
             }
 
             return slug;
+        }
+
+        private int GetAppliedFiltersCount(ProductFilterRequestDto filter)
+        {
+            var count = 0;
+
+            if (!string.IsNullOrWhiteSpace(filter.Search)) count++;
+            if (filter.CategoryId.HasValue) count++;
+            if (filter.BrandId.HasValue) count++;
+            if (filter.MinPrice.HasValue) count++;
+            if (filter.MaxPrice.HasValue) count++;
+            if (filter.MinRating.HasValue) count++;
+            if (filter.TagNames?.Any() == true) count++;
+            if (filter.TagIds?.Any() == true) count++;
+            if (!string.IsNullOrWhiteSpace(filter.TagsSearch)) count++;
+            if (filter.InStockOnly == true) count++;
+            if (filter.OnSaleOnly == true) count++;
+            if (filter.FeaturedOnly == true) count++;
+            if (filter.NewOnly == true) count++;
+            if (filter.IsFeatured.HasValue) count++;
+            if (filter.IsNew.HasValue) count++;
+            if (filter.IsBestseller.HasValue) count++;
+            if (filter.IsLimitedEdition.HasValue) count++;
+            if (filter.Status.HasValue) count++;
+            if (filter.Condition.HasValue) count++;
+            if (!string.IsNullOrWhiteSpace(filter.Origin)) count++;
+            if (filter.JapaneseRegion.HasValue) count++;
+            if (filter.AuthenticityLevel.HasValue) count++;
+
+            return count;
         }
 
         #endregion

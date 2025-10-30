@@ -1,17 +1,18 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using SakuraHomeAPI.Data;
 using SakuraHomeAPI.Models.Base;
 using SakuraHomeAPI.Models.Entities;
 using SakuraHomeAPI.Models.Entities.Catalog;
 using SakuraHomeAPI.Models.Entities.Identity;
+using SakuraHomeAPI.Models.Entities.Lookup;
 using SakuraHomeAPI.Models.Entities.Orders;
 using SakuraHomeAPI.Models.Entities.Products;
 using SakuraHomeAPI.Models.Entities.Reviews;
+using SakuraHomeAPI.Models.Entities.Shipping;
 using SakuraHomeAPI.Models.Entities.UserCart;
 using SakuraHomeAPI.Models.Entities.UserWishlist;
-using SakuraHomeAPI.Models.Entities.Shipping;
-using SakuraHomeAPI.Data;
 using System.Reflection;
 
 namespace SakuraHomeAPI.Data
@@ -95,6 +96,10 @@ namespace SakuraHomeAPI.Data
         // Marketing
         public DbSet<Banner> Banners { get; set; }
 
+        // Address Lookup Tables (Independent - for dropdown only)
+        public DbSet<VietnamProvince> VietnamProvinces { get; set; }
+        public DbSet<VietnamWard> VietnamWards { get; set; }
+
         #endregion
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -129,8 +134,10 @@ namespace SakuraHomeAPI.Data
             // These entities inherit from AuditableEntity (int-based) but have Guid foreign keys
             ConfigureAuditNavigationProperties(builder);
 
-            // Seed master data using external seeder
-            DatabaseSeeder.SeedData(builder);
+            // SEED DATA DISABLED FOR CLEAN PROJECT DISTRIBUTION
+            // Use SQL scripts in Scripts/SeedData/ folder instead
+            // Uncomment the line below only for development if needed
+            // DatabaseSeeder.SeedData(builder);
         }
 
         /// <summary>
@@ -553,6 +560,29 @@ namespace SakuraHomeAPI.Data
                 entity.HasIndex(st => st.Status);
                 entity.HasIndex(st => st.UpdatedAt);
             });
+
+            // Address indexes (for performance on plain fields)
+            builder.Entity<Address>(entity =>
+            {
+                entity.HasIndex(a => a.UserId);
+                entity.HasIndex(a => a.ProvinceId);  // Plain int field index
+                entity.HasIndex(a => a.WardId);      // Plain int field index
+                entity.HasIndex(a => a.IsDefault);
+                entity.HasIndex(a => new { a.UserId, a.IsDefault });
+            });
+
+            // Vietnam Address lookup indexes (independent tables for dropdown)
+            builder.Entity<VietnamProvince>(entity =>
+            {
+                entity.HasIndex(p => p.Name);
+                entity.HasIndex(p => p.DisplayOrder);
+            });
+
+            builder.Entity<VietnamWard>(entity =>
+            {
+                entity.HasIndex(w => w.Name);
+                entity.HasIndex(w => w.ProvinceId);
+            });
         }
 
         /// <summary>
@@ -612,6 +642,10 @@ namespace SakuraHomeAPI.Data
                 .WithMany(u => u.Addresses)
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // NOTE: ProvinceId and WardId in Address are plain int fields
+            // They do NOT have foreign key relationships to VietnamProvince/VietnamWard
+            // These are just reference IDs from frontend dropdown selections
 
             builder.Entity<RefreshToken>()
                 .HasOne(rt => rt.User)
@@ -850,6 +884,13 @@ namespace SakuraHomeAPI.Data
                 .WithMany()
                 .HasForeignKey(oi => oi.ProductVariantId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Vietnam Address Lookup relationships (independent - for dropdown only)
+            builder.Entity<VietnamWard>()
+                .HasOne(w => w.Province)
+                .WithMany(p => p.Wards)
+                .HasForeignKey(w => w.ProvinceId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         /// <summary>
@@ -937,12 +978,12 @@ namespace SakuraHomeAPI.Data
             {
                 entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_AverageRating", "AverageRating >= 0 AND AverageRating <= 5"));
                 entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_TotalReviews", "TotalReviews >= 0"));
-                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_StarCounts", 
+                entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_StarCounts",
                     "OneStar >= 0 AND TwoStar >= 0 AND ThreeStar >= 0 AND FourStar >= 0 AND FiveStar >= 0"));
                 entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_VerifiedPurchases", "VerifiedPurchases >= 0"));
                 entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_WithImages", "WithImages >= 0"));
                 entity.ToTable(t => t.HasCheckConstraint("CK_ReviewSummary_Recommended", "Recommended >= 0"));
-                
+
                 // Configure decimal precision for AverageRating
                 entity.Property(rs => rs.AverageRating)
                     .HasPrecision(3, 2); // 3 digits total, 2 after decimal (allows values like 5.00, 4.99, etc.)
@@ -956,6 +997,12 @@ namespace SakuraHomeAPI.Data
 
                 entity.Property(pa => pa.MaxValue)
                     .HasPrecision(18, 4); // Allows values like 9999999999999.9999
+            });
+
+            // Address constraints (optional - for data integrity)
+            builder.Entity<Address>(entity =>
+            {
+                entity.ToTable(t => t.HasCheckConstraint("CK_Address_ProvinceWard", "ProvinceId > 0 AND WardId > 0"));
             });
         }
 
@@ -984,18 +1031,18 @@ namespace SakuraHomeAPI.Data
         {
             // Since AuditableEntity uses int? for audit foreign keys but User has Guid primary key,
             // we need to explicitly configure these relationships as they won't work by convention
-            
+
             // The issue is that some entities inherit from AuditableEntity (int audit fields) 
             // but try to reference User entities (Guid primary key)
             // We need to ignore the navigation properties for these mismatched relationships
-            
+
             // Configure Review entity - now that ApprovedBy is Guid?, we can configure the relationship properly
             builder.Entity<Review>(entity =>
             {
                 entity.Ignore(r => r.CreatedByUser);
                 entity.Ignore(r => r.UpdatedByUser);
                 entity.Ignore(r => r.DeletedByUser);
-                
+
                 // Now configure the ApprovedByUser relationship properly since ApprovedBy is Guid?
                 entity.HasOne(r => r.ApprovedByUser)
                     .WithMany()
@@ -1138,7 +1185,7 @@ namespace SakuraHomeAPI.Data
                 // Ignore the audit navigation properties since they're incompatible with int audit fields
                 entity.Ignore(so => so.CreatedByUser);
                 entity.Ignore(so => so.UpdatedByUser);
-                
+
                 // Configure the main relationship
                 entity.HasOne(so => so.Order)
                     .WithMany()
@@ -1168,6 +1215,9 @@ namespace SakuraHomeAPI.Data
                 entity.Ignore(osh => osh.CreatedByUser);
                 entity.Ignore(osh => osh.UpdatedByUser);
             });
+
+            // Note: Address entity doesn't have audit navigation properties 
+            // (CreatedByUser, UpdatedByUser, DeletedByUser) so no need to ignore them
 
             // Note: ReviewImage now inherits from BaseEntity, so no audit properties to ignore
 

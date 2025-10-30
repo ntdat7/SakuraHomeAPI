@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.DTOs.Notifications.Requests;
 using SakuraHomeAPI.DTOs.Notifications.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Services.Interfaces;
 using System.Security.Claims;
 

@@ -1,0 +1,27 @@
+﻿### Tạo đơn vận chuyển mới (Staff Only)
+
+@staff_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIzODU5MWYwOC1jZWRjLTQ3MjctYTZkNC1iYmFlMTY5YjljZGIiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBVc2VyIiwicm9sZSI6IlN1cGVyQWRtaW4iLCJmaXJzdE5hbWUiOiJBZG1pbiIsImxhc3ROYW1lIjoiVXNlciIsInRpZXIiOiJCcm9uemUiLCJzdGF0dXMiOiJBY3RpdmUiLCJlbWFpbFZlcmlmaWVkIjoiRmFsc2UiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiJhMjlmZGFhMy0yMmRkLTRiZTItYTRhNy0xZTY2NTBjMzc5NDciLCJpYXQiOjE3NTYxOTE5OTQsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NTYxOTE5OTQsImV4cCI6MTc1NjE5NTU5NCwiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.4Wn_iNk6OYgcCOqRefAylUcSSXQLM1isiycy_9nK5Ck
+
+
+
+POST https://localhost:8080/api/shipping
+Authorization: Bearer {{staff_token}}
+Content-Type: application/json
+
+{
+  "orderId": 5,
+  "serviceType": "STANDARD",
+  "notes": "Giao hàng nhanh",
+  "isCOD": true,
+  "codAmount": 500000,
+  "weight": 1.2,
+  "length": 30,
+  "width": 20,
+  "height": 10,
+  "receiverName": "Nguyen Thanh Dat",
+  "receiverPhone": "0396966376",
+  "receiverAddress": "123 Duong Le Loi, Phuong Ben Nghe, Ho Chi Minh, Vietnam",
+  "provinceCode": "01",
+  "districtCode": "001",
+  "wardCode": "0001"
+}

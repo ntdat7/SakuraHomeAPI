@@ -1,0 +1,722 @@
+﻿### =================================================================
+### AUTHENTICATION API - COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = https://localhost:8080
+
+### =================================================================
+### USER REGISTRATION TESTS
+### =================================================================
+
+### 1. ✅ Valid User Registration
+# @name userRegister
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@sakurahome.com",
+  "password": "StrongPass123!",
+  "confirmPassword": "StrongPass123!",
+  "firstName": "New",
+  "lastName": "User",
+  "phoneNumber": "+84901234567",
+  "dateOfBirth": "1995-05-15",
+  "gender": "Male",
+  "acceptTerms": true
+}
+
+### 2. ❌ Registration with Existing Email
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "firstName": "Duplicate",
+  "lastName": "User"
+}
+
+### 3. ❌ Registration with Weak Password
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "weakpass@test.com",
+  "password": "123",
+  "confirmPassword": "123",
+  "firstName": "Weak",
+  "lastName": "Password"
+}
+
+### 4. ❌ Registration with Mismatched Passwords
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "mismatch@test.com",
+  "password": "Password123!",
+  "confirmPassword": "DifferentPass123!",
+  "firstName": "Mismatch",
+  "lastName": "Password"
+}
+
+### 5. ❌ Registration with Invalid Email Format
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "firstName": "Invalid",
+  "lastName": "Email"
+}
+
+### 6. ❌ Registration with Missing Required Fields
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "",
+  "password": "",
+  "confirmPassword": "",
+  "firstName": "",
+  "lastName": ""
+}
+
+### =================================================================
+### USER LOGIN TESTS
+### =================================================================
+
+### 7. ✅ Valid Login
+# @name validLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+### 8. ✅ Customer Login
+# @name customerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+### 9. ❌ Login with Wrong Password
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "WrongPassword123!",
+  "rememberMe": false
+}
+
+### 10. ❌ Login with Non-existent Email
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "AnyPassword123!",
+  "rememberMe": false
+}
+
+### 11. ❌ Login with Empty Credentials
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "",
+  "password": "",
+  "rememberMe": false
+}
+
+### 12. ❌ Login with Invalid Email Format
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "invalid-email-format",
+  "password": "Password123!",
+  "rememberMe": false
+}
+
+### Store valid token for subsequent tests
+@adminToken = {{validLogin.response.body.data.token}}
+@refreshToken = {{validLogin.response.body.data.refreshToken}}
+
+### =================================================================
+### TOKEN MANAGEMENT TESTS
+### =================================================================
+
+### 13. ✅ Get Current User Info
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{adminToken}}
+
+### 14. ✅ Refresh Token
+POST {{baseUrl}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 15. ❌ Refresh with Invalid Token
+POST {{baseUrl}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "invalid-refresh-token"
+}
+
+### 16. ❌ Access Protected Route without Token
+GET {{baseUrl}}/api/auth/me
+
+### 17. ❌ Access Protected Route with Invalid Token
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid-token-123
+
+### 18. ✅ Check Authentication Status
+GET {{baseUrl}}/api/auth/check
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### PASSWORD MANAGEMENT TESTS
+### =================================================================
+
+### 19. ✅ Change Password (Valid)
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Admin123!",
+  "newPassword": "NewPassword123!",
+  "confirmNewPassword": "NewPassword123!"
+}
+
+### 20. ❌ Change Password with Wrong Current Password
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "WrongCurrentPassword",
+  "newPassword": "NewPassword123!",
+  "confirmNewPassword": "NewPassword123!"
+}
+
+### 21. ❌ Change Password with Mismatched New Passwords
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "NewPassword123!",
+  "newPassword": "AnotherPassword123!",
+  "confirmNewPassword": "DifferentPassword123!"
+}
+
+### 22. ✅ Forgot Password Request
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com"
+}
+
+### 23. ❌ Forgot Password with Non-existent Email
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com"
+}
+
+### 24. ✅ Reset Password (Simulate with token)
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "token": "mock-reset-token",
+  "newPassword": "ResetPassword123!",
+  "confirmNewPassword": "ResetPassword123!"
+}
+
+### 25. ❌ Reset Password with Invalid Token
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "token": "invalid-reset-token",
+  "newPassword": "Password123!",
+  "confirmNewPassword": "Password123!"
+}
+
+### =================================================================
+### EMAIL VERIFICATION TESTS
+### =================================================================
+
+### 26. ✅ Verify Email (Simulate)
+POST {{baseUrl}}/api/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "token": "mock-verification-token"
+}
+
+### 27. ✅ Resend Email Verification
+POST {{baseUrl}}/api/auth/resend-email-verification
+Content-Type: application/json
+
+"admin@sakurahome.com"
+
+### 28. ❌ Verify Email with Invalid Token
+POST {{baseUrl}}/api/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "token": "invalid-verification-token"
+}
+
+### 29. ❌ Resend Verification for Non-existent Email
+POST {{baseUrl}}/api/auth/resend-email-verification
+Content-Type: application/json
+
+"nonexistent@example.com"
+
+### =================================================================
+### TOKEN REVOCATION TESTS
+### =================================================================
+
+### 30. ✅ Revoke Specific Token
+POST {{baseUrl}}/api/auth/revoke-token
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 31. ✅ Revoke All Tokens (Logout from all devices)
+POST {{baseUrl}}/api/auth/revoke-all-tokens
+Authorization: Bearer {{adminToken}}
+
+### 32. ✅ Logout (Single session)
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 33. ❌ Revoke Token without Authorization
+POST {{baseUrl}}/api/auth/revoke-token
+Content-Type: application/json
+
+{
+  "refreshToken": "some-token"
+}
+
+### =================================================================
+### SECURITY TESTS
+### =================================================================
+
+### 34. 🔒 SQL Injection Attempt - Email Field
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com'; DROP TABLE Users; --",
+  "password": "Admin123!",
+  "rememberMe": false
+}
+
+### 35. 🔒 XSS Attempt - Name Fields
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "xsstest@example.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "firstName": "<script>alert('XSS')</script>",
+  "lastName": "<img src=x onerror=alert('XSS')>"
+}
+
+### 36. 🔒 Long Input Test - Email Field
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "verylongemailaddressthatexceedsnormallimitsandmightcauseissues@verylongdomainnamethatmightcauseproblemsandexceedlimitations.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### 37. 🔒 Special Characters in Password
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "specialchars@test.com",
+  "password": "P@$$w0rd!@#$%^&*()_+-=[]{}|;:,.<>?",
+  "confirmPassword": "P@$$w0rd!@#$%^&*()_+-=[]{}|;:,.<>?",
+  "firstName": "Special",
+  "lastName": "Chars"
+}
+
+### =================================================================
+### RATE LIMITING TESTS
+### =================================================================
+
+### 38. 🚦 Multiple Login Attempts (Rate Limiting)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "WrongPassword",
+  "rememberMe": false
+}
+
+### 39. 🚦 Multiple Login Attempts (Attempt 2)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "WrongPassword",
+  "rememberMe": false
+}
+
+### 40. 🚦 Multiple Login Attempts (Attempt 3)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "WrongPassword",
+  "rememberMe": false
+}
+
+### 41. 🚦 Multiple Login Attempts (Attempt 4)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "WrongPassword",
+  "rememberMe": false
+}
+
+### 42. 🚦 Multiple Login Attempts (Attempt 5)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "WrongPassword",
+  "rememberMe": false
+}
+
+### =================================================================
+### EDGE CASE TESTS
+### =================================================================
+
+### 43. 🔍 Unicode Characters in Names
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "unicode@test.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "firstName": "Nguyễn Văn",
+  "lastName": "Anh",
+  "phoneNumber": "+84987654321"
+}
+
+### 44. 🔍 Empty JSON Body
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{}
+
+### 45. 🔍 Malformed JSON
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "Password123!"
+  // Missing comma - malformed JSON
+}
+
+### 46. 🔍 Null Values
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": null,
+  "password": null,
+  "confirmPassword": null,
+  "firstName": null,
+  "lastName": null
+}
+
+### 47. 🔍 Very Long Password
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "longpass@test.com",
+  "password": "ThisIsAVeryLongPasswordThatExceedsNormalLimitsAndMightCauseIssuesWithTheSystemValidationOrDatabaseStorage123!",
+  "confirmPassword": "ThisIsAVeryLongPasswordThatExceedsNormalLimitsAndMightCauseIssuesWithTheSystemValidationOrDatabaseStorage123!",
+  "firstName": "Long",
+  "lastName": "Password"
+}
+
+### =================================================================
+### CONCURRENT ACCESS TESTS
+### =================================================================
+
+### 48. 🔄 Concurrent Login Attempts (Same User)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+### 49. 🔄 Concurrent Login Attempts (Same User) - Duplicate
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+### 50. 🔄 Concurrent Registration Attempts (Same Email)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "concurrent@test.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "firstName": "Concurrent",
+  "lastName": "Test1"
+}
+
+### 51. 🔄 Concurrent Registration Attempts (Same Email) - Duplicate
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "concurrent@test.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "firstName": "Concurrent",
+  "lastName": "Test2"
+}
+
+### =================================================================
+### PERFORMANCE TESTS
+### =================================================================
+
+### 52. ⚡ Quick Login Test
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": false
+}
+
+### 53. ⚡ Quick Token Validation
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{adminToken}}
+
+### 54. ⚡ Quick Password Change
+POST {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "ResetPassword123!",
+  "newPassword": "Admin123!",
+  "confirmNewPassword": "Admin123!"
+}
+
+### =================================================================
+### CLEANUP TESTS
+### =================================================================
+
+### 55. 🧹 Final Login to Restore State
+# @name finalLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+### Store final token for other test files
+@finalToken = {{finalLogin.response.body.data.token}}
+
+### =================================================================
+### TEST SUMMARY & VALIDATION CHECKLIST
+### =================================================================
+
+###
+### ✅ AUTHENTICATION FEATURES TESTED:
+### 
+### 🔐 Registration:
+### - Valid registration with all fields
+### - Email uniqueness validation
+### - Password strength requirements
+### - Confirmation password matching
+### - Required field validation
+### - Invalid email format handling
+### 
+### 🔑 Login:
+### - Valid credentials authentication
+### - Invalid password handling
+### - Non-existent user handling
+### - Empty credentials validation
+### - Remember me functionality
+### - Different user roles (Admin/Customer)
+### 
+### 🎟️ Token Management:
+### - JWT token generation and validation
+### - Refresh token functionality
+### - Token expiration handling
+### - Invalid token rejection
+### - Current user retrieval
+### - Authentication status checking
+### 
+### 🔒 Password Management:
+### - Password change with current verification
+### - Forgot password email sending
+### - Password reset with token
+### - Invalid token handling
+### - Password confirmation validation
+### 
+### 📧 Email Verification:
+### - Email verification with token
+### - Verification resend functionality
+### - Invalid verification token handling
+### - Non-existent email handling
+### 
+### 🚫 Token Revocation:
+### - Single token revocation
+### - All tokens revocation (logout all devices)
+### - Logout single session
+### - Unauthorized revocation attempts
+### 
+### 🛡️ Security:
+### - SQL injection prevention
+### - XSS attack prevention
+### - Input length validation
+### - Special character handling
+### - Unicode character support
+### 
+### 🚦 Rate Limiting:
+### - Multiple failed login attempts
+### - Brute force protection
+### - Account lockout mechanisms
+### 
+### 🔍 Edge Cases:
+### - Malformed JSON handling
+### - Null value handling
+### - Empty request handling
+### - Very long input validation
+### - Concurrent access scenarios
+### 
+### ⚡ Performance:
+### - Response time validation
+### - Quick authentication checks
+### - Efficient token operations
+### 
+### 📊 EXPECTED RESPONSE CODES:
+### 
+### ✅ Success Scenarios:
+### - 200 OK: Login, password change, verification
+### - 201 Created: Registration
+### 
+### ❌ Error Scenarios:
+### - 400 Bad Request: Validation errors, malformed data
+### - 401 Unauthorized: Invalid credentials, expired tokens
+### - 409 Conflict: Email already exists
+### - 422 Unprocessable Entity: Business rule violations
+### - 429 Too Many Requests: Rate limiting
+### 
+### 🎯 PERFORMANCE TARGETS:
+### 
+### - Login response: < 500ms
+### - Registration response: < 1000ms
+### - Token validation: < 100ms
+### - Password operations: < 2000ms
+### - Email operations: < 3000ms
+### 
+### 📋 VALIDATION CHECKLIST:
+### 
+### ✅ Functional Requirements:
+### - All endpoints return correct status codes
+### - Response payloads match expected schemas
+### - Business logic operates correctly
+### - Error messages are informative
+### - Security measures are effective
+### 
+### ✅ Non-Functional Requirements:
+### - Performance targets are met
+### - Security vulnerabilities are prevented
+### - Input validation is comprehensive
+### - Error handling is graceful
+### - Logging captures important events
+### 
+### 🔧 TROUBLESHOOTING:
+### 
+### If tests fail:
+### 1. Check database connectivity
+### 2. Verify email service configuration
+### 3. Confirm JWT settings in appsettings.json
+### 4. Check for seed data in database
+### 5. Verify CORS settings for frontend integration
+### 6. Check rate limiting configuration
+### 7. Confirm password policy settings
+### 
+### 📈 MONITORING RECOMMENDATIONS:
+### 
+### - Monitor failed login attempt patterns
+### - Track registration success rates
+### - Alert on authentication service downtime
+### - Monitor JWT token expiration issues
+### - Track password reset request volumes
+### - Monitor email delivery success rates
+### - Alert on suspicious authentication patterns
+###

@@ -1,8 +1,7 @@
 ﻿### Sakura Home API - Order Management Tests
 ### Make sure to run the application first: dotnet run
-### Base URL: https://localhost:7240 (check launchSettings.json for your port)
 
-@baseUrl = http://localhost:5273
+@baseUrl = https://localhost:8080
 @contentType = application/json
 
 # Variables for testing (update these after running auth tests)

@@ -1,0 +1,359 @@
+﻿### Sakura Home API - Order Management Latest Tests
+### Make sure to run the application first: dotnet run
+
+@baseUrl = https://localhost:8080
+@contentType = application/json
+
+# Variables for testing (update these after running auth tests)
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJiZTlhZTY4Yy0xZWE1LTQzYTktYjcwZC0zZDMwMmM2MjAxMWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6ImJhNjM0Mjc1LTEzNTktNDJkZS1iMmMwLTRjYmUwYWYwZjRlMyIsImlhdCI6MTc1NDM4NDg1MiwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NDM4NDg1MiwiZXhwIjoxNzU0Mzg4NDUyLCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.BOtPAGI8bF9fjCVXIUkewJClD0fLmIiZcV7XiKObbg4
+@userId = be9ae68c-1ea5-43a9-b70d-3d302c62011a
+@addressId = 1
+@orderId = 1
+
+### ==========================================
+### 1. CALCULATE ORDER TOTAL (Guest/User)
+### ==========================================
+
+POST {{baseUrl}}/api/order/calculate-total
+Content-Type: {{contentType}}
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "productVariantId": null,
+      "quantity": 2
+    },
+    {
+      "productId": 2,
+      "productVariantId": null,
+      "quantity": 1
+    }
+  ],
+  "shippingAddressId": {{addressId}},
+  "couponCode": null
+}
+
+### ==========================================
+### 2. VALIDATE ORDER (Authenticated)
+### ==========================================
+
+POST {{baseUrl}}/api/order/validate
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "shippingAddressId": {{addressId}},
+  "billingAddressId": null,
+  "paymentMethod": "COD",
+  "deliveryMethod": "Standard",
+  "orderNotes": "Please handle with care",
+  "couponCode": null,
+  "giftWrap": false,
+  "giftMessage": null,
+  "expressDelivery": false
+}
+
+### ==========================================
+### 3. CREATE ORDER FROM CART (Authenticated)
+### ==========================================
+
+POST {{baseUrl}}/api/order
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "shippingAddressId": {{addressId}},
+  "billingAddressId": null,
+  "paymentMethod": "COD",
+  "deliveryMethod": "Standard",
+  "orderNotes": "Please deliver after 6 PM",
+  "couponCode": null,
+  "giftWrap": false,
+  "giftMessage": null,
+  "expressDelivery": false
+}
+
+### ==========================================
+### 4. GET USER ORDERS (All Orders)
+### ==========================================
+
+GET {{baseUrl}}/api/order
+Authorization: Bearer {{accessToken}}
+
+### ==========================================
+### 5. GET USER ORDERS WITH FILTERS
+### ==========================================
+
+GET {{baseUrl}}/api/order?status=1&page=1&pageSize=10&fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{accessToken}}
+
+### ==========================================
+### 6. GET SPECIFIC ORDER DETAILS
+### ==========================================
+
+GET {{baseUrl}}/api/order/{{orderId}}
+Authorization: Bearer {{accessToken}}
+
+### ==========================================
+### 7. UPDATE ORDER (Only for Pending Orders)
+### ==========================================
+
+PUT {{baseUrl}}/api/order/{{orderId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "shippingAddressId": {{addressId}},
+  "orderNotes": "Updated: Please call before delivery",
+  "giftWrap": true,
+  "giftMessage": "Happy Birthday!",
+  "expressDelivery": false
+}
+
+### ==========================================
+### 8. GET ORDER STATUS HISTORY
+### ==========================================
+
+GET {{baseUrl}}/api/order/{{orderId}}/status-history
+Authorization: Bearer {{accessToken}}
+
+### ==========================================
+### 9. ADD ORDER NOTE (Customer)
+### ==========================================
+
+POST {{baseUrl}}/api/order/{{orderId}}/notes
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "note": "Please deliver to the security guard if I'm not home"
+}
+
+### ==========================================
+### 10. GET ORDER NOTES
+### ==========================================
+
+GET {{baseUrl}}/api/order/{{orderId}}/notes
+Authorization: Bearer {{accessToken}}
+
+### ==========================================
+### 11. CANCEL ORDER
+### ==========================================
+
+DELETE {{baseUrl}}/api/order/{{orderId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "reason": "Changed my mind about the purchase"
+}
+
+### ==========================================
+### 12. REQUEST RETURN (For Delivered Orders)
+### ==========================================
+
+POST {{baseUrl}}/api/order/{{orderId}}/return
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "reason": "DefectiveProduct",
+  "description": "The product arrived damaged",
+  "requestedItems": [
+    {
+      "orderItemId": 1,
+      "quantity": 1,
+      "reason": "Damaged during shipping"
+    }
+  ],
+  "images": []
+}
+
+### ==========================================
+### STAFF ONLY ENDPOINTS (Requires Staff Token)
+### ==========================================
+
+# Set staff token here (get from staff login)
+@staffToken = your-staff-token-here
+
+### ==========================================
+### 13. CONFIRM ORDER (Staff Only)
+### ==========================================
+
+PATCH {{baseUrl}}/api/order/{{orderId}}/confirm
+Authorization: Bearer {{staffToken}}
+
+### ==========================================
+### 14. PROCESS ORDER (Staff Only)
+### ==========================================
+
+PATCH {{baseUrl}}/api/order/{{orderId}}/process
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "processingNotes": "Order packed and ready for shipping",
+  "expectedShipDate": "2024-02-02"
+}
+
+### ==========================================
+### 15. SHIP ORDER (Staff Only)
+### ==========================================
+
+PATCH {{baseUrl}}/api/order/{{orderId}}/ship
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "trackingNumber": "TN123456789",
+  "shippingCarrier": "Giao Hàng Nhanh",
+  "estimatedDeliveryDate": "2024-02-05",
+  "shippingNotes": "Shipped via express delivery"
+}
+
+### ==========================================
+### 16. MARK AS DELIVERED (Staff Only)
+### ==========================================
+
+PATCH {{baseUrl}}/api/order/{{orderId}}/deliver
+Authorization: Bearer {{staffToken}}
+
+### ==========================================
+### 17. UPDATE ORDER STATUS (Staff Only)
+### ==========================================
+
+PATCH {{baseUrl}}/api/order/{{orderId}}/status
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "status": 4,
+  "notes": "Order has been shipped and is on the way"
+}
+
+### ==========================================
+### 18. ADD STAFF NOTE (Staff Only)
+### ==========================================
+
+POST {{baseUrl}}/api/order/{{orderId}}/staff-notes
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "note": "Customer requested special packaging",
+  "isCustomerVisible": true
+}
+
+### ==========================================
+### 19. PROCESS RETURN (Staff Only)
+### ==========================================
+
+PATCH {{baseUrl}}/api/order/{{orderId}}/return
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "action": "Approved",
+  "staffNotes": "Return approved, refund will be processed",
+  "refundAmount": 150000,
+  "refundMethod": "Original Payment Method"
+}
+
+### ==========================================
+### 20. GET ORDER STATISTICS (Staff Only)
+### ==========================================
+
+GET {{baseUrl}}/api/order/stats?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{staffToken}}
+
+### ==========================================
+### 21. GET RECENT ORDERS (Staff Only)
+### ==========================================
+
+GET {{baseUrl}}/api/order/recent?count=10
+Authorization: Bearer {{staffToken}}
+
+### ==========================================
+### TESTING SCENARIOS
+### ==========================================
+
+### Scenario 1: Complete Order Flow
+# 1. Add items to cart (use Cart.http)
+# 2. Create shipping address (use User.http)
+# 3. Validate order
+# 4. Calculate total
+# 5. Create order
+# 6. View order details
+# 7. Update order (if needed)
+# 8. Staff confirms order
+# 9. Staff processes order
+# 10. Staff ships order
+# 11. Staff marks as delivered
+
+### Scenario 2: Order Cancellation
+# 1. Create order
+# 2. Cancel order (customer)
+# 3. Verify order status and stock restoration
+
+### Scenario 3: Order Return
+# 1. Create and complete order
+# 2. Request return (customer)
+# 3. Process return (staff)
+# 4. Verify refund processing
+
+### ==========================================
+### ERROR CASES TO TEST
+### ==========================================
+
+### Test with invalid order ID
+GET {{baseUrl}}/api/order/99999
+Authorization: Bearer {{accessToken}}
+
+### Test creating order with empty cart
+POST {{baseUrl}}/api/order
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "shippingAddressId": {{addressId}},
+  "paymentMethod": "COD"
+}
+
+### Test updating cancelled order (should fail)
+PUT {{baseUrl}}/api/order/{{orderId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderNotes": "Trying to update cancelled order"
+}
+
+### Test accessing order from different user (should fail)
+GET {{baseUrl}}/api/order/{{orderId}}
+Authorization: Bearer different-user-token
+
+### ==========================================
+### ORDER STATUS REFERENCE
+### ==========================================
+# 1 = Pending (?ang ch? x? lý)
+# 2 = Confirmed (?ã xác nh?n)
+# 3 = Processing (?ang chu?n b? hàng)
+# 4 = Shipped (?ã giao cho v?n chuy?n)
+# 5 = OutForDelivery (?ang giao hàng)
+# 6 = Delivered (?ã giao thành công)
+# 7 = Cancelled (?ã h?y)
+# 8 = Returned (?ã tr? hàng)
+# 9 = Refunded (?ã hoàn ti?n)
+
+### ==========================================
+### PAYMENT METHODS REFERENCE
+### ==========================================
+# COD = Cash on Delivery
+# BankTransfer = Bank Transfer
+# CreditCard = Credit Card
+# DebitCard = Debit Card
+# EWallet = E-Wallet (MoMo, ZaloPay)
+# QRCode = QR Code Payment
+# Installment = Installment Payment
+

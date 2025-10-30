@@ -1,6 +1,6 @@
 ﻿using SakuraHomeAPI.DTOs.Reviews.Requests;
 using SakuraHomeAPI.DTOs.Reviews.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 
 namespace SakuraHomeAPI.Services.Interfaces
 {

@@ -1,8 +1,9 @@
-using Microsoft.EntityFrameworkCore;
+Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SakuraHomeAPI.Data;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Notifications.Requests;
 using SakuraHomeAPI.DTOs.Notifications.Responses;
-using SakuraHomeAPI.Models.DTOs;
 using SakuraHomeAPI.Models.Entities;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
@@ -494,8 +495,8 @@ namespace SakuraHomeAPI.Services.Implementations
                 var notification = new CreateNotificationRequestDto
                 {
                     UserId = order.User.Id,
-                    Title = "X·c nh?n thanh to·n",
-                    Message = $"Thanh to·n cho ??n h‡ng #{order.OrderNumber} ?„ ???c x·c nh?n th‡nh cÙng.",
+                    Title = "X√°c nh?n thanh to√°n",
+                    Message = $"Thanh to√°n cho ??n h√†ng #{order.OrderNumber} ?√£ ???c x√°c nh?n th√†nh c√¥ng.",
                     Type = NotificationType.Payment,
                     ActionUrl = $"/orders/{orderId}",
                     Priority = ConvertNotificationPriorityToPriority(NotificationPriority.High),
@@ -540,8 +541,8 @@ namespace SakuraHomeAPI.Services.Implementations
                 var bulkNotification = new CreateBulkNotificationRequestDto
                 {
                     UserIds = adminUsers,
-                    Title = "C?nh b·o t?n kho th?p",
-                    Message = $"S?n ph?m {product.Name} (SKU: {product.SKU}) ch? cÚn {currentStock} s?n ph?m trong kho (ng??ng: {threshold}).",
+                    Title = "C?nh b√°o t?n kho th?p",
+                    Message = $"S?n ph?m {product.Name} (SKU: {product.SKU}) ch? c√≤n {currentStock} s?n ph?m trong kho (ng??ng: {threshold}).",
                     Type = NotificationType.Alert,
                     ActionUrl = $"/admin/products/{productId}",
                     Priority = ConvertNotificationPriorityToPriority(NotificationPriority.High),
@@ -609,8 +610,8 @@ namespace SakuraHomeAPI.Services.Implementations
                 var bulkNotification = new CreateBulkNotificationRequestDto
                 {
                     SendToAll = true,
-                    Title = "ThÙng b·o b?o trÏ h? th?ng",
-                    Message = $"H? th?ng s? b?o trÏ t? {startTime:dd/MM/yyyy HH:mm} ??n {endTime:dd/MM/yyyy HH:mm}. {message}",
+                    Title = "Th√¥ng b√°o b?o tr√¨ h? th?ng",
+                    Message = $"H? th?ng s? b?o tr√¨ t? {startTime:dd/MM/yyyy HH:mm} ??n {endTime:dd/MM/yyyy HH:mm}. {message}",
                     Type = NotificationType.System,
                     Priority = ConvertNotificationPriorityToPriority(NotificationPriority.High),
                     SendEmail = true,
@@ -674,19 +675,19 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return type switch
             {
-                NotificationType.General => "ThÙng b·o chung",
-                NotificationType.Order => "??n h‡ng",
-                NotificationType.Payment => "Thanh to·n",
+                NotificationType.General => "Th√¥ng b√°o chung",
+                NotificationType.Order => "??n h√†ng",
+                NotificationType.Payment => "Thanh to√°n",
                 NotificationType.Shipping => "V?n chuy?n",
                 NotificationType.Product => "S?n ph?m",
-                NotificationType.Promotion => "Khuy?n m„i",
+                NotificationType.Promotion => "Khuy?n m√£i",
                 NotificationType.System => "H? th?ng",
                 NotificationType.Security => "B?o m?t",
                 NotificationType.Marketing => "Marketing",
                 NotificationType.Reminder => "Nh?c nh?",
-                NotificationType.Alert => "C?nh b·o",
+                NotificationType.Alert => "C?nh b√°o",
                 NotificationType.Newsletter => "B?n tin",
-                _ => "KhÙng x·c ??nh"
+                _ => "Kh√¥ng x√°c ??nh"
             };
         }
 
@@ -695,11 +696,11 @@ namespace SakuraHomeAPI.Services.Implementations
             return priority switch
             {
                 NotificationPriority.Low => "Th?p",
-                NotificationPriority.Normal => "Trung bÏnh",
+                NotificationPriority.Normal => "Trung b√¨nh",
                 NotificationPriority.High => "Cao",
                 NotificationPriority.Urgent => "Kh?n c?p",
-                NotificationPriority.Critical => "NghiÍm tr?ng",
-                _ => "KhÙng x·c ??nh"
+                NotificationPriority.Critical => "Nghi√™m tr?ng",
+                _ => "Kh√¥ng x√°c ??nh"
             };
         }
 
@@ -707,15 +708,15 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Confirmed => $"??n h‡ng #{orderNumber} ?„ ???c x·c nh?n",
-                OrderStatus.Processing => $"??n h‡ng #{orderNumber} ?ang ???c x? l˝",
-                OrderStatus.Packed => $"??n h‡ng #{orderNumber} ?„ ???c ?Ûng gÛi",
-                OrderStatus.Shipped => $"??n h‡ng #{orderNumber} ?ang ???c v?n chuy?n",
-                OrderStatus.Delivered => $"??n h‡ng #{orderNumber} ?„ ???c giao th‡nh cÙng",
-                OrderStatus.Cancelled => $"??n h‡ng #{orderNumber} ?„ b? h?y",
-                OrderStatus.Returned => $"??n h‡ng #{orderNumber} ?„ ???c tr? l?i",
-                OrderStatus.Refunded => $"??n h‡ng #{orderNumber} ?„ ???c ho‡n ti?n",
-                _ => $"C?p nh?t ??n h‡ng #{orderNumber}"
+                OrderStatus.Confirmed => $"??n h√†ng #{orderNumber} ?√£ ???c x√°c nh?n",
+                OrderStatus.Processing => $"??n h√†ng #{orderNumber} ?ang ???c x? l√Ω",
+                OrderStatus.Packed => $"??n h√†ng #{orderNumber} ?√£ ???c ?√≥ng g√≥i",
+                OrderStatus.Shipped => $"??n h√†ng #{orderNumber} ?ang ???c v?n chuy?n",
+                OrderStatus.Delivered => $"??n h√†ng #{orderNumber} ?√£ ???c giao th√†nh c√¥ng",
+                OrderStatus.Cancelled => $"??n h√†ng #{orderNumber} ?√£ b? h?y",
+                OrderStatus.Returned => $"??n h√†ng #{orderNumber} ?√£ ???c tr? l?i",
+                OrderStatus.Refunded => $"??n h√†ng #{orderNumber} ?√£ ???c ho√†n ti?n",
+                _ => $"C?p nh?t ??n h√†ng #{orderNumber}"
             };
         }
 
@@ -723,15 +724,15 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Confirmed => $"??n h‡ng #{orderNumber} c?a b?n ?„ ???c x·c nh?n v‡ s? ???c x? l˝ s?m nh?t.",
-                OrderStatus.Processing => $"??n h‡ng #{orderNumber} ?ang ???c chu?n b? v‡ ?Ûng gÛi.",
-                OrderStatus.Packed => $"??n h‡ng #{orderNumber} ?„ ???c ?Ûng gÛi v‡ s?n s‡ng giao h‡ng.",
-                OrderStatus.Shipped => $"??n h‡ng #{orderNumber} ?„ ???c giao cho ??n v? v?n chuy?n.",
-                OrderStatus.Delivered => $"??n h‡ng #{orderNumber} ?„ ???c giao th‡nh cÙng. C?m ?n b?n ?„ mua h‡ng!",
-                OrderStatus.Cancelled => $"??n h‡ng #{orderNumber} ?„ b? h?y. N?u b?n ?„ thanh to·n, ti?n s? ???c ho‡n l?i.",
-                OrderStatus.Returned => $"??n h‡ng #{orderNumber} ?„ ???c tr? l?i th‡nh cÙng.",
-                OrderStatus.Refunded => $"Ti?n c?a ??n h‡ng #{orderNumber} ?„ ???c ho‡n l?i v‡o t‡i kho?n c?a b?n.",
-                _ => $"Tr?ng th·i ??n h‡ng #{orderNumber} ?„ ???c c?p nh?t."
+                OrderStatus.Confirmed => $"??n h√†ng #{orderNumber} c?a b?n ?√£ ???c x√°c nh?n v√† s? ???c x? l√Ω s?m nh?t.",
+                OrderStatus.Processing => $"??n h√†ng #{orderNumber} ?ang ???c chu*n b? v√† ?√≥ng g√≥i.",
+                OrderStatus.Packed => $"??n h√†ng #{orderNumber} ?√£ ???c ?√≥ng g√≥i v√† s?n s√†ng giao h√†ng.",
+                OrderStatus.Shipped => $"??n h√†ng #{orderNumber} ?√£ ???c giao cho ??n v? v?n chuy?n.",
+                OrderStatus.Delivered => $"??n h√†ng #{orderNumber} ?√£ ???c giao th√†nh c√¥ng. C?m ?n b?n ?√£ mua h√†ng!",
+                OrderStatus.Cancelled => $"??n h√†ng #{orderNumber} ?√£ b? h?y. N?u b?n ?√£ thanh to√°n, ti?n s? ???c ho√†n l?i.",
+                OrderStatus.Returned => $"??n h√†ng #{orderNumber} ?√£ ???c tr? l?i th√†nh c√¥ng.",
+                OrderStatus.Refunded => $"TiÔøΩn cÔøΩa ??n h√†ng #{orderNumber} ?√£ ???c ho√†n l?i v√†o t√†i kho?n c?a b?n.",
+                _ => $"Tr?ng th√°i ??n h√†ng #{orderNumber} ?√£ ???c c?p nh?t."
             };
         }
 
@@ -766,16 +767,16 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Pending => "Ch? x? l˝",
-                OrderStatus.Confirmed => "?„ x·c nh?n",
-                OrderStatus.Processing => "?ang x? l˝",
-                OrderStatus.Packed => "?„ ?Ûng gÛi",
+                OrderStatus.Pending => "Ch? x? l√Ω",
+                OrderStatus.Confirmed => "?√£ x√°c nh?n",
+                OrderStatus.Processing => "?ang x? l√Ω",
+                OrderStatus.Packed => "?√£ ?√≥ng g√≥i",
                 OrderStatus.Shipped => "?ang v?n chuy?n",
-                OrderStatus.Delivered => "?„ giao h‡ng",
-                OrderStatus.Cancelled => "?„ h?y",
-                OrderStatus.Returned => "?„ tr? h‡ng",
-                OrderStatus.Refunded => "?„ ho‡n ti?n",
-                _ => "KhÙng x·c ??nh"
+                OrderStatus.Delivered => "?√£ giao h√†ng",
+                OrderStatus.Cancelled => "?√£ h?y",
+                OrderStatus.Returned => "?√£ tr? h√†ng",
+                OrderStatus.Refunded => "?√£ ho√†n ti?n",
+                _ => "Kh√¥ng x√°c ??nh"
             };
         }
 

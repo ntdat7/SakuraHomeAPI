@@ -31,12 +31,12 @@ namespace SakuraHomeAPI.Models.Entities
         public string SKU { get; set; }
 
         [MaxLength(1000)]
-        public string ShortDescription { get; set; }
+        public string? ShortDescription { get; set; } 
 
-        public string Description { get; set; }
+        public string? Description { get; set; } 
 
         [MaxLength(500)]
-        public string MainImage { get; set; }
+        public string? MainImage { get; set; } 
 
         #endregion
 
@@ -50,7 +50,7 @@ namespace SakuraHomeAPI.Models.Entities
         public decimal? OriginalPrice { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal? CostPrice { get; set; } // For profit calculation
+        public decimal? CostPrice { get; set; } 
 
         [Required]
         public int Stock { get; set; }
@@ -74,26 +74,26 @@ namespace SakuraHomeAPI.Models.Entities
         #region Japanese Product Specific
 
         [MaxLength(100)]
-        public string Origin { get; set; } // Prefecture in Japan
+        public string? Origin { get; set; } 
 
         public JapaneseOrigin? JapaneseRegion { get; set; }
 
         public AuthenticityLevel AuthenticityLevel { get; set; } = AuthenticityLevel.Verified;
 
         [MaxLength(1000)]
-        public string AuthenticityInfo { get; set; }
+        public string? AuthenticityInfo { get; set; } 
 
         [MaxLength(2000)]
-        public string UsageGuide { get; set; } // How to use (especially for Japanese products)
+        public string? UsageGuide { get; set; } 
 
         [MaxLength(1000)]
-        public string Ingredients { get; set; } // For food/cosmetics
+        public string? Ingredients { get; set; } 
 
         public DateTime? ExpiryDate { get; set; }
         public DateTime? ManufactureDate { get; set; }
 
         [MaxLength(50)]
-        public string BatchNumber { get; set; }
+        public string? BatchNumber { get; set; } 
 
         public AgeRestriction AgeRestriction { get; set; } = AgeRestriction.None;
 
@@ -107,7 +107,7 @@ namespace SakuraHomeAPI.Models.Entities
         public WeightUnit WeightUnit { get; set; } = WeightUnit.Gram;
 
         [MaxLength(50)]
-        public string Dimensions { get; set; } // "10x5x3 cm"
+        public string? Dimensions { get; set; } 
 
         [Column(TypeName = "decimal(8,2)")]
         public decimal? Length { get; set; }
@@ -159,10 +159,10 @@ namespace SakuraHomeAPI.Models.Entities
         #region SEO & Marketing
 
         [MaxLength(500)]
-        public string Tags { get; set; } // Comma-separated tags
+        public string? Tags { get; set; } 
 
         [MaxLength(1000)]
-        public string MarketingDescription { get; set; }
+        public string? MarketingDescription { get; set; } 
 
         public bool IsGiftWrappingAvailable { get; set; } = false;
 
@@ -231,7 +231,7 @@ namespace SakuraHomeAPI.Models.Entities
         public string FormattedPrice => $"{Price:N0} ₫";
 
         [NotMapped]
-        public string FormattedOriginalPrice => OriginalPrice?.ToString("N0") + " ₫";
+        public string? FormattedOriginalPrice => OriginalPrice?.ToString("N0") + " ₫"; 
 
         [NotMapped]
         public List<string> TagList => !string.IsNullOrEmpty(Tags)

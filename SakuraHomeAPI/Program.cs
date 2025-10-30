@@ -17,6 +17,7 @@ using SakuraHomeAPI.Data;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.Services.Implementations;
+using SakuraHomeAPI.Tools; // THÊM DÒNG NÀY
 using Serilog;
 using System;
 using System.IO;
@@ -262,7 +263,10 @@ builder.Services.AddScoped<IShippingService, ShippingService>();
 
 builder.Services.AddScoped<IAdminService, AdminService>();
 
-//builder.Services.AddScoped<IProductService, ProductService>();
+// Product services - ENABLED for refactoring
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<SakuraHomeAPI.Repositories.Interfaces.IProductRepository, SakuraHomeAPI.Repositories.Implementations.ProductRepository>();
+
 //builder.Services.AddScoped<ICategoryService, CategoryService>();
 //builder.Services.AddScoped<IBrandService, BrandService>();
 //builder.Services.AddScoped<IFileService, FileService>();
@@ -395,6 +399,23 @@ using (var scope = app.Services.CreateScope())
             throw;
         }
     }
+}
+
+// THÊM PHẦN IMPORT ADDRESS VÀO ĐÂY
+// Import Vietnam Addresses if requested
+if (args.Length > 0 && args[0] == "--import-addresses")
+{
+    var csvPath = args.Length > 1 ? args[1] : "Data/Book1.csv";
+    Console.WriteLine($"Import CSV từ: {csvPath}");
+
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var importer = new AddressImporter(context);
+
+    await importer.ImportFromCsvAsync(csvPath);
+    Console.WriteLine("Nhấn Enter để thoát...");
+    Console.ReadLine();
+    return;
 }
 
 // Graceful shutdown

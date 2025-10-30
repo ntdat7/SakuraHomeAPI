@@ -1,0 +1,130 @@
+﻿### AdminController API Test Suite
+# Lưu ý: Cần có token Bearer hợp lệ với quyền Staff/Admin để test các endpoint này
+# Đặt biến token ở đầu file để dùng cho tất cả request
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiI4MWFkOTkxYS01YTQzLTRjYTctYWRhYi0wNjA3YTYxNTIxNjciLCJpYXQiOjE3NTU3ODE3NzIsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NTU3ODE3NzIsImV4cCI6MTc1NTc4NTM3MiwiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.397M_1MgIB91SqZ2S5UQSZJBugM83QYjdzkuRJ7Jg5g
+@baseUrl = https://localhost:8080/api/admin
+@userId = 4B9A3069-0026-421F-BB12-81024808AE24
+
+### 1. Lấy danh sách người dùng (GET, lọc, phân trang, kiểm thử các tham số)
+GET {{baseUrl}}/users?keyword=test&page=1&pageSize=10&role=Staff&isActive=true
+Authorization: Bearer {{token}}
+
+### 2. Lấy chi tiết người dùng theo ID (GET)
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### 3. Tạo mới người dùng (POST, kiểm thử các trường hợp thiếu/thừa dữ liệu)
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "Email": "testuser@sakurahome.com",
+  "UserName": "testuser",
+  "Password": "TestPassword123",
+  "PhoneNumber": "0123456789",
+  "Role": "Staff",
+  "IsActive": true
+}
+
+### 3.1. Tạo user thiếu trường bắt buộc (Email)
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "UserName": "nouseremail",
+  "Password": "TestPassword123",
+  "PhoneNumber": "0123456789",
+  "Role": "Staff",
+  "IsActive": true
+}
+
+### 3.2. Tạo user với email đã tồn tại
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "Email": "testuser@sakurahome.com",
+  "UserName": "testuser2",
+  "Password": "TestPassword123",
+  "PhoneNumber": "0123456789",
+  "Role": "Staff",
+  "IsActive": true
+}
+
+### 4. Cập nhật thông tin người dùng (PUT, kiểm thử thay đổi role, trạng thái)
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "Email": "updateduser21212@sakurahome.com",
+  "UserName": "updateduser1212",
+  "PhoneNumber": "0987654321",
+  "Role": "Admin",
+  "IsActive": false
+}
+
+### 4.1. Cập nhật thiếu trường (UserName)
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "Email": "updateduser21212@sakurahome.com",
+  "PhoneNumber": "0987654321",
+  "Role": "Staff",
+  "IsActive": true
+}
+
+### 5. Xóa người dùng (DELETE, kiểm thử user không tồn tại)
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### 6. Đổi trạng thái người dùng (PATCH, kiểm thử chuyển trạng thái)
+PATCH {{baseUrl}}/users/{{userId}}/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "IsActive": false
+}
+
+### 6.1. Đổi trạng thái user không tồn tại
+PATCH {{baseUrl}}/users/00000000-0000-0000-0000-000000000000/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "IsActive": true
+}
+
+### 7. Lấy thống kê người dùng (GET)
+GET {{baseUrl}}/users/stats
+Authorization: Bearer {{token}}
+
+### 8. Reset mật khẩu người dùng (POST, kiểm thử mật khẩu yếu)
+POST {{baseUrl}}/users/{{userId}}/reset-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "NewPassword": "NewPassword123"
+}
+
+### 8.1. Reset mật khẩu yếu
+POST {{baseUrl}}/users/{{userId}}/reset-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+{
+  "NewPassword": "123"
+}
+
+### 9. Mở khóa tài khoản người dùng (POST)
+POST {{baseUrl}}/users/{{userId}}/unlock
+Authorization: Bearer {{token}}
+
+### 10. Xác thực email người dùng (POST)
+POST {{baseUrl}}/users/{{userId}}/verify-email
+Authorization: Bearer {{token}}
+
+### 11. Xác thực số điện thoại người dùng (POST)
+POST {{baseUrl}}/users/{{userId}}/verify-phone
+Authorization: Bearer {{token}}
+
+# Thay {{userId}} bằng ID người dùng thực tế khi test từng endpoint.
+# Có thể thêm các trường hợp lỗi, kiểm thử phân quyền, kiểm thử dữ liệu đầu vào không hợp lệ.

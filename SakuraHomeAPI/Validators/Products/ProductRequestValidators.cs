@@ -1,5 +1,6 @@
-using FluentValidation;
+﻿using FluentValidation;
 using SakuraHomeAPI.DTOs.Products.Requests;
+using SakuraHomeAPI.DTOs.Products.Components;
 using SakuraHomeAPI.Validators.Common;
 
 namespace SakuraHomeAPI.Validators.Products
@@ -131,6 +132,11 @@ namespace SakuraHomeAPI.Validators.Products
                 .WithMessage("Weight must be greater than 0")
                 .When(x => x.Weight.HasValue);
 
+            RuleFor(x => x.Dimensions)
+                .MaximumLength(50)
+                .WithMessage("Dimensions cannot exceed 50 characters")
+                .When(x => !string.IsNullOrEmpty(x.Dimensions));
+
             RuleFor(x => x.Length)
                 .GreaterThan(0)
                 .WithMessage("Length must be greater than 0")
@@ -173,17 +179,17 @@ namespace SakuraHomeAPI.Validators.Products
 
             // Validate images
             RuleForEach(x => x.Images)
-                .SetValidator(new CreateProductImageRequestValidator())
+                .SetValidator(new CreateProductImageValidator())
                 .When(x => x.Images != null);
 
             // Validate variants
             RuleForEach(x => x.Variants)
-                .SetValidator(new CreateProductVariantRequestValidator())
+                .SetValidator(new CreateProductVariantValidator())
                 .When(x => x.Variants != null);
 
             // Validate attributes
             RuleForEach(x => x.Attributes)
-                .SetValidator(new SetProductAttributeRequestValidator())
+                .SetValidator(new CreateProductAttributeValidator())
                 .When(x => x.Attributes != null);
 
             // Validate tag IDs
@@ -197,6 +203,40 @@ namespace SakuraHomeAPI.Validators.Products
                 .Must(HaveValidGiftWrappingSetup)
                 .WithMessage("Gift wrapping fee is required when gift wrapping is available")
                 .When(x => x.IsGiftWrappingAvailable);
+
+            // Enum validations
+            RuleFor(x => x.Status)
+                .IsInEnum()
+                .WithMessage("Invalid product status");
+
+            RuleFor(x => x.Condition)
+                .IsInEnum()
+                .WithMessage("Invalid product condition");
+
+            RuleFor(x => x.Visibility)
+                .IsInEnum()
+                .WithMessage("Invalid product visibility");
+
+            RuleFor(x => x.AuthenticityLevel)
+                .IsInEnum()
+                .WithMessage("Invalid authenticity level");
+
+            RuleFor(x => x.AgeRestriction)
+                .IsInEnum()
+                .WithMessage("Invalid age restriction");
+
+            RuleFor(x => x.WeightUnit)
+                .IsInEnum()
+                .WithMessage("Invalid weight unit");
+
+            RuleFor(x => x.DimensionUnit)
+                .IsInEnum()
+                .WithMessage("Invalid dimension unit");
+
+            RuleFor(x => x.JapaneseRegion)
+                .IsInEnum()
+                .WithMessage("Invalid Japanese region")
+                .When(x => x.JapaneseRegion.HasValue);
         }
 
         private bool BeValidProductName(string name)

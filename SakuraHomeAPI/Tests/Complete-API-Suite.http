@@ -31,10 +31,12 @@ Content-Type: application/json
 }
 
 ### 📝 Store Authentication Token
-@authToken = {{userLogin.response.body.data.token}}
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJiOGRmZjk4ZC0zMDJiLTRiMDYtOWMyMS02NTAzMWNiY2M4M2IiLCJlbWFpbCI6InRlc3R1c2VyQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJUZXN0IFVzZXIiLCJyb2xlIjoiQ3VzdG9tZXIiLCJmaXJzdE5hbWUiOiJUZXN0IiwibGFzdE5hbWUiOiJVc2VyIiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6IjY5ZmQxMTMzLWQyYmEtNDcyZC04NTI4LThiYzE2YjVhYmZmZCIsImlhdCI6MTc1NjE3MjM0NSwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NjE3MjM0NSwiZXhwIjoxNzU2MTc1OTQ1LCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.8_PcT-kv9WeMRLBLP5bleawosUP2Mym7jxqpCZAIdVY
+
+
 
 ### STEP 3: 🛍️ Browse Products
-GET {{baseUrl}}/api/products?page=1&pageSize=10&sortBy=CreatedAt&sortOrder=desc
+GET {{baseUrl}}/api/products?page=1
 Authorization: Bearer {{authToken}}
 
 ### STEP 4: 📦 Get Product Details
@@ -47,8 +49,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "productId": 1,
-  "productVariantId": 1,
+  "productId": 3,
   "quantity": 2
 }
 
@@ -62,17 +63,18 @@ Content-Type: application/json
 }
 
 ### STEP 7: 🎫 Check Available Coupons
-GET {{baseUrl}}/api/coupons/available
+GET {{baseUrl}}/api/coupon/available
 Authorization: Bearer {{authToken}}
 
 ### STEP 8: 🎫 Apply Coupon to Cart
-POST {{baseUrl}}/api/coupons/apply
+POST {{baseUrl}}/api/coupon/use
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": 1,
-  "couponCode": "WELCOME15"
+  "cartId": 65,
+  "Code": "FLASH30",
+  "OrderAmount": 5690000
 }
 
 ### STEP 9: 💰 Calculate Shipping

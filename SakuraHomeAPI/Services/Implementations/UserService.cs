@@ -1,13 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using SakuraHomeAPI.Data;
-using SakuraHomeAPI.Services.Interfaces;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Users;
 using SakuraHomeAPI.DTOs.Users.Requests;
 using SakuraHomeAPI.DTOs.Users.Responses;
+using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Enums;
-using AutoMapper;
 
 namespace SakuraHomeAPI.Services.Implementations
 {
@@ -111,14 +112,10 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (!string.IsNullOrEmpty(request.PreferredCurrency))
                     user.PreferredCurrency = request.PreferredCurrency;
 
-                if (request.EmailNotifications.HasValue)
-                    user.EmailNotifications = request.EmailNotifications.Value;
-
-                if (request.SmsNotifications.HasValue)
-                    user.SmsNotifications = request.SmsNotifications.Value;
-
-                if (request.PushNotifications.HasValue)
-                    user.PushNotifications = request.PushNotifications.Value;
+                // Handle boolean properties directly since they are not nullable in the request
+                user.EmailNotifications = request.EmailNotifications;
+                user.SmsNotifications = request.SmsNotifications;
+                user.PushNotifications = request.PushNotifications;
 
                 user.UpdatedAt = DateTime.UtcNow;
 
@@ -184,12 +181,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     Id = a.Id,
                     AddressLine1 = a.AddressLine1,
                     AddressLine2 = a.AddressLine2,
-                    City = a.City,
-                    StateProvince = a.State,  // Using State instead of StateProvince
+                    ProvinceId = a.ProvinceId,
+                    WardId = a.WardId,
                     PostalCode = a.PostalCode,
                     Country = a.Country,
-                    PhoneNumber = a.Phone,    // Using Phone instead of PhoneNumber
-                    RecipientName = a.Name,   // Using Name instead of RecipientName
+                    Phone = a.Phone,
+                    Name = a.Name,
                     IsDefault = a.IsDefault,
                     Type = a.Type,
                     Notes = a.Notes,
@@ -231,14 +228,14 @@ namespace SakuraHomeAPI.Services.Implementations
                 var address = new Address
                 {
                     UserId = userId,
+                    Name = request.Name,
+                    Phone = request.Phone,
                     AddressLine1 = request.AddressLine1,
                     AddressLine2 = request.AddressLine2,
-                    City = request.City,
-                    State = request.StateProvince,  // Using State instead of StateProvince
+                    ProvinceId = request.ProvinceId,
+                    WardId = request.WardId,
                     PostalCode = request.PostalCode,
-                    Country = request.Country,
-                    Phone = request.PhoneNumber,     // Using Phone instead of PhoneNumber
-                    Name = request.RecipientName,    // Using Name instead of RecipientName
+                    Country = request.Country ?? "Vietnam",
                     IsDefault = shouldBeDefault,
                     Type = request.Type,
                     Notes = request.Notes,
@@ -254,12 +251,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     Id = address.Id,
                     AddressLine1 = address.AddressLine1,
                     AddressLine2 = address.AddressLine2,
-                    City = address.City,
-                    StateProvince = address.State,   // Using State instead of StateProvince
+                    ProvinceId = address.ProvinceId,
+                    WardId = address.WardId,
                     PostalCode = address.PostalCode,
                     Country = address.Country,
-                    PhoneNumber = address.Phone,     // Using Phone instead of PhoneNumber
-                    RecipientName = address.Name,    // Using Name instead of RecipientName
+                    Phone = address.Phone,
+                    Name = address.Name,
                     IsDefault = address.IsDefault,
                     Type = address.Type,
                     Notes = address.Notes,
@@ -288,29 +285,29 @@ namespace SakuraHomeAPI.Services.Implementations
                     return ApiResponse.ErrorResult<AddressResponseDto>("Address not found");
 
                 // Update properties
+                if (!string.IsNullOrEmpty(request.Name))
+                    address.Name = request.Name;
+
+                if (!string.IsNullOrEmpty(request.Phone))
+                    address.Phone = request.Phone;
+
                 if (!string.IsNullOrEmpty(request.AddressLine1))
                     address.AddressLine1 = request.AddressLine1;
 
                 if (request.AddressLine2 != null)
                     address.AddressLine2 = request.AddressLine2;
 
-                if (!string.IsNullOrEmpty(request.City))
-                    address.City = request.City;
+                if (request.ProvinceId.HasValue)
+                    address.ProvinceId = request.ProvinceId.Value;
 
-                if (!string.IsNullOrEmpty(request.StateProvince))
-                    address.State = request.StateProvince;   // Using State instead of StateProvince
+                if (request.WardId.HasValue)
+                    address.WardId = request.WardId.Value;
 
                 if (!string.IsNullOrEmpty(request.PostalCode))
                     address.PostalCode = request.PostalCode;
 
                 if (!string.IsNullOrEmpty(request.Country))
                     address.Country = request.Country;
-
-                if (request.PhoneNumber != null)
-                    address.Phone = request.PhoneNumber;     // Using Phone instead of PhoneNumber
-
-                if (request.RecipientName != null)
-                    address.Name = request.RecipientName;    // Using Name instead of RecipientName
 
                 if (request.Type.HasValue)
                     address.Type = request.Type.Value;
@@ -343,12 +340,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     Id = address.Id,
                     AddressLine1 = address.AddressLine1,
                     AddressLine2 = address.AddressLine2,
-                    City = address.City,
-                    StateProvince = address.State,   // Using State instead of StateProvince
+                    ProvinceId = address.ProvinceId,
+                    WardId = address.WardId,
                     PostalCode = address.PostalCode,
                     Country = address.Country,
-                    PhoneNumber = address.Phone,     // Using Phone instead of PhoneNumber
-                    RecipientName = address.Name,    // Using Name instead of RecipientName
+                    Phone = address.Phone,
+                    Name = address.Name,
                     IsDefault = address.IsDefault,
                     Type = address.Type,
                     Notes = address.Notes,

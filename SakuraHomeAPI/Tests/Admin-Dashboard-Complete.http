@@ -1,0 +1,183 @@
+﻿### Admin Dashboard Endpoints Tests
+### These endpoints are required for admin frontend dashboard
+
+@baseUrl = https://localhost:8080
+@staffToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiIxNjgyNGI3OS01M2MzLTRmYWItYjE1Yy1lN2RmYzM5M2ExYmUiLCJpYXQiOjE3NTk4NTQxNDMsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NTk4NTQxNDMsImV4cCI6MTc1OTg1Nzc0MywiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.fGBBaDpY_H-VGR8RUqt7E2MznswM0NIOcK832KvkUPg
+
+### ================================================================
+### DASHBOARD & ANALYTICS ENDPOINTS
+### ================================================================
+
+### 1. Dashboard Overview - All-in-one endpoint for admin dashboard
+GET {{baseUrl}}/api/admin/dashboard/overview
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### Expected Response:
+# - UserStats: User statistics
+# - OrderStats: Order statistics  
+# - RecentOrders: Recent orders list
+# - TotalProducts: Total products count
+# - LowStockProducts: Low stock products count  
+# - PendingOrders: Pending orders count
+
+### ================================================================
+
+### 2. Order Statistics - Alternative admin endpoint
+GET {{baseUrl}}/api/admin/orders/stats
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### With date filters
+GET {{baseUrl}}/api/admin/orders/stats?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### Expected Response:
+# - TotalOrders, TotalRevenue, AverageOrderValue
+# - PendingOrders, ConfirmedOrders, ProcessingOrders, etc.
+# - Payment status breakdown
+# - Growth trends and rates
+
+### ================================================================
+
+### 3. Revenue Analytics - Time period breakdown
+GET {{baseUrl}}/api/admin/analytics/revenue?period=month
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### Revenue analytics for different periods
+GET {{baseUrl}}/api/admin/analytics/revenue?period=week
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+GET {{baseUrl}}/api/admin/analytics/revenue?period=year
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### Expected Response:
+# - Period, FromDate, ToDate
+# - TotalRevenue, TotalOrders, AverageOrderValue
+# - DailyBreakdown (when implemented)
+
+### ================================================================
+
+### 4. Product Statistics - Product dashboard metrics
+GET {{baseUrl}}/api/admin/products/stats
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### Expected Response:
+# - TotalProducts: Total products count
+# - ActiveProducts: Active products count  
+# - InactiveProducts: Inactive products count
+# - OutOfStockProducts: Out of stock count
+# - LowStockProducts: Low stock count
+
+### ================================================================
+
+### 5. Top Selling Products - For dashboard widgets
+GET {{baseUrl}}/api/admin/products/top-selling?limit=5
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### Get more top selling products
+GET {{baseUrl}}/api/admin/products/top-selling?limit=10
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### Expected Response:
+# Array of ProductSummaryDto with best selling products
+
+### ================================================================
+### EXISTING ENDPOINTS (Already implemented)
+### ================================================================
+
+### 6. User Statistics - Admin user stats
+GET {{baseUrl}}/api/admin/users/stats
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### 7. Order Stats - Original endpoint (still works)
+GET {{baseUrl}}/api/order/stats
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### 8. Recent Orders - Original endpoint (still works)  
+GET {{baseUrl}}/api/order/recent?limit=10
+Authorization: Bearer {{staffToken}}
+Content-Type: application/json
+
+### ================================================================
+### ADMIN FUNCTIONALITY TESTING
+### ================================================================
+
+### Test Dashboard Flow
+### 1. Login as staff/admin first
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+### 2. Use the token from login response in above requests
+### Copy the token from login response to @staffToken variable
+
+### ================================================================
+### FRONTEND INTEGRATION NOTES
+### ================================================================
+
+### JavaScript Example Usage:
+# const getDashboardData = async () => {
+#   const response = await fetch('/api/admin/dashboard/overview', {
+#     headers: {
+#       'Authorization': `Bearer ${adminToken}`,
+#       'Content-Type': 'application/json'
+#     }
+#   });
+#   return await response.json();
+# };
+
+### Dashboard Widgets Mapping:
+# - Total Users: UserStats.TotalUsers
+# - Active Users: UserStats.ActiveUsers  
+# - Total Orders: OrderStats.TotalOrders
+# - Today Revenue: OrderStats.TotalRevenue (filtered by today)
+# - Pending Orders: OrderStats.PendingOrders
+# - Recent Orders: RecentOrders array
+# - Top Products: From /products/top-selling
+# - Low Stock Alert: LowStockProducts count
+
+### Error Handling:
+# All endpoints return consistent ApiResponse format:
+# {
+#   "success": boolean,
+#   "message": string,
+#   "data": object,
+#   "errors": string[],
+#   "timestamp": datetime
+# }
+
+### Authorization:
+# All endpoints require Staff or Admin role
+# Use "StaffOnly" policy - includes both Staff and Admin roles
+
+### ================================================================
+### MISSING ENDPOINTS (Future Implementation)
+### ================================================================
+
+### These endpoints would be useful for complete admin dashboard:
+
+# GET /api/admin/analytics/revenue/daily       # Daily revenue breakdown
+# GET /api/admin/analytics/users               # User behavior analytics  
+# GET /api/admin/analytics/products            # Product performance analytics
+# GET /api/admin/inventory/alerts              # Inventory alerts
+# GET /api/admin/system/health                 # System health status
+# GET /api/admin/notifications/stats           # Notification statistics
+# POST /api/admin/reports/generate             # Generate custom reports
+# GET /api/admin/dashboard/widgets/{widgetId}  # Individual widget data
+
+### ================================================================

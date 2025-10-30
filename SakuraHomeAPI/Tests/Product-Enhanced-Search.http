@@ -1,0 +1,625 @@
+﻿### =================================================================
+### ENHANCED PRODUCT SEARCH & FILTER COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = https://localhost:8080
+
+
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiI5N2Y2ZTY5OC1kMWQyLTQ3ZmEtYjg2My04NjlhNDkxZmE5NGIiLCJpYXQiOjE3NTkyNDQ4MjMsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NTkyNDQ4MjMsImV4cCI6MTc1OTI0ODQyMywiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.QLSE3MuMz-CwkAlp8sfwhJIdigNKC2ZXc3ixFVY0zbI
+
+@customerToken = {{customerLogin.response.body.data.token}}
+### Quick Login to get tokens
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+###
+# @name customerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+
+### =================================================================
+### BASIC SEARCH FUNCTIONALITY TESTS
+### =================================================================
+
+### 1. ✅ Basic Text Search
+GET {{baseUrl}}/api/product?search=pocky&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 2. ✅ Multi-word Search
+GET {{baseUrl}}/api/product?search=japanese chocolate&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 3. ✅ Search by SKU
+GET {{baseUrl}}/api/product?search=POCKY-CHOC&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 4. ✅ Search by Brand Name
+GET {{baseUrl}}/api/product?search=shiseido&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 5. ✅ Search by Category Name
+GET {{baseUrl}}/api/product?search=beauty&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 6. ✅ Empty Search (should return all active products)
+GET {{baseUrl}}/api/product?search=&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### TAG-BASED SEARCH TESTS
+### =================================================================
+
+### 7. ✅ Search by Single Tag Name
+GET {{baseUrl}}/api/product?tagNames=Premium&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 8. ✅ Search by Multiple Tag Names (ANY logic)
+GET {{baseUrl}}/api/product?tagNames=Premium,Best%20Seller&tagMatchMode=Any&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 9. ✅ Search by Multiple Tag Names (ALL logic)
+GET {{baseUrl}}/api/product?tagNames=New%20Arrival,Japanese%20Snack&tagMatchMode=All&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 10. ✅ Search in Tags Field (string search)
+GET {{baseUrl}}/api/product?tagsSearch=snack&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 11. ✅ Combined Text and Tag Search
+GET {{baseUrl}}/api/product?search=sake&tagsSearch=premium&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 12. ✅ Tag Search with Case Insensitive
+GET {{baseUrl}}/api/product?tagNames=PREMIUM,best%20seller&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### ADVANCED FILTERING TESTS
+### =================================================================
+
+### 13. ✅ Price Range Filter
+GET {{baseUrl}}/api/product?minPrice=100000&maxPrice=500000&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 14. ✅ Rating Filter
+GET {{baseUrl}}/api/product?minRating=4.5&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 15. ✅ Stock Range Filter
+GET {{baseUrl}}/api/product?minStock=50&maxStock=200&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 16. ✅ Weight Range Filter  
+GET {{baseUrl}}/api/product?minWeight=100&maxWeight=500&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 17. ✅ Category with Subcategories
+GET {{baseUrl}}/api/product?categoryId=1&includeSubcategories=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 18. ✅ Brand Filter
+GET {{baseUrl}}/api/product?brandId=3&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 19. ✅ Origin Filter
+GET {{baseUrl}}/api/product?origin=Tokyo&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 20. ✅ Japanese Region Filter
+GET {{baseUrl}}/api/product?japaneseRegion=Tokyo&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 21. ✅ Authenticity Level Filter
+GET {{baseUrl}}/api/product?authenticityLevel=Verified&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### BOOLEAN FILTER TESTS
+### =================================================================
+
+### 22. ✅ In Stock Only
+GET {{baseUrl}}/api/product?inStockOnly=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 23. ✅ On Sale Only
+GET {{baseUrl}}/api/product?onSaleOnly=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 24. ✅ Featured Products Only
+GET {{baseUrl}}/api/product?featuredOnly=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 25. ✅ New Products Only
+GET {{baseUrl}}/api/product?newOnly=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 26. ✅ Bestseller Products
+GET {{baseUrl}}/api/product?isBestseller=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 27. ✅ Limited Edition Products
+GET {{baseUrl}}/api/product?isLimitedEdition=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 28. ✅ Gift Wrapping Available
+GET {{baseUrl}}/api/product?isGiftWrappingAvailable=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 29. ✅ Allow Backorder
+GET {{baseUrl}}/api/product?allowBackorder=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 30. ✅ Has Discount
+GET {{baseUrl}}/api/product?hasDiscount=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### DATE FILTER TESTS
+### =================================================================
+
+### 31. ✅ Created Date Range
+GET {{baseUrl}}/api/product?createdFrom=2024-01-01&createdTo=2024-12-31&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 32. ✅ Available Date Range
+GET {{baseUrl}}/api/product?availableFrom=2023-01-01&availableUntil=2024-12-31&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 33. ✅ Recent Products (Last 30 days)
+GET {{baseUrl}}/api/product?createdFrom=2024-07-01&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### SORTING TESTS
+### =================================================================
+
+### 34. ✅ Sort by Name (Ascending)
+GET {{baseUrl}}/api/product?sortBy=name&sortOrder=asc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 35. ✅ Sort by Name (Descending)
+GET {{baseUrl}}/api/product?sortBy=name&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 36. ✅ Sort by Price (Low to High)
+GET {{baseUrl}}/api/product?sortBy=price&sortOrder=asc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 37. ✅ Sort by Price (High to Low)
+GET {{baseUrl}}/api/product?sortBy=price&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 38. ✅ Sort by Rating (Best First)
+GET {{baseUrl}}/api/product?sortBy=rating&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 39. ✅ Sort by Newest
+GET {{baseUrl}}/api/product?sortBy=created&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 40. ✅ Sort by Most Sold
+GET {{baseUrl}}/api/product?sortBy=sold&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 41. ✅ Sort by Most Viewed
+GET {{baseUrl}}/api/product?sortBy=views&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 42. ✅ Sort by Stock Level
+GET {{baseUrl}}/api/product?sortBy=stock&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 43. ✅ Sort by Popularity (Views + Sales + Rating)
+GET {{baseUrl}}/api/product?sortBy=popularity&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 44. ✅ Sort by Discount Percentage
+GET {{baseUrl}}/api/product?sortBy=discount&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 45. ✅ Sort by Relevance (with search term)
+GET {{baseUrl}}/api/product?search=sake&sortBy=relevance&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### COMPLEX COMBINED FILTER TESTS
+### =================================================================
+
+### 46. ✅ Complex Search: Text + Category + Price Range + Tags
+GET {{baseUrl}}/api/product?search=japanese&categoryId=1&minPrice=50000&maxPrice=300000&tagsSearch=premium&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 47. ✅ Complex Filter: Brand + Stock + Sale + Featured
+GET {{baseUrl}}/api/product?brandId=3&inStockOnly=true&hasDiscount=true&isFeatured=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 48. ✅ Complex Filter: Origin + Rating + Weight + Date
+GET {{baseUrl}}/api/product?origin=Tokyo&minRating=4&minWeight=100&createdFrom=2024-01-01&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 49. ✅ Complex Filter: Multiple Boolean Filters
+GET {{baseUrl}}/api/product?isFeatured=true&isNew=false&isBestseller=true&isGiftWrappingAvailable=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 50. ✅ Complex Filter: Tag Combinations
+GET {{baseUrl}}/api/product?tagNames=Premium,Japanese&tagMatchMode=All&tagsSearch=authentic&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PERFORMANCE & EDGE CASE TESTS
+### =================================================================
+
+### 51. ✅ Large Page Size
+GET {{baseUrl}}/api/product?page=1&pageSize=50&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 52. ✅ High Page Number
+GET {{baseUrl}}/api/product?page=10&pageSize=5&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 53. ✅ Very Specific Search (Should return few results)
+GET {{baseUrl}}/api/product?search=pocky%20chocolate&brandId=3&minPrice=40000&maxPrice=50000&isFeatured=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 54. ✅ No Results Search
+GET {{baseUrl}}/api/product?search=nonexistentproduct12345&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 55. ✅ Special Characters in Search
+GET {{baseUrl}}/api/product?search=pock%26%20chocolate&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 56. ✅ Minimum Filters for Performance Test
+GET {{baseUrl}}/api/product?search=a&minPrice=0&maxPrice=999999999&minRating=0&inStockOnly=false&onSaleOnly=false&page=1&pageSize=100
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### VALIDATION ERROR TESTS
+### =================================================================
+
+### 57. ❌ Invalid Page Number
+GET {{baseUrl}}/api/product?page=0&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 58. ❌ Invalid Page Size
+GET {{baseUrl}}/api/product?page=1&pageSize=0
+Authorization: Bearer {{customerToken}}
+
+### 59. ❌ Invalid Price Range
+GET {{baseUrl}}/api/product?minPrice=500000&maxPrice=100000&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 60. ❌ Invalid Rating
+GET {{baseUrl}}/api/product?minRating=6&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 61. ❌ Invalid Sort Field
+GET {{baseUrl}}/api/product?sortBy=invalidfield&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 62. ❌ Invalid Sort Order
+GET {{baseUrl}}/api/product?sortBy=price&sortOrder=invalid&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 63. ❌ Negative Price
+GET {{baseUrl}}/api/product?minPrice=-100&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 64. ❌ Invalid Category ID
+GET {{baseUrl}}/api/product?categoryId=0&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 65. ❌ Invalid Brand ID
+GET {{baseUrl}}/api/product?brandId=-1&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 66. ❌ Too Long Search Term
+GET {{baseUrl}}/api/product?search={{string_101_chars}}&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### SECURITY TESTS
+### =================================================================
+
+### 67. 🔒 SQL Injection in Search
+GET {{baseUrl}}/api/product?search=' OR 1=1 --&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 68. 🔒 XSS in Search
+GET {{baseUrl}}/api/product?search=<script>alert('xss')</script>&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 69. 🔒 SQL Injection in Tags Search
+GET {{baseUrl}}/api/product?tagsSearch=' UNION SELECT * FROM Users --&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 70. 🔒 Script Injection in Tag Names
+GET {{baseUrl}}/api/product?tagNames=<script>alert('xss')</script>&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### REAL-WORLD SCENARIO TESTS
+### =================================================================
+
+### 71. 🛍️ Customer Looking for Japanese Snacks
+GET {{baseUrl}}/api/product?search=japanese&categoryId=1&tagsSearch=snack&inStockOnly=true&sortBy=rating&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 72. 🛍️ Customer Looking for Premium Beauty Products
+GET {{baseUrl}}/api/product?categoryId=2&tagNames=Premium,Luxury&minPrice=500000&sortBy=rating&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 73. 🛍️ Customer Looking for Sale Items
+GET {{baseUrl}}/api/product?hasDiscount=true&sortBy=discount&page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 74. 🛍️ Customer Looking for Gift Items
+GET {{baseUrl}}/api/product?isGiftWrappingAvailable=true&isFeatured=true&sortBy=popularity&page=1&pageSize=15
+Authorization: Bearer {{customerToken}}
+
+### 75. 🛍️ Customer Price-Conscious Shopping
+GET {{baseUrl}}/api/product?maxPrice=200000&inStockOnly=true&sortBy=price&sortOrder=asc&page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 76. 🛍️ Customer Looking for New Arrivals
+GET {{baseUrl}}/api/product?isNew=true&sortBy=created&sortOrder=desc&page=1&pageSize=12
+Authorization: Bearer {{customerToken}}
+
+### 77. 🛍️ Customer Brand Shopping
+GET {{baseUrl}}/api/product?brandId=1&sortBy=rating&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 78. 🛍️ Customer Looking for Authentic Japanese Products
+GET {{baseUrl}}/api/product?japaneseRegion=Tokyo&authenticityLevel=Verified&tagNames=Authentic,Traditional&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### ADMIN/STAFF ADVANCED SEARCH TESTS
+### =================================================================
+
+### 79. 👨‍💼 Admin Stock Management Search
+GET {{baseUrl}}/api/product?minStock=0&maxStock=20&sortBy=stock&sortOrder=asc&page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### 80. 👨‍💼 Admin Product Performance Search
+GET {{baseUrl}}/api/product?sortBy=sold&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{adminToken}}
+
+### 81. 👨‍💼 Admin Featured Products Management
+GET {{baseUrl}}/api/product?isFeatured=true&sortBy=views&sortOrder=desc&page=1&pageSize=25
+Authorization: Bearer {{adminToken}}
+
+### 82. 👨‍💼 Admin New Products Review
+GET {{baseUrl}}/api/product?createdFrom=2024-08-01&sortBy=created&sortOrder=desc&page=1&pageSize=15
+Authorization: Bearer {{adminToken}}
+
+### 83. 👨‍💼 Admin Sale Performance Analysis
+GET {{baseUrl}}/api/product?hasDiscount=true&sortBy=sold&sortOrder=desc&page=1&pageSize=20
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### COMPREHENSIVE FILTER COMBINATION TESTS
+### =================================================================
+
+### 84. 🔧 Maximum Realistic Filters
+GET {{baseUrl}}/api/product?search=japanese&categoryId=1&brandId=3&minPrice=50000&maxPrice=500000&minRating=4&tagsSearch=premium&inStockOnly=true&isFeatured=true&sortBy=relevance&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 85. 🔧 Regional + Authenticity + Quality Filters
+GET {{baseUrl}}/api/product?japaneseRegion=Tokyo&authenticityLevel=Verified&minRating=4.5&tagNames=Premium,Authentic&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 86. 🔧 Inventory + Sales + Date Filters
+GET {{baseUrl}}/api/product?minStock=10&isBestseller=true&createdFrom=2024-01-01&sortBy=sold&sortOrder=desc&page=1&pageSize=15
+Authorization: Bearer {{customerToken}}
+
+### 87. 🔧 Customer Preference Filters
+GET {{baseUrl}}/api/product?isGiftWrappingAvailable=true&allowBackorder=false&hasDiscount=true&minRating=4&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PAGINATION STRESS TESTS
+### =================================================================
+
+### 88. 📄 Test Deep Pagination
+GET {{baseUrl}}/api/product?page=50&pageSize=5
+Authorization: Bearer {{customerToken}}
+
+### 89. 📄 Test Large Page Size with Filters
+GET {{baseUrl}}/api/product?categoryId=1&page=1&pageSize=100
+Authorization: Bearer {{customerToken}}
+
+### 90. 📄 Test Pagination with Complex Search
+GET {{baseUrl}}/api/product?search=japanese&tagNames=Premium&page=5&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### RESPONSE TIME & PERFORMANCE TESTS
+### =================================================================
+
+### 91. ⚡ Simple Search Performance
+GET {{baseUrl}}/api/product?search=sake&page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 92. ⚡ Complex Filter Performance
+GET {{baseUrl}}/api/product?search=japanese&categoryId=1&minPrice=50000&maxPrice=500000&inStockOnly=true&isFeatured=true&sortBy=relevance&page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 93. ⚡ Tag Search Performance
+GET {{baseUrl}}/api/product?tagNames=Premium,Best%20Seller,Japanese&tagMatchMode=Any&page=1&pageSize=25
+Authorization: Bearer {{customerToken}}
+
+### 94. ⚡ Sort Performance Test
+GET {{baseUrl}}/api/product?sortBy=popularity&page=1&pageSize=50
+Authorization: Bearer {{customerToken}}
+
+### 95. ⚡ Full-Text Search Performance
+GET {{baseUrl}}/api/product?search=traditional%20japanese%20authentic%20premium&sortBy=relevance&page=1&pageSize=30
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### DATA CONSISTENCY TESTS
+### =================================================================
+
+### 96. 🔄 Verify Search Results Consistency
+GET {{baseUrl}}/api/product?search=pocky&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 97. 🔄 Verify Filter Results Consistency
+GET {{baseUrl}}/api/product?categoryId=1&brandId=3&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 98. 🔄 Verify Sort Results Consistency
+GET {{baseUrl}}/api/product?sortBy=price&sortOrder=asc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 99. 🔄 Verify Tag Results Consistency
+GET {{baseUrl}}/api/product?tagNames=Premium&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 100. 🔄 Final Comprehensive Test
+GET {{baseUrl}}/api/product?search=japanese&categoryId=1&minPrice=50000&tagNames=Premium&inStockOnly=true&sortBy=relevance&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### TEST SUMMARY & EXPECTED RESULTS
+### =================================================================
+
+###
+### ✅ ENHANCED SEARCH FEATURES TESTED:
+### 
+### 🔍 Text Search Improvements:
+### - Multi-word search with OR logic
+### - Search across name, description, SKU, brand, category
+### - Case-insensitive search
+### - Special character handling
+### - Relevance-based sorting
+### 
+### 🏷️ Tag-Based Search (NEW):
+### - Search by tag names with ANY/ALL logic
+### - Search in Tags field (string-based)
+### - Case-insensitive tag matching
+### - Combined text and tag search
+### - Tag ID filtering (when Tag entity exists)
+### 
+### 🎛️ Enhanced Filtering:
+### - Stock range filtering
+### - Weight range filtering  
+### - Date range filtering (created, available)
+### - Origin and region filtering
+### - Authenticity level filtering
+### - Age restriction filtering
+### - Boolean filter combinations
+### 
+### 📊 Advanced Sorting:
+### - Relevance-based sorting for search
+### - Popularity sorting (views + sales + rating)
+### - Discount percentage sorting
+### - Multi-field sorting fallbacks
+### - Performance-optimized sorting
+### 
+### 🔧 Filter Validation:
+### - Range validation (price, weight, stock, dates)
+### - Boolean filter conflict detection
+### - Maximum filter limits for performance
+### - Input sanitization and security
+### - Complex validation rules
+### 
+### 🛡️ Security Enhancements:
+### - SQL injection prevention
+### - XSS attack prevention
+### - Input length validation
+### - Parameter sanitization
+### - Safe query building
+### 
+### ⚡ Performance Optimizations:
+### - Efficient query building
+### - Reduced N+1 queries
+### - Optimized filtering logic
+### - Smart pagination handling
+### - Relevance scoring optimization
+### 
+### 📊 EXPECTED RESPONSE IMPROVEMENTS:
+### 
+### ✅ Better Search Results:
+### - More relevant results with scoring
+### - Faster response times
+### - Accurate tag-based filtering
+### - Comprehensive filter combinations
+### - Consistent sorting behavior
+### 
+### ✅ Enhanced User Experience:
+### - Intuitive tag searching
+### - Flexible filter combinations
+### - Responsive performance
+### - Clear error messages
+### - Comprehensive validation
+### 
+### 🎯 PERFORMANCE TARGETS:
+### 
+### - Simple search: < 200ms
+### - Complex filters: < 400ms
+### - Tag search: < 300ms
+### - Sort operations: < 250ms
+### - Combined operations: < 500ms
+### 
+### 📋 VALIDATION SUCCESS CRITERIA:
+### 
+### ✅ Functional Requirements:
+### - All tag searches work correctly
+### - Filter combinations produce accurate results
+### - Sorting works for all supported fields
+### - Pagination works with all filter combinations
+### - Error handling is comprehensive
+### 
+### ✅ Performance Requirements:
+### - Response times meet targets
+### - Complex queries are optimized
+### - Memory usage is efficient
+### - Database queries are optimized
+### - No N+1 query problems
+### 
+### ✅ Security Requirements:
+### - All inputs are properly validated
+### - SQL injection is prevented
+### - XSS attacks are blocked
+### - Parameter limits are enforced
+### - Query complexity is controlled
+### 
+### 🚨 TROUBLESHOOTING GUIDE:
+### 
+### If tag searches fail:
+### 1. Verify Tags field has data in expected format
+### 2. Check case sensitivity in searches
+### 3. Validate tag name formatting
+### 4. Confirm TagMatchMode logic
+### 
+### If performance is slow:
+### 1. Check database indexes on search fields
+### 2. Monitor query execution plans
+### 3. Verify filter combination efficiency
+### 4. Check pagination implementation
+### 
+### If filters don't work:
+### 1. Validate filter parameter names
+### 2. Check data type conversions
+### 3. Verify filter logic implementation
+### 4. Test filter combinations individually
+### 
+### If sorting fails:
+### 1. Verify sort field names match exactly
+### 2. Check database field availability
+### 3. Test sort order implementation
+### 4. Validate relevance scoring logic
+###

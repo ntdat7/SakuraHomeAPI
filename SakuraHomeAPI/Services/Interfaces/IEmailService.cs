@@ -1,6 +1,7 @@
-using SakuraHomeAPI.Models.DTOs;
+﻿using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities.Orders;
 using SakuraHomeAPI.Models.Enums;
+using SakuraHomeAPI.Models.Entities;
 
 namespace SakuraHomeAPI.Services.Interfaces
 {
@@ -72,7 +73,7 @@ namespace SakuraHomeAPI.Services.Interfaces
         /// <summary>
         /// Get email template
         /// </summary>
-        Task<Models.Entities.NotificationTemplate?> GetEmailTemplateAsync(string templateName, string language = "vi");
+        Task<NotificationTemplate?> GetEmailTemplateAsync(string templateName, string language = "vi");
 
         /// <summary>
         /// Test email configuration

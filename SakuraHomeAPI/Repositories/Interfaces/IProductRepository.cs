@@ -1,9 +1,10 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using SakuraHomeAPI.Models.Entities;
 using SakuraHomeAPI.Models.Entities.Products;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.DTOs.Products.Requests;
 using SakuraHomeAPI.DTOs.Products.Responses;
+using SakuraHomeAPI.DTOs.Products.Components;
 
 namespace SakuraHomeAPI.Repositories.Interfaces
 {
@@ -225,22 +226,5 @@ namespace SakuraHomeAPI.Repositories.Interfaces
             CancellationToken cancellationToken = default);
 
         #endregion
-    }
-
-    /// <summary>
-    /// Product statistics DTO
-    /// </summary>
-    public class ProductStatisticsDto
-    {
-        public int ProductId { get; set; }
-        public int ViewCount { get; set; }
-        public int SoldCount { get; set; }
-        public int ReviewCount { get; set; }
-        public decimal AverageRating { get; set; }
-        public int WishlistCount { get; set; }
-        public int CartCount { get; set; }
-        public decimal Revenue { get; set; }
-        public DateTime LastSold { get; set; }
-        public DateTime LastViewed { get; set; }
     }
 }

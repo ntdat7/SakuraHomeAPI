@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Admin.Requests;
 using SakuraHomeAPI.DTOs.Admin.Responses;
-using SakuraHomeAPI.Models.DTOs;
+using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
@@ -72,7 +72,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     EmailConfirmed = u.EmailConfirmed,
                     PhoneNumberConfirmed = u.PhoneNumberConfirmed,
                     CreatedAt = u.CreatedAt,
-                    LastLoginAt = u.LastLoginAt
+                    LastLoginAt = u.LastLoginAt,
+                    // Add statistical fields
+                    TotalSpent = u.TotalSpent,
+                    TotalOrders = u.TotalOrders,
+                    Points = u.Points,
+                    LastOrderDate = u.LastOrderDate
                 }).ToList();
                 var response = new AdminUserListResponseDto
                 {
@@ -113,7 +118,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
                     CreatedAt = user.CreatedAt,
-                    LastLoginAt = user.LastLoginAt
+                    LastLoginAt = user.LastLoginAt,
+                    // Add statistical fields
+                    TotalSpent = user.TotalSpent,
+                    TotalOrders = user.TotalOrders,
+                    Points = user.Points,
+                    LastOrderDate = user.LastOrderDate
                 };
                 return ApiResponse.SuccessResult(dto, "User detail retrieved successfully");
             }
@@ -165,7 +175,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
                     CreatedAt = user.CreatedAt,
-                    LastLoginAt = user.LastLoginAt
+                    LastLoginAt = user.LastLoginAt,
+                    // Add statistical fields
+                    TotalSpent = user.TotalSpent,
+                    TotalOrders = user.TotalOrders,
+                    Points = user.Points,
+                    LastOrderDate = user.LastOrderDate
                 };
                 return ApiResponse.SuccessResult(dto, "User created successfully");
             }
@@ -212,7 +227,12 @@ namespace SakuraHomeAPI.Services.Implementations
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
                     CreatedAt = user.CreatedAt,
-                    LastLoginAt = user.LastLoginAt
+                    LastLoginAt = user.LastLoginAt,
+                    // Add statistical fields
+                    TotalSpent = user.TotalSpent,
+                    TotalOrders = user.TotalOrders,
+                    Points = user.Points,
+                    LastOrderDate = user.LastOrderDate
                 };
                 return ApiResponse.SuccessResult(dto, "User updated successfully");
             }

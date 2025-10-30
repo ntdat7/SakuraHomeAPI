@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Shipping.Requests;
-using SakuraHomeAPI.Models.DTOs;
 using SakuraHomeAPI.Services.Interfaces;
 using System.Security.Claims;
 
@@ -53,7 +52,7 @@ namespace SakuraHomeAPI.Controllers
         public async Task<ActionResult<ApiResponse<object>>> GetShippingZone(int id)
         {
             var result = await _shippingService.GetShippingZoneByIdAsync(id);
-            
+
             if (!result.IsSuccess)
             {
                 return NotFound(result);
@@ -69,7 +68,7 @@ namespace SakuraHomeAPI.Controllers
         public async Task<ActionResult<ApiResponse<object>>> TrackShipping(string trackingNumber)
         {
             var result = await _shippingService.TrackShippingAsync(trackingNumber);
-            
+
             if (!result.IsSuccess)
             {
                 return NotFound(result);
@@ -113,7 +112,7 @@ namespace SakuraHomeAPI.Controllers
         public async Task<ActionResult<ApiResponse<object>>> GetShippingOrder(int id)
         {
             var result = await _shippingService.GetShippingOrderByIdAsync(id);
-            
+
             if (!result.IsSuccess)
             {
                 return NotFound(result);

@@ -1,0 +1,1142 @@
+﻿### =================================================================
+### PRODUCT MANAGEMENT API - COMPREHENSIVE TEST SUITE
+### =================================================================
+@baseUrl = https://localhost:8080
+
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiIzODk5ZThhYi1mOTlhLTQ4ODUtYjcxMi01M2EzMzdiMTljM2YiLCJpYXQiOjE3NjAxNDM1MTYsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NjAxNDM1MTYsImV4cCI6MTc2MDE0NzExNiwiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.scKh6AHhkzu8Fi32GKnujRSqHMxUKbLSH7NiRxnNbwc
+### Quick Login to get tokens
+# @name adminLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
+  "rememberMe": true
+}
+
+
+### @name customerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@sakurahome.com",
+  "password": "Customer123!",
+  "rememberMe": false
+}
+
+@customerToken = {{customerLogin.response.body.data.token}}
+
+### =================================================================
+### PRODUCT DISCOVERY & BROWSING (PUBLIC/CUSTOMER)
+### =================================================================
+
+### 1. ✅ Get All Products (Public)
+GET {{baseUrl}}/api/product?page=1&pageSize=20
+
+### 2. ✅ Get All Products (Authenticated)
+GET {{baseUrl}}/api/product?page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 3. ✅ Get Products with Basic Filters
+GET {{baseUrl}}/api/product?page=1&pageSize=10&minPrice=100000&maxPrice=500000&inStock=true
+Authorization: Bearer {{customerToken}}
+
+### 4. ✅ Get Products with Category Filter
+GET {{baseUrl}}/api/product?categoryId=1&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 5. ✅ Get Products with Brand Filter
+GET {{baseUrl}}/api/product?brandId=1&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 6. ✅ Get Featured Products
+GET {{baseUrl}}/api/product?featured=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 7. ✅ Get Products on Sale
+GET {{baseUrl}}/api/product?onSale=true&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 8. ✅ Get Products with Sorting (Price Low to High)
+GET {{baseUrl}}/api/product?sortBy=Price&sortOrder=asc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 9. ✅ Get Products with Sorting (Popularity)
+GET {{baseUrl}}/api/product?sortBy=Popularity&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 10. ✅ Get Products with Sorting (Newest)
+GET {{baseUrl}}/api/product?sortBy=CreatedDate&sortOrder=desc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 11. ✅ Search Products by Name
+GET {{baseUrl}}/api/product?search=sake&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 12. ✅ Complex Product Search
+GET {{baseUrl}}/api/product?search=sake&categoryId=1&minPrice=200000&maxPrice=1000000&sortBy=Price&sortOrder=asc&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### INDIVIDUAL PRODUCT OPERATIONS
+### =================================================================
+
+### 13. ✅ Get Product by ID
+GET {{baseUrl}}/api/product/1
+Authorization: Bearer {{customerToken}}
+
+### 14. ✅ Get Product by SKU
+GET {{baseUrl}}/api/product/sku/SAKE001
+Authorization: Bearer {{customerToken}}
+
+### 15. ❌ Get Non-existent Product
+GET {{baseUrl}}/api/product/99999
+Authorization: Bearer {{customerToken}}
+
+### 16. ❌ Get Product with Invalid SKU
+GET {{baseUrl}}/api/product/sku/INVALID_SKU
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PRODUCT CREATION (ADMIN/STAFF)
+### =================================================================
+
+### 17. ✅ Create Simple Product
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Premium Japanese Sake Dassai 39 Junmai Daiginjo",
+  "sku": "DASSAI-39-720ML-2024",
+  "shortDescription": "Premium Japanese sake crafted with traditional brewing techniques",
+  "description": "Dassai 39 Junmai Daiginjo is a premium Japanese sake made from highly polished rice (39% remaining). This exceptional sake offers a delicate, fruity aroma with hints of apple and pear, balanced by a clean, smooth finish. Perfect for special occasions or as a gift for sake enthusiasts.",
+  "mainImage": "https://example.com/images/dassai-39-main.jpg",
+  "price": 850000,
+  "originalPrice": 950000,
+  "costPrice": 650000,
+  "stock": 50,
+  "minStock": 5,
+  "maxStock": 200,
+  "trackInventory": true,
+  "allowBackorder": false,
+  "allowPreorder": true,
+  "brandId": 1,
+  "categoryId": 1,
+  "origin": "Japan",
+  "japaneseRegion": 6,
+  "authenticityLevel": 3,
+  "authenticityInfo": "Certified by Japanese Sake Association with official import documentation",
+  "usageGuide": "Best served chilled at 8-12°C. Can be enjoyed as an aperitif or paired with sushi, sashimi, or light Japanese cuisine.",
+  "ingredients": "Rice, Water, Koji, Yeast (Rice polishing ratio: 39%)",
+  "expiryDate": "2025-12-31T23:59:59Z",
+  "manufactureDate": "2024-01-15T00:00:00Z",
+  "batchNumber": "DASSAI-2024-001",
+  "ageRestriction": 18,
+  "weight": 1200,
+  "weightUnit": 2,
+  "dimensions": "8.5x8.5x32.0",
+  "length": 8.5,
+  "width": 8.5,
+  "height": 32.0,
+  "dimensionUnit": 1,
+  "status": 1,
+  "condition": 1,
+  "visibility": 1,
+  "isFeatured": true,
+  "isNew": true,
+  "isBestseller": false,
+  "isLimitedEdition": true,
+  "isGiftWrappingAvailable": true,
+  "giftWrappingFee": 25000,
+  "tags": "premium, japanese, sake, dassai, junmai daiginjo, authentic, gift, limited edition",
+  "marketingDescription": "Experience the pinnacle of Japanese sake craftsmanship with Dassai 39 - a masterpiece that represents centuries of brewing tradition",
+  "availableFrom": "2024-01-01T00:00:00Z",
+  "availableUntil": "2024-12-31T23:59:59Z",
+  "images": [
+    {
+      "imageUrl": "https://example.com/images/dassai-39-main.jpg",
+      "altText": "Dassai 39 Junmai Daiginjo Main Bottle",
+      "isMain": true,
+      "displayOrder": 1
+    },
+    {
+      "imageUrl": "https://example.com/images/dassai-39-label.jpg",
+      "altText": "Dassai 39 Label Close-up",
+      "isMain": false,
+      "displayOrder": 2
+    },
+    {
+      "imageUrl": "https://example.com/images/dassai-39-serving.jpg",
+      "altText": "Dassai 39 Serving Suggestion",
+      "isMain": false,
+      "displayOrder": 3
+    },
+    {
+      "imageUrl": "https://example.com/images/dassai-39-gift-box.jpg",
+      "altText": "Dassai 39 Gift Box",
+      "isMain": false,
+      "displayOrder": 4
+    }
+  ],
+  "variants": [
+    {
+      "sku": "DASSAI-39-720ML-GIFT",
+      "name": "Gift Box Edition",
+      "price": 950000,
+      "stock": 20,
+      "attributes": {
+        "Package Type": "Premium Gift Box",
+        "Volume": "720ml",
+        "Gift Card": "Included"
+      }
+    },
+    {
+      "sku": "DASSAI-39-300ML-MINI",
+      "name": "Mini Bottle",
+      "price": 450000,
+      "stock": 30,
+      "attributes": {
+        "Package Type": "Standard Box",
+        "Volume": "300ml",
+        "Perfect For": "Tasting"
+      }
+    }
+  ],
+  "attributes": [
+    {
+      "attributeId": 1,
+      "value": "16%"
+    },
+    {
+      "attributeId": 2,
+      "value": "720ml"
+    },
+    {
+      "attributeId": 3,
+      "value": "Junmai Daiginjo"
+    },
+    {
+      "attributeId": 4,
+      "value": "39%"
+    },
+    {
+      "attributeId": 5,
+      "value": "Yamaguchi"
+    },
+    {
+      "attributeId": 6,
+      "value": "Asahi Shuzo"
+    },
+    {
+      "attributeId": 7,
+      "value": "8-12°C"
+    },
+    {
+      "attributeId": 8,
+      "value": "Fruity, Clean, Smooth"
+    },
+    {
+      "attributeId": 9,
+      "value": "Apple, Pear, Floral"
+    },
+    {
+      "attributeId": 10,
+      "value": "Sushi, Sashimi, Light Japanese Cuisine"
+    }
+  ],
+  "tagIds": [1, 2, 3, 5, 8]
+}
+### 18. ✅ Create Product with Variants
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Test Wine Collection",
+  "description": "Premium wine collection with multiple variants",
+  "sku": "TEST_WINE_001",
+  "price": 350000,
+  "categoryId": 2,
+  "brandId": 2,
+  "stockQuantity": 50,
+  "isActive": true,
+  "variants": [
+    {
+      "sku": "TEST_WINE_001_RED",
+      "name": "Red Wine",
+      "price": 350000,
+      "stockQuantity": 25,
+      "attributes": [
+        {"name": "Color", "value": "Red"},
+        {"name": "Volume", "value": "750ml"}
+      ]
+    },
+    {
+      "sku": "TEST_WINE_001_WHITE",
+      "name": "White Wine", 
+      "price": 320000,
+      "stockQuantity": 25,
+      "attributes": [
+        {"name": "Color", "value": "White"},
+        {"name": "Volume", "value": "750ml"}
+      ]
+    }
+  ]
+}
+
+### 19. ✅ Create Product with Images
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Test Beverage with Images",
+  "description": "Test product with multiple images",
+  "sku": "TEST_IMG_001",
+  "price": 200000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 75,
+  "isActive": true,
+  "images": [
+    {
+      "url": "https://example.com/product1-main.jpg",
+      "altText": "Main product image",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://example.com/product1-side.jpg",
+      "altText": "Side view",
+      "isPrimary": false,
+      "displayOrder": 2
+    }
+  ]
+}
+
+### 20. ✅ Create Product with Attributes
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Test Premium Sake",
+  "description": "Premium sake with detailed attributes",
+  "sku": "TEST_ATTR_001",
+  "price": 600000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 30,
+  "isActive": true,
+  "attributes": [
+    {"name": "Alcohol Content", "value": "15%"},
+    {"name": "Volume", "value": "720ml"},
+    {"name": "Type", "value": "Junmai Daiginjo"},
+    {"name": "Origin", "value": "Japan"},
+    {"name": "Rice Polishing Ratio", "value": "50%"}
+  ]
+}
+
+### 21. ❌ Create Product with Missing Required Fields
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "description": "Product without name and SKU",
+  "price": 100000
+}
+
+### 22. ❌ Create Product with Duplicate SKU
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Duplicate SKU Test",
+  "sku": "TEST_SAKE_001",
+  "price": 100000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 10
+}
+
+### 23. ❌ Create Product with Invalid Price
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Invalid Price Product",
+  "sku": "INVALID_PRICE_001",
+  "price": -100000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 10
+}
+
+### 24. ❌ Create Product without Authorization
+POST {{baseUrl}}/api/product
+Content-Type: application/json
+
+{
+  "name": "Unauthorized Product",
+  "sku": "UNAUTH_001",
+  "price": 100000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 10
+}
+
+### 25. ❌ Customer Trying to Create Product
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "name": "Customer Created Product",
+  "sku": "CUSTOMER_001",
+  "price": 100000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 10
+}
+
+### =================================================================
+### PRODUCT UPDATES (ADMIN/STAFF)
+### =================================================================
+
+### 26. ✅ Update Product Basic Information
+PUT {{baseUrl}}/api/product/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Premium Sake",
+  "description": "Updated description for premium sake",
+  "price": 480000,
+  "compareAtPrice": 520000,
+  "isActive": true,
+  "isFeatured": true,
+  "tags": ["premium", "updated", "sake", "featured"]
+}
+
+### 27. ✅ Update Product Stock
+PATCH {{baseUrl}}/api/product/1/stock
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "stockQuantity": 150,
+  "lowStockThreshold": 15,
+  "allowBackorder": true
+}
+
+### 28. ✅ Update Product Images
+PUT {{baseUrl}}/api/product/1/images
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "images": [
+    {
+      "url": "https://example.com/updated-main.jpg",
+      "altText": "Updated main image",
+      "isPrimary": true,
+      "displayOrder": 1
+    },
+    {
+      "url": "https://example.com/updated-gallery1.jpg",
+      "altText": "Gallery image 1",
+      "isPrimary": false,
+      "displayOrder": 2
+    }
+  ]
+}
+
+### 29. ✅ Update Product Attributes
+PUT {{baseUrl}}/api/product/1/attributes
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "attributes": [
+    {"name": "Alcohol Content", "value": "16%"},
+    {"name": "Volume", "value": "720ml"},
+    {"name": "Type", "value": "Junmai Daiginjo"},
+    {"name": "Updated Attribute", "value": "New Value"}
+  ]
+}
+
+### 30. ✅ Activate/Deactivate Product
+PATCH {{baseUrl}}/api/product/1/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+### 31. ✅ Reactivate Product
+PATCH {{baseUrl}}/api/product/1/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+### 32. ❌ Update Non-existent Product
+PUT {{baseUrl}}/api/product/99999
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Non-existent Product Update"
+}
+
+### 33. ❌ Customer Trying to Update Product
+PUT {{baseUrl}}/api/product/1
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "name": "Customer Update Attempt"
+}
+
+### =================================================================
+### PRODUCT DELETION (ADMIN/STAFF)
+### =================================================================
+
+### 34. ✅ Soft Delete Product
+DELETE {{baseUrl}}/api/product/2
+Authorization: Bearer {{adminToken}}
+
+### 35. ❌ Delete Non-existent Product
+DELETE {{baseUrl}}/api/product/99999
+Authorization: Bearer {{adminToken}}
+
+### 36. ❌ Customer Trying to Delete Product
+DELETE {{baseUrl}}/api/product/3
+Authorization: Bearer {{customerToken}}
+
+### 37. ❌ Delete Product without Authorization
+DELETE {{baseUrl}}/api/product/4
+
+### =================================================================
+### ADVANCED PRODUCT SEARCH & FILTERING
+### =================================================================
+
+### 38. ✅ Search with Multiple Categories
+GET {{baseUrl}}/api/product?categoryIds=1,2,3&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 39. ✅ Search with Multiple Brands
+GET {{baseUrl}}/api/product?brandIds=1,2&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 40. ✅ Search with Price Range and Rating
+GET {{baseUrl}}/api/product?minPrice=200000&maxPrice=800000&minRating=4&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 41. ✅ Search with Attributes Filter
+GET {{baseUrl}}/api/product?attributes=Alcohol%20Content:15%,Volume:720ml&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 42. ✅ Search with Tags Filter
+GET {{baseUrl}}/api/product?tags=premium,sake&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 43. ✅ Search with Availability Filter
+GET {{baseUrl}}/api/product?availability=InStock&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 44. ✅ Search Out of Stock Products
+GET {{baseUrl}}/api/product?availability=OutOfStock&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 45. ✅ Search with Date Range
+GET {{baseUrl}}/api/product?createdFrom=2024-01-01&createdTo=2024-12-31&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 46. ✅ Full-Text Search
+GET {{baseUrl}}/api/product/search?query=premium%20japanese%20sake&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 47. ✅ Search Suggestions
+GET {{baseUrl}}/api/product/search/suggestions?query=sak
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PRODUCT VARIANTS & OPTIONS
+### =================================================================
+
+### 48. ✅ Get Product Variants
+GET {{baseUrl}}/api/product/1/variants
+Authorization: Bearer {{customerToken}}
+
+### 49. ✅ Get Specific Variant
+GET {{baseUrl}}/api/product/variants/1
+Authorization: Bearer {{customerToken}}
+
+### 50. ✅ Add Product Variant (Admin)
+POST {{baseUrl}}/api/product/1/variants
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "sku": "TEST_SAKE_001_LARGE",
+  "name": "Large Size",
+  "price": 550000,
+  "stockQuantity": 25,
+  "attributes": [
+    {"name": "Size", "value": "1800ml"},
+    {"name": "Package", "value": "Gift Box"}
+  ]
+}
+
+### 51. ✅ Update Product Variant
+PUT {{baseUrl}}/api/product/variants/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Updated Variant Name",
+  "price": 525000,
+  "stockQuantity": 30,
+  "isActive": true
+}
+
+### 52. ✅ Delete Product Variant
+DELETE {{baseUrl}}/api/product/variants/2
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### PRODUCT REVIEWS & RATINGS
+### =================================================================
+
+### 53. ✅ Get Product Reviews
+GET {{baseUrl}}/api/product/1/reviews?page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 54. ✅ Get Product Review Summary
+GET {{baseUrl}}/api/product/1/reviews/summary
+Authorization: Bearer {{customerToken}}
+
+### 55. ✅ Get Reviews with Rating Filter
+GET {{baseUrl}}/api/product/1/reviews?rating=5&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 56. ✅ Get Reviews with Date Filter
+GET {{baseUrl}}/api/product/1/reviews?fromDate=2024-01-01&toDate=2024-12-31&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PRODUCT RECOMMENDATIONS
+### =================================================================
+
+### 57. ✅ Get Related Products
+GET {{baseUrl}}/api/product/1/related?count=5
+Authorization: Bearer {{customerToken}}
+
+### 58. ✅ Get Recommended Products
+GET {{baseUrl}}/api/product/recommendations?count=10
+Authorization: Bearer {{customerToken}}
+
+### 59. ✅ Get Recently Viewed Products
+GET {{baseUrl}}/api/product/recently-viewed?count=5
+Authorization: Bearer {{customerToken}}
+
+### 60. ✅ Get Frequently Bought Together
+GET {{baseUrl}}/api/product/1/frequently-bought-together?count=3
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### PRODUCT ANALYTICS & STATISTICS (ADMIN)
+### =================================================================
+
+### 61. ✅ Get Product Performance Stats
+GET {{baseUrl}}/api/product/stats/performance?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{adminToken}}
+
+### 62. ✅ Get Top Selling Products
+GET {{baseUrl}}/api/product/stats/top-selling?period=last30days&count=10
+Authorization: Bearer {{adminToken}}
+
+### 63. ✅ Get Low Stock Products
+GET {{baseUrl}}/api/product/stats/low-stock
+Authorization: Bearer {{adminToken}}
+
+### 64. ✅ Get Out of Stock Products
+GET {{baseUrl}}/api/product/stats/out-of-stock
+Authorization: Bearer {{adminToken}}
+
+### 65. ✅ Get Product Views Analytics
+GET {{baseUrl}}/api/product/stats/views?productId=1&period=last7days
+Authorization: Bearer {{adminToken}}
+
+### 66. ✅ Get Category Performance
+GET {{baseUrl}}/api/product/stats/category-performance
+Authorization: Bearer {{adminToken}}
+
+### 67. ✅ Get Brand Performance
+GET {{baseUrl}}/api/product/stats/brand-performance
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### BULK OPERATIONS (ADMIN)
+### =================================================================
+
+### 68. ✅ Bulk Update Product Prices
+PATCH {{baseUrl}}/api/product/bulk/update-prices
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "productIds": [1, 3, 4],
+  "priceAdjustment": {
+    "type": "percentage",
+    "value": 10,
+    "operation": "increase"
+  }
+}
+
+### 69. ✅ Bulk Update Product Status
+PATCH {{baseUrl}}/api/product/bulk/update-status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "productIds": [1, 3, 4],
+  "isActive": true,
+  "isFeatured": false
+}
+
+### 70. ✅ Bulk Update Stock Quantities
+PATCH {{baseUrl}}/api/product/bulk/update-stock
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "updates": [
+    {"productId": 1, "stockQuantity": 200},
+    {"productId": 3, "stockQuantity": 150},
+    {"productId": 4, "stockQuantity": 100}
+  ]
+}
+
+### 71. ✅ Bulk Delete Products
+DELETE {{baseUrl}}/api/product/bulk
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "productIds": [5, 6, 7]
+}
+
+### =================================================================
+### PRODUCT IMPORT/EXPORT (ADMIN)
+### =================================================================
+
+### 72. ✅ Export Products
+POST {{baseUrl}}/api/product/export
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "format": "Excel",
+  "filters": {
+    "categoryId": 1,
+    "isActive": true
+  },
+  "includeVariants": true,
+  "includeImages": false
+}
+
+### 73. ✅ Get Export Status
+GET {{baseUrl}}/api/product/export/status/export-id-123
+Authorization: Bearer {{adminToken}}
+
+### 74. ✅ Download Export File
+GET {{baseUrl}}/api/product/export/download/export-id-123
+Authorization: Bearer {{adminToken}}
+
+### 75. ✅ Import Products (CSV/Excel)
+POST {{baseUrl}}/api/product/import
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data
+
+# Note: This would typically include file upload
+# For testing purposes, we'll simulate with JSON
+{
+  "validateOnly": true,
+  "updateExisting": false,
+  "data": [
+    {
+      "name": "Imported Product 1",
+      "sku": "IMPORT_001",
+      "price": 300000,
+      "categoryId": 1,
+      "brandId": 1,
+      "stockQuantity": 50
+    }
+  ]
+}
+
+### =================================================================
+### ERROR HANDLING & EDGE CASES
+### =================================================================
+
+### 76. ❌ Invalid Page Parameters
+GET {{baseUrl}}/api/product?page=-1&pageSize=0
+Authorization: Bearer {{customerToken}}
+
+### 77. ❌ Extremely Large Page Size
+GET {{baseUrl}}/api/product?page=1&pageSize=10000
+Authorization: Bearer {{customerToken}}
+
+### 78. ❌ Invalid Sort Parameters
+GET {{baseUrl}}/api/product?sortBy=InvalidField&sortOrder=invalidOrder
+Authorization: Bearer {{customerToken}}
+
+### 79. ❌ Invalid Price Range
+GET {{baseUrl}}/api/product?minPrice=1000000&maxPrice=100000
+Authorization: Bearer {{customerToken}}
+
+### 80. ❌ Invalid Category ID
+GET {{baseUrl}}/api/product?categoryId=99999
+Authorization: Bearer {{customerToken}}
+
+### 81. ❌ Invalid Brand ID
+GET {{baseUrl}}/api/product?brandId=99999
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### SECURITY TESTS
+### =================================================================
+
+### 82. 🔒 SQL Injection in Search
+GET {{baseUrl}}/api/product?search=' OR 1=1--
+Authorization: Bearer {{customerToken}}
+
+### 83. 🔒 XSS in Product Creation
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "<script>alert('XSS')</script>",
+  "description": "<img src=x onerror=alert('XSS')>",
+  "sku": "XSS_TEST_001",
+  "price": 100000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 10
+}
+
+### 84. 🔒 Path Traversal in SKU
+GET {{baseUrl}}/api/product/sku/../../admin/users
+Authorization: Bearer {{customerToken}}
+
+### 85. 🔒 Very Long Product Name
+POST {{baseUrl}}/api/product
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "A".repeat(1000),
+  "sku": "LONG_NAME_001",
+  "price": 100000,
+  "categoryId": 1,
+  "brandId": 1,
+  "stockQuantity": 10
+}
+
+### =================================================================
+### PERFORMANCE TESTS
+### =================================================================
+
+### 86. ⚡ Rapid Product Queries
+GET {{baseUrl}}/api/product?page=1&pageSize=50
+Authorization: Bearer {{customerToken}}
+
+### 87. ⚡ Complex Search Query
+GET {{baseUrl}}/api/product?search=sake&categoryIds=1,2,3&brandIds=1,2&minPrice=100000&maxPrice=1000000&tags=premium,japanese&availability=InStock&sortBy=Price&sortOrder=asc&page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 88. ⚡ Concurrent Product Access
+GET {{baseUrl}}/api/product/1
+Authorization: Bearer {{customerToken}}
+
+### 89. ⚡ Large Product List
+GET {{baseUrl}}/api/product?page=1&pageSize=100
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### DATA CONSISTENCY TESTS
+### =================================================================
+
+### 90. 🔄 Concurrent Stock Updates
+PATCH {{baseUrl}}/api/product/1/stock
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "stockQuantity": 100,
+  "version": 1
+}
+
+### 91. 🔄 Concurrent Product Updates
+PUT {{baseUrl}}/api/product/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Concurrent Update Test",
+  "price": 500000,
+  "version": 1
+}
+
+### =================================================================
+### CLEANUP & VALIDATION
+### =================================================================
+
+### 92. 🧹 Verify Final Product State
+GET {{baseUrl}}/api/product/1
+Authorization: Bearer {{customerToken}}
+
+### 93. 🧹 Verify Product List
+GET {{baseUrl}}/api/product?page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+### 94. 🧹 Verify Product Search Works
+GET {{baseUrl}}/api/product?search=test&page=1&pageSize=5
+Authorization: Bearer {{customerToken}}
+
+### =================================================================
+### DEBUG ENDPOINTS (DEVELOPMENT)
+### =================================================================
+
+### 95. 🐛 Debug Product Information
+GET {{baseUrl}}/api/product/debug?productId=1
+Authorization: Bearer {{adminToken}}
+
+### 96. 🐛 Debug Search Index
+GET {{baseUrl}}/api/product/debug/search-index
+Authorization: Bearer {{adminToken}}
+
+### 97. 🐛 Debug Database Queries
+GET {{baseUrl}}/api/product/debug/queries?productId=1
+Authorization: Bearer {{adminToken}}
+
+### =================================================================
+### TEST SUMMARY & VALIDATION CHECKLIST
+### =================================================================
+
+###
+### ✅ PRODUCT MANAGEMENT FEATURES TESTED:
+### 
+### 📱 Product Discovery:
+### - Public product listing
+### - Authenticated product access
+### - Basic filtering (price, stock, featured)
+### - Category and brand filtering
+### - Search functionality
+### - Sorting options (price, popularity, date)
+### - Pagination handling
+### 
+### 🏷️ Individual Product Operations:
+### - Get product by ID
+### - Get product by SKU
+### - Product detail display
+### - Non-existent product handling
+### - Invalid identifier handling
+### 
+### ➕ Product Creation (Admin):
+### - Simple product creation
+### - Product with variants
+### - Product with images
+### - Product with attributes
+### - Required field validation
+### - Duplicate SKU prevention
+### - Price validation
+### - Authorization enforcement
+### 
+### ✏️ Product Updates (Admin):
+### - Basic information updates
+### - Stock quantity management
+### - Image management
+### - Attribute management
+### - Status activation/deactivation
+### - Non-existent product handling
+### - Authorization enforcement
+### 
+### 🗑️ Product Deletion (Admin):
+### - Soft delete functionality
+### - Non-existent product handling
+### - Authorization enforcement
+### - Customer access prevention
+### 
+### 🔍 Advanced Search & Filtering:
+### - Multiple category filtering
+### - Multiple brand filtering
+### - Price and rating ranges
+### - Attribute-based filtering
+### - Tag-based filtering
+### - Availability filtering
+### - Date range filtering
+### - Full-text search
+### - Search suggestions
+### 
+### 🎭 Product Variants:
+### - Variant listing
+### - Individual variant access
+### - Variant creation
+### - Variant updates
+### - Variant deletion
+### - Variant stock management
+### 
+### ⭐ Reviews & Ratings:
+### - Product review listing
+### - Review summary statistics
+### - Rating-based filtering
+### - Date-based filtering
+### - Review aggregation
+### 
+### 🤖 Recommendations:
+### - Related products
+### - Personalized recommendations
+### - Recently viewed products
+### - Frequently bought together
+### - Cross-selling suggestions
+### 
+### 📊 Analytics & Statistics (Admin):
+### - Performance statistics
+### - Top selling products
+### - Stock level monitoring
+### - View analytics
+### - Category performance
+### - Brand performance
+### 
+### 📦 Bulk Operations (Admin):
+### - Bulk price updates
+### - Bulk status updates
+### - Bulk stock updates
+### - Bulk deletion
+### - Batch processing
+### 
+### 📥📤 Import/Export (Admin):
+### - Product export functionality
+### - Export status tracking
+### - File download
+### - Product import validation
+### - Bulk data processing
+### 
+### 🛡️ Security Testing:
+### - SQL injection prevention
+### - XSS attack prevention
+### - Path traversal prevention
+### - Input length validation
+### - Authorization validation
+### 
+### ⚡ Performance Testing:
+### - Rapid query handling
+### - Complex search performance
+### - Concurrent access
+### - Large dataset handling
+### - Response time validation
+### 
+### 🔄 Data Consistency:
+### - Concurrent update handling
+### - Version conflict resolution
+### - Stock synchronization
+### - Data integrity maintenance
+### 
+### 🔍 Error Handling:
+### - Invalid parameter handling
+### - Boundary value testing
+### - Missing resource handling
+### - Authorization failures
+### - Validation error responses
+### 
+### 📊 EXPECTED RESPONSE CODES:
+### 
+### ✅ Success Scenarios:
+### - 200 OK: Get operations, updates
+### - 201 Created: Product creation, variant creation
+### - 204 No Content: Deletion operations
+### 
+### ❌ Error Scenarios:
+### - 400 Bad Request: Validation errors, invalid parameters
+### - 401 Unauthorized: Missing authentication
+### - 403 Forbidden: Insufficient permissions
+### - 404 Not Found: Non-existent products/variants
+### - 409 Conflict: SKU conflicts, concurrent updates
+### - 422 Unprocessable Entity: Business rule violations
+### 
+### 🎯 PERFORMANCE TARGETS:
+### 
+### - Product listing: < 300ms
+### - Product detail: < 200ms
+### - Search operations: < 500ms
+### - Product creation: < 800ms
+### - Product updates: < 400ms
+### - Bulk operations: < 5000ms
+### - Import/Export: < 30000ms
+### 
+### 📋 VALIDATION CHECKLIST:
+### 
+### ✅ Functional Requirements:
+### - All CRUD operations work correctly
+### - Search and filtering are accurate
+### - Business logic is properly implemented
+### - Data relationships are maintained
+### - Error handling is comprehensive
+### 
+### ✅ Security Requirements:
+### - Authentication is enforced where required
+### - Authorization rules are respected
+### - Input validation prevents attacks
+### - Data sanitization is effective
+### - Access controls are properly implemented
+### 
+### ✅ Performance Requirements:
+### - Response times meet targets
+### - Large datasets are handled efficiently
+### - Search operations are optimized
+### - Concurrent access is managed
+### - Memory usage is optimized
+### 
+### ✅ Data Integrity:
+### - Product data consistency
+### - Stock level accuracy
+### - Relationship integrity
+### - Version control effectiveness
+### - Transaction atomicity
+### 
+### 🔧 TROUBLESHOOTING:
+### 
+### If tests fail:
+### 1. Verify database connectivity and schema
+### 2. Check authentication and authorization setup
+### 3. Confirm product seed data exists
+### 4. Validate category and brand relationships
+### 5. Check file upload configuration
+### 6. Verify search index configuration
+### 7. Confirm stock calculation logic
+### 8. Check variant relationship setup
+### 
+### 📈 MONITORING RECOMMENDATIONS:
+### 
+### - Monitor product creation/update rates
+### - Track search query performance
+### - Alert on stock level changes
+### - Monitor product view patterns
+### - Track conversion rates
+### - Alert on bulk operation failures
+### - Monitor import/export success rates
+### - Track product availability changes
+###
