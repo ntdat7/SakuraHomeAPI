@@ -74,13 +74,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Identity Configuration - FIXED: Using Guid as key type to match your User model
 builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 {
-    // Password settings
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequiredUniqueChars = 1;
+    // Password settings - RELAXED for admin user creation
+    options.Password.RequireDigit = false;           // Không yêu cầu số
+    options.Password.RequireLowercase = false;       // Không yêu cầu chữ thường
+    options.Password.RequireNonAlphanumeric = false; // Không yêu cầu ký tự đặc biệt
+    options.Password.RequireUppercase = false;       // Không yêu cầu chữ hoa
+    options.Password.RequiredLength = 3;             // Chỉ cần tối thiểu 3 ký tự
+    options.Password.RequiredUniqueChars = 1;        // Chỉ cần 1 ký tự unique
 
     // Lockout settings
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
@@ -276,19 +276,19 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<SakuraHomeAPI.Repositories.Interfaces.IProductRepository, SakuraHomeAPI.Repositories.Implementations.ProductRepository>();
 
-//builder.Services.AddScoped<ICategoryService, CategoryService>();
-//builder.Services.AddScoped<IBrandService, BrandService>();
-//builder.Services.AddScoped<IFileService, FileService>();
-//builder.Services.AddScoped<ITranslationService, TranslationService>();
-//builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+//builder.Services.AddScoped(ICategoryService, CategoryService>();
+//builder.Services.AddScoped(IBrandService, BrandService>();
+//builder.Services.AddScoped(IFileService, FileService>();
+//builder.Services.AddScoped(ITranslationService, TranslationService>();
+//builder.Services.AddScoped(IAnalyticsService, AnalyticsService>();
 
 //// Repository Pattern
 //builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-//builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+//builder.Services.AddScoped(IUnitOfWork, UnitOfWork>();
 
 //// Background Services
-//builder.Services.AddHostedService<EmailProcessorService>();
-//builder.Services.AddHostedService<NotificationProcessorService>();
+//builder.Services.AddHostedService(EmailProcessorService>();
+//builder.Services.AddHostedService(NotificationProcessorService>();
 
 // Health Checks
 builder.Services.AddHealthChecks()

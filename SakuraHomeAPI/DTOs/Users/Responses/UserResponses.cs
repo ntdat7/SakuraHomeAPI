@@ -88,10 +88,26 @@ namespace SakuraHomeAPI.DTOs.Users.Responses
         public string LastName { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string? Avatar { get; set; }
+        public string? PhoneNumber { get; set; }
+
+        // Role & Status
         public UserRole Role { get; set; }
+        public string RoleDisplayName { get; set; } = string.Empty;
         public AccountStatus Status { get; set; }
         public UserTier Tier { get; set; }
         public bool IsActive { get; set; }
+        public bool IsEmployee { get; set; }
+
+        // Employee fields (NULL for Customer)
+        public string? NationalIdCard { get; set; }
+        public DateTime? HireDate { get; set; }
+        public decimal? BaseSalary { get; set; }
+
+        // Stats (NULL for Staff/Admin)
+        public int? Points { get; set; }
+        public decimal? TotalSpent { get; set; }
+        public int? TotalOrders { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
     }
@@ -101,7 +117,6 @@ namespace SakuraHomeAPI.DTOs.Users.Responses
     /// </summary>
     public class UserProfileDto : UserSummaryDto
     {
-        public string? PhoneNumber { get; set; }
         public DateTime? DateOfBirth { get; set; }
         public Gender? Gender { get; set; }
         public string PreferredLanguage { get; set; } = "vi";
@@ -109,9 +124,6 @@ namespace SakuraHomeAPI.DTOs.Users.Responses
         public bool EmailNotifications { get; set; }
         public bool SmsNotifications { get; set; }
         public bool PushNotifications { get; set; }
-        public int Points { get; set; }
-        public decimal TotalSpent { get; set; }
-        public int TotalOrders { get; set; }
         public DateTime? LastOrderDate { get; set; }
         public bool EmailVerified { get; set; }
         public bool PhoneVerified { get; set; }

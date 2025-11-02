@@ -310,6 +310,170 @@ namespace SakuraHomeAPI.Controllers
             return BadRequest(result);
         }
 
+        /// <summary>
+        /// Get paginated list of users with advanced filters
+        /// </summary>
+        [HttpGet("users/list")]
+        public async Task<ActionResult> GetUsersList([FromQuery] UserFilterRequest filter)
+        {
+            try
+            {
+                var result = await _adminService.GetUsersAsync(filter);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting users list");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Get detailed user information
+        /// </summary>
+        [HttpGet("users/{userId:guid}/detail")]
+        public async Task<ActionResult> GetUserDetail(Guid userId)
+        {
+            try
+            {
+                var result = await _adminService.GetUserDetailAsync(userId);
+                if (result.Success)
+                    return Ok(result);
+                return NotFound(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user detail");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Create new user
+        /// </summary>
+        [HttpPost("users/create")]
+        public async Task<ActionResult> CreateNewUser([FromBody] CreateUserRequest request)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized(new { success = false, message = "Not authenticated" });
+
+                var result = await _adminService.CreateUserAsync(request, currentUserId.Value);
+                if (result.Success)
+                    return CreatedAtAction(nameof(GetUserDetail), new { userId = result.Data!.Id }, result);
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating user");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Update user
+        /// </summary>
+        [HttpPut("users/{userId:guid}/update")]
+        public async Task<ActionResult> UpdateExistingUser(Guid userId, [FromBody] UpdateUserRequest request)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized();
+
+                var result = await _adminService.UpdateUserAsync(userId, request, currentUserId.Value);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Delete user
+        /// </summary>
+        [HttpDelete("users/{userId:guid}/delete")]
+        public async Task<ActionResult> DeleteExistingUser(Guid userId)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized();
+
+                var result = await _adminService.DeleteUserAsync(userId, currentUserId.Value);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting user");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Toggle user status
+        /// </summary>
+        [HttpPatch("users/{userId:guid}/toggle")]
+        public async Task<ActionResult> ToggleUserStatus(Guid userId)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized();
+
+                var result = await _adminService.ToggleUserStatusAsync(userId, currentUserId.Value);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling status");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Check email availability
+        /// </summary>
+        [HttpGet("users/check-email")]
+        public async Task<ActionResult> CheckEmail([FromQuery, Required, EmailAddress] string email)
+        {
+            try
+            {
+                var result = await _adminService.CheckEmailAsync(email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking email");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Check CCCD availability
+        /// </summary>
+        [HttpGet("users/check-cccd")]
+        public async Task<ActionResult> CheckNationalId([FromQuery, Required] string nationalIdCard)
+        {
+            try
+            {
+                var result = await _adminService.CheckNationalIdAsync(nationalIdCard);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking CCCD");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
         #endregion
 
         #region User Statistics

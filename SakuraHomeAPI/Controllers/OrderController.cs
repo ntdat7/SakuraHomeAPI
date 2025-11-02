@@ -15,7 +15,7 @@ namespace SakuraHomeAPI.Controllers
     /// Order management controller
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/orders")]  // Changed from api/[controller] to api/orders (lowercase, plural)
     [Authorize]
     public class OrderController : ControllerBase
     {
@@ -144,25 +144,40 @@ namespace SakuraHomeAPI.Controllers
         /// Get user's orders with optional filtering
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<ApiResponseDto<List<OrderSummaryDto>>>> GetUserOrders([FromQuery] OrderFilterDto? filter = null)
+        public async Task<ActionResult<ApiResponse<PagedResult<OrderSummaryDto>>>> GetUserOrders([FromQuery] OrderFilterDto? filter = null)
         {
             try
             {
                 var userId = GetCurrentUserId();
                 if (!userId.HasValue)
-                    return Unauthorized(ApiResponseDto<List<OrderSummaryDto>>.ErrorResult("User not authenticated"));
+                    return Unauthorized(ApiResponse.ErrorResult<PagedResult<OrderSummaryDto>>("User not authenticated"));
 
                 var result = await _orderService.GetUserOrdersAsync(userId.Value, filter);
 
-                if (result.Success)
-                    return Ok(ApiResponseDto<List<OrderSummaryDto>>.SuccessResult(result.Data, result.Message));
+                if (result.Success && result.Data != null)
+                {
+                    // Calculate pagination info using PagedResult
+                    var page = filter?.Page ?? 1;
+                    var pageSize = filter?.PageSize ?? 20;
+                    var totalCount = result.Data.Count; // TODO: Should come from service with actual total count from DB
+                    
+                    var pagedResult = new PagedResult<OrderSummaryDto>
+                    {
+                        Items = result.Data,
+                        TotalCount = totalCount,
+                        PageNumber = page,
+                        PageSize = pageSize
+                    };
 
-                return BadRequest(ApiResponseDto<List<OrderSummaryDto>>.ErrorResult(result.Message));
+                    return Ok(ApiResponse.SuccessResult(pagedResult, result.Message ?? "Orders retrieved successfully"));
+                }
+
+                return BadRequest(ApiResponse.ErrorResult<PagedResult<OrderSummaryDto>>(result.Message ?? "Failed to retrieve orders"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting orders for user {UserId}", GetCurrentUserId());
-                return StatusCode(500, ApiResponseDto<List<OrderSummaryDto>>.ErrorResult("An error occurred while retrieving orders"));
+                return StatusCode(500, ApiResponse.ErrorResult<PagedResult<OrderSummaryDto>>("An error occurred while retrieving orders"));
             }
         }
 

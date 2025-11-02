@@ -9,6 +9,7 @@ using SakuraHomeAPI.DTOs.Users.Responses;
 using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Enums;
+using SakuraHomeAPI.Models.Entities;
 
 namespace SakuraHomeAPI.Services.Implementations
 {
@@ -488,155 +489,72 @@ namespace SakuraHomeAPI.Services.Implementations
             }
         }
 
+        public async Task<ApiResponse<PagedResponseDto<UserActivityDto>>> GetUserActivitiesAsync(Guid userId, int page = 1, int pageSize = 20)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null || user.IsDeleted || !user.IsActive)
+                    return ApiResponse.ErrorResult<PagedResponseDto<UserActivityDto>>("User not found");
+
+                // Validate pagination parameters
+                if (page < 1) page = 1;
+                if (pageSize < 1) pageSize = 20;
+                if (pageSize > 100) pageSize = 100; // Max 100 items per page
+
+                // Get total count
+                var totalItems = await _context.UserActivities
+                    .Where(ua => ua.UserId == userId)
+                    .CountAsync();
+
+                // Calculate pagination
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                var skip = (page - 1) * pageSize;
+
+                // Get activities
+                var activities = await _context.UserActivities
+                    .Where(ua => ua.UserId == userId)
+                    .OrderByDescending(ua => ua.CreatedAt)
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .Select(ua => new UserActivityDto
+                    {
+                        Id = ua.Id,
+                        ActivityType = Enum.Parse<ActivityType>(ua.ActivityType),
+                        Description = ua.Description,
+                        Details = ua.Details,
+                        CreatedAt = ua.CreatedAt,
+                        IpAddress = ua.IpAddress,
+                        RelatedEntityId = ua.RelatedEntityId,
+                        RelatedEntityType = ua.RelatedEntityType
+                    })
+                    .ToListAsync();
+
+                var response = new PagedResponseDto<UserActivityDto>
+                {
+                    Data = activities,
+                    Success = true,
+                    Message = "User activities retrieved successfully",
+                    Pagination = new PaginationResponseDto
+                    {
+                        CurrentPage = page,
+                        PageSize = pageSize,
+                        TotalItems = totalItems,
+                        TotalPages = totalPages,
+                        HasNext = page < totalPages,
+                        HasPrevious = page > 1
+                    }
+                };
+
+                return ApiResponse.SuccessResult(response, "User activities retrieved successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting activities for user {UserId}", userId);
+                return ApiResponse.ErrorResult<PagedResponseDto<UserActivityDto>>("Failed to retrieve user activities");
+            }
+        }
+
         //public async Task<ApiResponse<UserListResponseDto>> GetUserListAsync(UserFilterRequestDto filter)
-        //{
-        //    try
-        //    {
-        //        var query = _context.Users.AsQueryable();
-
-        //        // Filter: search
-        //        if (!string.IsNullOrWhiteSpace(filter.Search))
-        //        {
-        //            var search = filter.Search.ToLower();
-        //            query = query.Where(u => u.UserName.ToLower().Contains(search)
-        //                || u.Email.ToLower().Contains(search)
-        //                || u.FirstName.ToLower().Contains(search)
-        //                || u.LastName.ToLower().Contains(search));
-        //        }
-        //        // Filter: role
-        //        if (filter.Role.HasValue)
-        //            query = query.Where(u => u.Role == filter.Role.Value);
-        //        // Filter: status
-        //        if (filter.Status.HasValue)
-        //            query = query.Where(u => u.Status == filter.Status.Value);
-        //        // Filter: tier
-        //        if (filter.Tier.HasValue)
-        //            query = query.Where(u => u.Tier == filter.Tier.Value);
-        //        // Filter: isActive
-        //        if (filter.IsActive.HasValue)
-        //            query = query.Where(u => u.IsActive == filter.IsActive.Value);
-        //        // Filter: email verified
-        //        if (filter.EmailVerified.HasValue)
-        //            query = query.Where(u => u.EmailVerified == filter.EmailVerified.Value);
-        //        // Filter: phone verified
-        //        if (filter.PhoneVerified.HasValue)
-        //            query = query.Where(u => u.PhoneVerified == filter.PhoneVerified.Value);
-        //        // Filter: provider
-        //        if (filter.Provider.HasValue)
-        //            query = query.Where(u => u.Provider == filter.Provider.Value);
-        //        // Filter: created date
-        //        if (filter.CreatedFrom.HasValue)
-        //            query = query.Where(u => u.CreatedAt >= filter.CreatedFrom.Value);
-        //        if (filter.CreatedTo.HasValue)
-        //            query = query.Where(u => u.CreatedAt <= filter.CreatedTo.Value);
-        //        // Filter: last login
-        //        if (filter.LastLoginFrom.HasValue)
-        //            query = query.Where(u => u.LastLoginAt >= filter.LastLoginFrom.Value);
-        //        if (filter.LastLoginTo.HasValue)
-        //            query = query.Where(u => u.LastLoginAt <= filter.LastLoginTo.Value);
-        //        // Filter: total spent
-        //        if (filter.MinTotalSpent.HasValue)
-        //            query = query.Where(u => u.TotalSpent >= filter.MinTotalSpent.Value);
-        //        if (filter.MaxTotalSpent.HasValue)
-        //            query = query.Where(u => u.TotalSpent <= filter.MaxTotalSpent.Value);
-        //        // Filter: total orders
-        //        if (filter.MinTotalOrders.HasValue)
-        //            query = query.Where(u => u.TotalOrders >= filter.MinTotalOrders.Value);
-        //        if (filter.MaxTotalOrders.HasValue)
-        //            query = query.Where(u => u.TotalOrders <= filter.MaxTotalOrders.Value);
-
-        //        // Sorting
-        //        switch (filter.SortBy?.ToLower())
-        //        {
-        //            case "name":
-        //                query = filter.SortOrder == "asc" ? query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName) : query.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName);
-        //                break;
-        //            case "email":
-        //                query = filter.SortOrder == "asc" ? query.OrderBy(u => u.Email) : query.OrderByDescending(u => u.Email);
-        //                break;
-        //            case "created":
-        //                query = filter.SortOrder == "asc" ? query.OrderBy(u => u.CreatedAt) : query.OrderByDescending(u => u.CreatedAt);
-        //                break;
-        //            case "lastlogin":
-        //                query = filter.SortOrder == "asc" ? query.OrderBy(u => u.LastLoginAt) : query.OrderByDescending(u => u.LastLoginAt);
-        //                break;
-        //            case "totalspent":
-        //                query = filter.SortOrder == "asc" ? query.OrderBy(u => u.TotalSpent) : query.OrderByDescending(u => u.TotalSpent);
-        //                break;
-        //            case "totalorders":
-        //                query = filter.SortOrder == "asc" ? query.OrderBy(u => u.TotalOrders) : query.OrderByDescending(u => u.TotalOrders);
-        //                break;
-        //            default:
-        //                query = query.OrderByDescending(u => u.CreatedAt);
-        //                break;
-        //        }
-
-        //        // Pagination
-        //        int page = filter.Page > 0 ? filter.Page : 1;
-        //        int pageSize = filter.PageSize > 0 && filter.PageSize <= 100 ? filter.PageSize : 20;
-        //        int skip = (page - 1) * pageSize;
-        //        int totalItems = await query.CountAsync();
-        //        var users = await query.Skip(skip).Take(pageSize).ToListAsync();
-
-        //        // Mapping
-        //        var userDtos = users.Select(u => new DTOs.Users.UserSummaryDto
-        //        {
-        //            Id = u.Id,
-        //            UserName = u.UserName,
-        //            Email = u.Email,
-        //            FirstName = u.FirstName,
-        //            LastName = u.LastName,
-        //            FullName = $"{u.FirstName} {u.LastName}".Trim(),
-        //            Avatar = u.Avatar,
-        //            Role = u.Role,
-        //            Status = u.Status,
-        //            Tier = u.Tier,
-        //            IsActive = u.IsActive,
-        //            CreatedAt = u.CreatedAt,
-        //            LastLoginAt = u.LastLoginAt
-        //        }).ToList();
-
-        //        // Statistics (simple)
-        //        var statistics = new DTOs.Users.UserStatisticsDto
-        //        {
-        //            TotalUsers = totalItems,
-        //            ActiveUsers = await _context.Users.CountAsync(u => u.IsActive && !u.IsDeleted),
-        //            NewUsersThisMonth = await _context.Users.CountAsync(u => u.CreatedAt >= new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1)),
-        //            AvgTotalSpent = totalItems > 0 ? (double)users.Average(u => u.TotalSpent) : 0,
-        //            AvgTotalOrders = totalItems > 0 ? users.Average(u => u.TotalOrders) : 0,
-        //            RoleCounts = await _context.Users.GroupBy(u => u.Role).Select(g => new DTOs.Users.UserRoleCountDto { Role = g.Key, Count = g.Count() }).ToListAsync(),
-        //            TierCounts = await _context.Users.GroupBy(u => u.Tier).Select(g => new DTOs.Users.UserTierCountDto { Tier = g.Key, Count = g.Count() }).ToListAsync(),
-        //            StatusCounts = await _context.Users.GroupBy(u => u.Status).Select(g => new DTOs.Users.UserStatusCountDto { Status = g.Key, Count = g.Count() }).ToListAsync()
-        //        };
-
-        //        var response = new DTOs.Users.UserListResponseDto
-        //        {
-        //            Items = userDtos,
-        //            Page = page,
-        //            PageSize = pageSize,
-        //            TotalItems = totalItems,
-        //            TotalPages = (int)Math.Ceiling((double)totalItems / pageSize),
-        //            Filters = new DTOs.Users.UserFilterInfoDto
-        //            {
-        //                Search = filter.Search,
-        //                Role = filter.Role,
-        //                Status = filter.Status,
-        //                Tier = filter.Tier,
-        //                IsActive = filter.IsActive,
-        //                SortBy = filter.SortBy,
-        //                SortOrder = filter.SortOrder,
-        //                TotalFiltersApplied = new[] { filter.Search, filter.Role, filter.Status, filter.Tier, filter.IsActive }.Count(x => x != null)
-        //            },
-        //            Statistics = statistics
-        //        };
-
-        //        return ApiResponse.SuccessResult(response, "User list retrieved successfully");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error getting user list");
-        //        return ApiResponse.ErrorResult<UserListResponseDto>("Failed to retrieve user list");
-        //    }
-        //}
     }
 }

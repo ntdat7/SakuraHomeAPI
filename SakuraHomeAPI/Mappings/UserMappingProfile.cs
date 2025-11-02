@@ -16,7 +16,17 @@ namespace SakuraHomeAPI.Mappings
         {
             // User mappings using Response DTOs
             CreateMap<User, UserSummaryDto>()
-                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}".Trim()));
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}".Trim()))
+                .ForMember(dest => dest.RoleDisplayName, opt => opt.MapFrom(src => src.RoleDisplayName))
+                .ForMember(dest => dest.IsEmployee, opt => opt.MapFrom(src => src.IsEmployee))
+                // Map employee fields (always map, will be null for customers)
+                .ForMember(dest => dest.NationalIdCard, opt => opt.MapFrom(src => src.NationalIdCard))
+                .ForMember(dest => dest.HireDate, opt => opt.MapFrom(src => src.HireDate))
+                .ForMember(dest => dest.BaseSalary, opt => opt.MapFrom(src => src.BaseSalary))
+                // Map stats fields (null for employees)
+                .ForMember(dest => dest.Points, opt => opt.MapFrom(src => src.Role == Models.Enums.UserRole.Customer ? (int?)src.Points : null))
+                .ForMember(dest => dest.TotalSpent, opt => opt.MapFrom(src => src.Role == Models.Enums.UserRole.Customer ? (decimal?)src.TotalSpent : null))
+                .ForMember(dest => dest.TotalOrders, opt => opt.MapFrom(src => src.Role == Models.Enums.UserRole.Customer ? (int?)src.TotalOrders : null));
 
             CreateMap<User, UserProfileDto>()
                 .IncludeBase<User, UserSummaryDto>()
