@@ -4,7 +4,6 @@ using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.DTOs.Admin.Requests;
 using SakuraHomeAPI.DTOs.Admin.Responses;
 using SakuraHomeAPI.DTOs.Common;
-using SakuraHomeAPI.DTOs.Orders.Responses;
 using SakuraHomeAPI.DTOs.Products.Responses;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
@@ -15,7 +14,7 @@ namespace SakuraHomeAPI.Controllers
     /// Admin controller for user management and system administration
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/admin")]
     [Authorize(Policy = "StaffOnly")]
     public class AdminController : ControllerBase
     {
@@ -25,7 +24,7 @@ namespace SakuraHomeAPI.Controllers
         private readonly ILogger<AdminController> _logger;
 
         public AdminController(
-            IAdminService adminService, 
+            IAdminService adminService,
             IOrderService orderService,
             IProductService productService,
             ILogger<AdminController> logger)
@@ -46,29 +45,20 @@ namespace SakuraHomeAPI.Controllers
         {
             try
             {
-                // Get user stats
                 var userStatsResult = await _adminService.GetUserStatisticsAsync();
-                
-                // Get order stats 
                 var orderStatsResult = await _orderService.GetOrderStatsAsync(null, null, null);
-                
-                // Get recent orders
                 var recentOrdersResult = await _orderService.GetRecentOrdersAsync(10);
-
-                // Get product stats (we'll create a basic one)
-                var totalProductsResult = await _productService.GetListAsync(new DTOs.Products.Requests.ProductFilterRequestDto 
-                { 
-                    Page = 1, 
-                    PageSize = 1 
-                }, CancellationToken.None);
+                var totalProductsResult = await _productService.GetListAsync(
+                    new DTOs.Products.Requests.ProductFilterRequestDto { Page = 1, PageSize = 1 },
+                    CancellationToken.None);
 
                 var overview = new DashboardOverviewDto
                 {
                     UserStats = userStatsResult.Success ? userStatsResult.Data : null,
                     OrderStats = orderStatsResult.Success ? orderStatsResult.Data : null,
-                    RecentOrders = recentOrdersResult.Success ? recentOrdersResult.Data : new List<OrderSummaryDto>(),
+                    RecentOrders = recentOrdersResult.Success ? recentOrdersResult.Data : new(),
                     TotalProducts = totalProductsResult.IsSuccess ? totalProductsResult.Data?.Pagination?.TotalItems ?? 0 : 0,
-                    LowStockProducts = 0, // TODO: Implement low stock count
+                    LowStockProducts = 0,
                     PendingOrders = orderStatsResult.Success ? orderStatsResult.Data?.PendingOrders ?? 0 : 0
                 };
 
@@ -82,35 +72,10 @@ namespace SakuraHomeAPI.Controllers
         }
 
         /// <summary>
-        /// Get order statistics for admin dashboard
-        /// </summary>
-        [HttpGet("orders/stats")]
-        public async Task<ActionResult<ApiResponse<OrderStatsDto>>> GetOrderStats(
-            [FromQuery] DateTime? fromDate = null, 
-            [FromQuery] DateTime? toDate = null)
-        {
-            try
-            {
-                var result = await _orderService.GetOrderStatsAsync(null, fromDate, toDate);
-
-                if (result.Success)
-                    return Ok(ApiResponse.SuccessResult(result.Data, result.Message));
-
-                return BadRequest(ApiResponse.ErrorResult<OrderStatsDto>(result.Message));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting admin order statistics");
-                return StatusCode(500, ApiResponse.ErrorResult<OrderStatsDto>("An error occurred while retrieving order statistics"));
-            }
-        }
-
-        /// <summary>
         /// Get revenue analytics with time period breakdown
         /// </summary>
         [HttpGet("analytics/revenue")]
-        public async Task<ActionResult<ApiResponse<RevenueAnalyticsDto>>> GetRevenueAnalytics(
-            [FromQuery] string period = "month")
+        public async Task<ActionResult<ApiResponse<RevenueAnalyticsDto>>> GetRevenueAnalytics([FromQuery] string period = "month")
         {
             try
             {
@@ -133,7 +98,7 @@ namespace SakuraHomeAPI.Controllers
                 }
 
                 var orderStatsResult = await _orderService.GetOrderStatsAsync(null, fromDate, toDate);
-                
+
                 if (!orderStatsResult.Success)
                 {
                     return BadRequest(ApiResponse.ErrorResult<RevenueAnalyticsDto>(orderStatsResult.Message));
@@ -147,8 +112,7 @@ namespace SakuraHomeAPI.Controllers
                     TotalRevenue = orderStatsResult.Data?.TotalRevenue ?? 0,
                     TotalOrders = orderStatsResult.Data?.TotalOrders ?? 0,
                     AverageOrderValue = orderStatsResult.Data?.AverageOrderValue ?? 0,
-                    // TODO: Add daily/weekly/monthly breakdowns when available
-                    DailyBreakdown = new List<DailyRevenueDto>()
+                    DailyBreakdown = new()
                 };
 
                 return Ok(ApiResponse.SuccessResult(revenueAnalytics, "Revenue analytics retrieved successfully"));
@@ -168,25 +132,20 @@ namespace SakuraHomeAPI.Controllers
         {
             try
             {
-                // Get total products count
-                var allProductsResult = await _productService.GetListAsync(new DTOs.Products.Requests.ProductFilterRequestDto 
-                { 
-                    Page = 1, 
-                    PageSize = 1 
-                }, CancellationToken.None);
+                var allProductsResult = await _productService.GetListAsync(
+                    new DTOs.Products.Requests.ProductFilterRequestDto { Page = 1, PageSize = 1 },
+                    CancellationToken.None);
 
-                // Get active products count
-                var activeProductsResult = await _productService.GetListAsync(new DTOs.Products.Requests.ProductFilterRequestDto 
-                { 
-                    Page = 1, 
-                    PageSize = 1,
-                    Status = Models.Enums.ProductStatus.Active
-                }, CancellationToken.None);
+                var activeProductsResult = await _productService.GetListAsync(
+                    new DTOs.Products.Requests.ProductFilterRequestDto
+                    {
+                        Page = 1,
+                        PageSize = 1,
+                        Status = Models.Enums.ProductStatus.Active
+                    },
+                    CancellationToken.None);
 
-                // Get out of stock products
                 var outOfStockResult = await _productService.GetOutOfStockProductsAsync(CancellationToken.None);
-
-                // Get low stock products
                 var lowStockResult = await _productService.GetLowStockProductsAsync(CancellationToken.None);
 
                 var productStats = new ProductStatsDto
@@ -195,7 +154,7 @@ namespace SakuraHomeAPI.Controllers
                     ActiveProducts = activeProductsResult.IsSuccess ? activeProductsResult.Data?.Pagination?.TotalItems ?? 0 : 0,
                     OutOfStockProducts = outOfStockResult.IsSuccess ? outOfStockResult.Data?.Count() ?? 0 : 0,
                     LowStockProducts = lowStockResult.IsSuccess ? lowStockResult.Data?.Count() ?? 0 : 0,
-                    InactiveProducts = 0 // TODO: Calculate inactive products
+                    InactiveProducts = 0
                 };
 
                 return Ok(ApiResponse.SuccessResult(productStats, "Product statistics retrieved successfully"));
@@ -211,8 +170,7 @@ namespace SakuraHomeAPI.Controllers
         /// Get top selling products
         /// </summary>
         [HttpGet("products/top-selling")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<ProductSummaryDto>>>> GetTopSellingProducts(
-            [FromQuery] int limit = 5)
+        public async Task<ActionResult<ApiResponse<IEnumerable<ProductSummaryDto>>>> GetTopSellingProducts([FromQuery] int limit = 5)
         {
             try
             {
@@ -310,6 +268,170 @@ namespace SakuraHomeAPI.Controllers
             return BadRequest(result);
         }
 
+        /// <summary>
+        /// Get paginated list of users with advanced filters
+        /// </summary>
+        [HttpGet("users/list")]
+        public async Task<ActionResult> GetUsersList([FromQuery] UserFilterRequest filter)
+        {
+            try
+            {
+                var result = await _adminService.GetUsersAsync(filter);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting users list");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Get detailed user information
+        /// </summary>
+        [HttpGet("users/{userId:guid}/detail")]
+        public async Task<ActionResult> GetUserDetail(Guid userId)
+        {
+            try
+            {
+                var result = await _adminService.GetUserDetailAsync(userId);
+                if (result.Success)
+                    return Ok(result);
+                return NotFound(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user detail");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Create new user
+        /// </summary>
+        [HttpPost("users/create")]
+        public async Task<ActionResult> CreateNewUser([FromBody] CreateUserRequest request)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized(new { success = false, message = "Not authenticated" });
+
+                var result = await _adminService.CreateUserAsync(request, currentUserId.Value);
+                if (result.Success)
+                    return CreatedAtAction(nameof(GetUserDetail), new { userId = result.Data!.Id }, result);
+                return BadRequest(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating user");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Update user
+        /// </summary>
+        [HttpPut("users/{userId:guid}/update")]
+        public async Task<ActionResult> UpdateExistingUser(Guid userId, [FromBody] UpdateUserRequest request)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized();
+
+                var result = await _adminService.UpdateUserAsync(userId, request, currentUserId.Value);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Delete user
+        /// </summary>
+        [HttpDelete("users/{userId:guid}/delete")]
+        public async Task<ActionResult> DeleteExistingUser(Guid userId)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized();
+
+                var result = await _adminService.DeleteUserAsync(userId, currentUserId.Value);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting user");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Toggle user status
+        /// </summary>
+        [HttpPatch("users/{userId:guid}/toggle")]
+        public async Task<ActionResult> ToggleUserStatus(Guid userId)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (!currentUserId.HasValue)
+                    return Unauthorized();
+
+                var result = await _adminService.ToggleUserStatusAsync(userId, currentUserId.Value);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling status");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Check email availability
+        /// </summary>
+        [HttpGet("users/check-email")]
+        public async Task<ActionResult> CheckEmail([FromQuery, Required, EmailAddress] string email)
+        {
+            try
+            {
+                var result = await _adminService.CheckEmailAsync(email);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking email");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
+        /// <summary>
+        /// Check CCCD availability
+        /// </summary>
+        [HttpGet("users/check-cccd")]
+        public async Task<ActionResult> CheckNationalId([FromQuery, Required] string nationalIdCard)
+        {
+            try
+            {
+                var result = await _adminService.CheckNationalIdAsync(nationalIdCard);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking CCCD");
+                return StatusCode(500, new { success = false, message = "Error occurred" });
+            }
+        }
+
         #endregion
 
         #region User Statistics
@@ -394,66 +516,4 @@ namespace SakuraHomeAPI.Controllers
 
         #endregion
     }
-
-    /// <summary>
-    /// Reset password request model
-    /// </summary>
-    public class ResetPasswordRequest
-    {
-        [Required, MinLength(8), MaxLength(100)]
-        public string NewPassword { get; set; } = string.Empty;
-    }
-
-    #region Dashboard DTOs
-
-    /// <summary>
-    /// Complete dashboard overview data
-    /// </summary>
-    public class DashboardOverviewDto
-    {
-        public AdminUserStatisticsDto? UserStats { get; set; }
-        public OrderStatsDto? OrderStats { get; set; }
-        public List<OrderSummaryDto> RecentOrders { get; set; } = new();
-        public int TotalProducts { get; set; }
-        public int LowStockProducts { get; set; }
-        public int PendingOrders { get; set; }
-    }
-
-    /// <summary>
-    /// Revenue analytics data
-    /// </summary>
-    public class RevenueAnalyticsDto
-    {
-        public string Period { get; set; } = string.Empty;
-        public DateTime FromDate { get; set; }
-        public DateTime ToDate { get; set; }
-        public decimal TotalRevenue { get; set; }
-        public int TotalOrders { get; set; }
-        public decimal AverageOrderValue { get; set; }
-        public List<DailyRevenueDto> DailyBreakdown { get; set; } = new();
-    }
-
-    /// <summary>
-    /// Daily revenue breakdown
-    /// </summary>
-    public class DailyRevenueDto
-    {
-        public DateTime Date { get; set; }
-        public decimal Revenue { get; set; }
-        public int OrderCount { get; set; }
-    }
-
-    /// <summary>
-    /// Product statistics data
-    /// </summary>
-    public class ProductStatsDto
-    {
-        public int TotalProducts { get; set; }
-        public int ActiveProducts { get; set; }
-        public int InactiveProducts { get; set; }
-        public int OutOfStockProducts { get; set; }
-        public int LowStockProducts { get; set; }
-    }
-
-    #endregion
 }

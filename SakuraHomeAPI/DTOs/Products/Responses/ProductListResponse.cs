@@ -95,5 +95,9 @@ namespace SakuraHomeAPI.DTOs.Products.Responses
         public decimal MaxPrice { get; set; }
         public decimal AveragePrice { get; set; }
         public decimal AverageRating { get; set; }
+        public int ActiveProducts { get; set; }
+        public int InactiveProducts { get; set; }
+        public int LowStockProducts { get; set; }
     }
+
 }

@@ -3,18 +3,22 @@ using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Admin.Requests;
 using SakuraHomeAPI.DTOs.Admin.Responses;
+using SakuraHomeAPI.DTOs.Users.Responses;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
 using AutoMapper;
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 namespace SakuraHomeAPI.Services.Implementations
 {
     /// <summary>
     /// Professional AdminService for advanced user management and admin operations
     /// </summary>
-    public class AdminService : IAdminService
+    public partial class AdminService : IAdminService
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
@@ -413,5 +417,313 @@ namespace SakuraHomeAPI.Services.Implementations
                 return ApiResponse.ErrorResult("Failed to verify phone");
             }
         }
-    }
-}
+        public async Task<ApiResponse<PagedResult<UserSummaryDto>>> GetUsersAsync(UserFilterRequest filter)
+        {
+            try
+            {
+                var query = _context.Users.Where(u => !u.IsDeleted).AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+                {
+                    var searchLower = filter.SearchTerm.ToLower();
+                    query = query.Where(u =>
+                        u.FirstName.ToLower().Contains(searchLower) ||
+                        u.LastName.ToLower().Contains(searchLower) ||
+                        u.Email.ToLower().Contains(searchLower) ||
+                        (u.NationalIdCard != null && u.NationalIdCard.Contains(filter.SearchTerm)));
+                }
+
+                if (filter.Role.HasValue)
+                    query = query.Where(u => u.Role == filter.Role.Value);
+
+                if (filter.Status.HasValue)
+                    query = query.Where(u => u.Status == filter.Status.Value);
+
+                if (filter.IsActive.HasValue)
+                    query = query.Where(u => u.IsActive == filter.IsActive.Value);
+
+                var totalCount = await query.CountAsync();
+
+                var users = await query
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Skip((filter.PageNumber - 1) * filter.PageSize)
+                    .Take(filter.PageSize)
+                    .ToListAsync();
+
+                var userDtos = _mapper.Map<List<UserSummaryDto>>(users);
+
+                var result = new PagedResult<UserSummaryDto>
+                {
+                    Items = userDtos,
+                    TotalCount = totalCount,
+                    PageNumber = filter.PageNumber,
+                    PageSize = filter.PageSize
+                };
+
+                return ApiResponse.SuccessResult(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting users list");
+                return ApiResponse.ErrorResult<PagedResult<UserSummaryDto>>("Failed to get users");
+            }
+        }
+
+        public async Task<ApiResponse<UserProfileDto>> GetUserDetailAsync(Guid userId)
+        {
+            try
+            {
+                var user = await _context.Users
+                    .Include(u => u.Addresses.Where(a => !a.IsDeleted))
+                    .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+
+                if (user == null)
+                    return ApiResponse.ErrorResult<UserProfileDto>("User not found");
+
+                var userDto = _mapper.Map<UserProfileDto>(user);
+                return ApiResponse.SuccessResult(userDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user detail for {UserId}", userId);
+                return ApiResponse.ErrorResult<UserProfileDto>("Failed to get user detail");
+            }
+        }
+
+        public async Task<ApiResponse<UserSummaryDto>> CreateUserAsync(CreateUserRequest request, Guid adminId)
+        {
+            try
+            {
+                var existingEmail = await _userManager.FindByEmailAsync(request.Email);
+                if (existingEmail != null)
+                    return ApiResponse.ErrorResult<UserSummaryDto>("Email already exists");
+
+                if (!string.IsNullOrWhiteSpace(request.NationalIdCard))
+                {
+                    var existingCCCD = await _context.Users
+                        .AnyAsync(u => u.NationalIdCard == request.NationalIdCard && !u.IsDeleted);
+                    if (existingCCCD)
+                        return ApiResponse.ErrorResult<UserSummaryDto>("CCCD already exists");
+                }
+
+                if (request.Role >= UserRole.Staff)
+                {
+                    if (string.IsNullOrWhiteSpace(request.NationalIdCard))
+                        return ApiResponse.ErrorResult<UserSummaryDto>("CCCD is required for Staff/Admin");
+                    if (!request.HireDate.HasValue)
+                        return ApiResponse.ErrorResult<UserSummaryDto>("Hire date is required for Staff/Admin");
+                    if (!request.BaseSalary.HasValue || request.BaseSalary.Value <= 0)
+                        return ApiResponse.ErrorResult<UserSummaryDto>("Base salary is required for Staff/Admin");
+                    if (request.HireDate.Value > DateTime.Now)
+                        return ApiResponse.ErrorResult<UserSummaryDto>("Hire date cannot be in the future");
+                }
+
+                var user = new User
+                {
+                    Email = request.Email,
+                    UserName = request.Email,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    PhoneNumber = request.PhoneNumber,
+                    DateOfBirth = request.DateOfBirth,
+                    Gender = request.Gender ?? Gender.Unknown,
+                    Avatar = request.Avatar,
+                    Role = request.Role,
+                    Status = request.Status,
+                    IsActive = request.IsActive,
+                    NationalIdCard = request.NationalIdCard,
+                    HireDate = request.HireDate,
+                    BaseSalary = request.BaseSalary,
+                    Tier = request.Tier ?? UserTier.Bronze,
+                    Points = request.InitialPoints ?? 0,
+                    TotalSpent = request.InitialSpent ?? 0,
+                    PreferredLanguage = request.PreferredLanguage ?? "vi",
+                    PreferredCurrency = request.PreferredCurrency ?? "VND",
+                    EmailNotifications = request.EmailNotifications,
+                    SmsNotifications = request.SmsNotifications,
+                    PushNotifications = request.PushNotifications,
+                    CreatedBy = adminId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    EmailVerified = true,
+                    EmailVerifiedAt = DateTime.UtcNow,
+                    Provider = LoginProvider.Local
+                };
+
+                var result = await _userManager.CreateAsync(user, request.Password);
+                if (!result.Succeeded)
+                {
+                    var errors = result.Errors.Select(e => e.Description).ToList();
+                    return ApiResponse.ErrorResult<UserSummaryDto>("Failed to create user", errors);
+                }
+
+                _logger.LogInformation("User created by admin {AdminId}: {Email}", adminId, user.Email);
+                var userDto = _mapper.Map<UserSummaryDto>(user);
+                return ApiResponse.SuccessResult(userDto, "User created successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating user");
+                return ApiResponse.ErrorResult<UserSummaryDto>("Failed to create user");
+            }
+        }
+
+        public async Task<ApiResponse<UserSummaryDto>> UpdateUserAsync(Guid userId, UpdateUserRequest request, Guid adminId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null || user.IsDeleted)
+                    return ApiResponse.ErrorResult<UserSummaryDto>("User not found");
+
+                if (!string.IsNullOrWhiteSpace(request.NationalIdCard) && request.NationalIdCard != user.NationalIdCard)
+                {
+                    var existingCCCD = await _context.Users
+                        .AnyAsync(u => u.NationalIdCard == request.NationalIdCard && u.Id != userId && !u.IsDeleted);
+                    if (existingCCCD)
+                        return ApiResponse.ErrorResult<UserSummaryDto>("CCCD already exists");
+                }
+
+                if (!string.IsNullOrWhiteSpace(request.FirstName)) user.FirstName = request.FirstName;
+                if (!string.IsNullOrWhiteSpace(request.LastName)) user.LastName = request.LastName;
+                if (!string.IsNullOrWhiteSpace(request.PhoneNumber)) user.PhoneNumber = request.PhoneNumber;
+                if (request.DateOfBirth.HasValue) user.DateOfBirth = request.DateOfBirth;
+                if (request.Gender.HasValue) user.Gender = request.Gender;
+                if (!string.IsNullOrWhiteSpace(request.Avatar)) user.Avatar = request.Avatar;
+
+                if (user.IsEmployee)
+                {
+                    if (!string.IsNullOrWhiteSpace(request.NationalIdCard)) user.NationalIdCard = request.NationalIdCard;
+                    if (request.HireDate.HasValue) user.HireDate = request.HireDate;
+                    if (request.BaseSalary.HasValue) user.BaseSalary = request.BaseSalary;
+                }
+
+                if (request.Role.HasValue) user.Role = request.Role.Value;
+                if (request.Status.HasValue) user.Status = request.Status.Value;
+                if (request.IsActive.HasValue) user.IsActive = request.IsActive.Value;
+                if (request.Tier.HasValue && user.Role == UserRole.Customer) user.Tier = request.Tier.Value;
+
+                user.UpdatedBy = adminId;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    var errors = result.Errors.Select(e => e.Description).ToList();
+                    return ApiResponse.ErrorResult<UserSummaryDto>("Failed to update user", errors);
+                }
+
+                _logger.LogInformation("User {UserId} updated by admin {AdminId}", userId, adminId);
+                var userDto = _mapper.Map<UserSummaryDto>(user);
+                return ApiResponse.SuccessResult(userDto, "User updated successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user {UserId}", userId);
+                return ApiResponse.ErrorResult<UserSummaryDto>("Failed to update user");
+            }
+        }
+
+        public async Task<ApiResponse> DeleteUserAsync(Guid userId, Guid adminId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null || user.IsDeleted)
+                    return ApiResponse.ErrorResult("User not found");
+
+                user.IsDeleted = true;
+                user.DeletedAt = DateTime.UtcNow;
+                user.DeletedBy = adminId;
+                user.IsActive = false;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    var errors = result.Errors.Select(e => e.Description).ToList();
+                    return ApiResponse.ErrorResult("Failed to delete user", errors);
+                }
+
+                _logger.LogInformation("User {UserId} deleted by admin {AdminId}", userId, adminId);
+                return ApiResponse.SuccessResult("User deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting user {UserId}", userId);
+                return ApiResponse.ErrorResult("Failed to delete user");
+            }
+        }
+
+        public async Task<ApiResponse> ToggleUserStatusAsync(Guid userId, Guid adminId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null || user.IsDeleted)
+                    return ApiResponse.ErrorResult("User not found");
+
+                user.IsActive = !user.IsActive;
+                user.UpdatedBy = adminId;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    var errors = result.Errors.Select(e => e.Description).ToList();
+                    return ApiResponse.ErrorResult("Failed to toggle user status", errors);
+                }
+
+                var message = user.IsActive ? "User activated successfully" : "User deactivated successfully";
+                _logger.LogInformation("User {UserId} status toggled to {Status} by admin {AdminId}", userId, user.IsActive, adminId);
+                return ApiResponse.SuccessResult(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error toggling user status {UserId}", userId);
+                return ApiResponse.ErrorResult("Failed to toggle user status");
+            }
+        }
+
+        public async Task<ApiResponse<EmailCheckResponse>> CheckEmailAsync(string email)
+        {
+            try
+            {
+                var exists = await _userManager.FindByEmailAsync(email) != null;
+                var response = new EmailCheckResponse
+                {
+                    Exists = exists,
+                    Available = !exists,
+                    Message = exists ? "Email already exists" : "Email is available"
+                };
+                return ApiResponse.SuccessResult(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking email {Email}", email);
+                return ApiResponse.ErrorResult<EmailCheckResponse>("Failed to check email");
+            }
+        }
+
+        public async Task<ApiResponse<NationalIdCheckResponse>> CheckNationalIdAsync(string nationalIdCard)
+        {
+            try
+            {
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.NationalIdCard == nationalIdCard && !u.IsDeleted);
+                var exists = user != null;
+                var response = new NationalIdCheckResponse
+                {
+                    Exists = exists,
+                    Available = !exists,
+                    Message = exists ? "CCCD already exists" : "CCCD is available",
+                    ExistingUser = exists ? _mapper.Map<UserSummaryDto>(user) : null
+                };
+                return ApiResponse.SuccessResult(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking national ID card {CCCD}", nationalIdCard);
+                return ApiResponse.ErrorResult<NationalIdCheckResponse>("Failed to check CCCD");
+            }
+        }
+    }}

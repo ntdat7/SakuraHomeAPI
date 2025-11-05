@@ -1,0 +1,88 @@
+﻿@baseUrl = https://localhost:7240/api
+@authToken = {{login.response.body.data.token}}
+
+### Variables
+@testEmail = user@sakurahome.com
+@testPassword = Test123!@#
+
+### 1. Login to get auth token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{testEmail}}",
+  "password": "{{testPassword}}"
+}
+
+### 2. Get User Activities - Page 1 (Default)
+GET {{baseUrl}}/user/activities
+Authorization: Bearer {{authToken}}
+
+### 3. Get User Activities - Page 1 with 10 items per page
+GET {{baseUrl}}/user/activities?page=1&pageSize=10
+Authorization: Bearer {{authToken}}
+
+### 4. Get User Activities - Page 2 with 20 items per page
+GET {{baseUrl}}/user/activities?page=2&pageSize=20
+Authorization: Bearer {{authToken}}
+
+### 5. Get User Activities - With different page sizes
+GET {{baseUrl}}/user/activities?page=1&pageSize=5
+Authorization: Bearer {{authToken}}
+
+### 6. Get User Activities - Edge case: Large page size (should be capped at 100)
+GET {{baseUrl}}/user/activities?page=1&pageSize=500
+Authorization: Bearer {{authToken}}
+
+### 7. Get User Activities - Edge case: Invalid page (should default to 1)
+GET {{baseUrl}}/user/activities?page=0&pageSize=20
+Authorization: Bearer {{authToken}}
+
+### 8. Get User Activities - Edge case: Negative values (should default to valid values)
+GET {{baseUrl}}/user/activities?page=-1&pageSize=-10
+Authorization: Bearer {{authToken}}
+
+### 9. Get User Profile
+GET {{baseUrl}}/user/profile
+Authorization: Bearer {{authToken}}
+
+### 10. Get User Stats
+GET {{baseUrl}}/user/stats
+Authorization: Bearer {{authToken}}
+
+###################################################
+# Expected Response Format for User Activities
+###################################################
+# {
+#   "success": true,
+#   "message": "User activities retrieved successfully",
+#   "data": {
+#     "data": [
+#       {
+#         "id": 1,
+#         "activityType": "Login",
+#         "description": "Đăng nhập hệ thống",
+#         "details": null,
+#         "createdAt": "2025-11-02T10:30:00Z",
+#         "ipAddress": "192.168.1.1",
+#         "relatedEntityId": null,
+#         "relatedEntityType": null
+#       }
+#     ],
+#     "pagination": {
+#       "currentPage": 1,
+#       "pageSize": 20,
+#       "totalItems": 4,
+#       "totalPages": 1,
+#       "hasNext": false,
+#       "hasPrevious": false,
+#       "nextPage": null,
+#       "previousPage": null
+#     },
+#     "success": true,
+#     "message": "User activities retrieved successfully"
+#   },
+#   "errors": [],
+#   "timestamp": "2025-11-02T17:49:01Z"
+# }

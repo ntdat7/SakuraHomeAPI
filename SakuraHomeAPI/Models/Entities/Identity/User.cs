@@ -126,6 +126,30 @@ namespace SakuraHomeAPI.Models.Entities.Identity
 
         #endregion
 
+        #region Employee Information (Simple - Only for Staff/Admin)
+
+        /// <summary>
+        /// Căn cước công dân - Chỉ dùng cho Nhân viên/Quản lý
+        /// NULL cho khách hàng
+        /// </summary>
+        [MaxLength(20)]
+        public string? NationalIdCard { get; set; }
+
+        /// <summary>
+        /// Ngày vào làm - Chỉ dùng cho Nhân viên/Quản lý
+        /// NULL cho khách hàng
+        /// </summary>
+        public DateTime? HireDate { get; set; }
+
+        /// <summary>
+        /// Lương cơ bản - Chỉ dùng cho Nhân viên/Quản lý
+        /// NULL cho khách hàng
+        /// </summary>
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? BaseSalary { get; set; }
+
+        #endregion
+
         #region Audit Properties (từ IAuditable) - FIXED: Changed to Guid to match User key type
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -175,6 +199,19 @@ namespace SakuraHomeAPI.Models.Entities.Identity
             !string.IsNullOrEmpty(PasswordResetToken) &&
             PasswordResetExpires.HasValue &&
             PasswordResetExpires > DateTime.UtcNow;
+
+        [NotMapped]
+        public bool IsEmployee => Role >= UserRole.Staff;
+
+        [NotMapped]
+        public string RoleDisplayName => Role switch
+        {
+            UserRole.Customer => "Khách hàng",
+            UserRole.Staff => "Nhân viên",
+            UserRole.Admin => "Quản lý",
+            UserRole.SuperAdmin => "Quản trị viên",
+            _ => "Unknown"
+        };
 
         #endregion
 

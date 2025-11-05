@@ -24,6 +24,10 @@ namespace SakuraHomeAPI.Services.Interfaces
         
         // User Stats & Analytics
         Task<ApiResponse<UserStatsDto>> GetUserStatsAsync(Guid userId);
+        
+        // User Activities
+        Task<ApiResponse<PagedResponseDto<UserActivityDto>>> GetUserActivitiesAsync(Guid userId, int page = 1, int pageSize = 20);
+        
         // Admin: User List
        // Task<ApiResponse<UserListResponseDto>> GetUserListAsync(UserFilterRequestDto filter);
     }

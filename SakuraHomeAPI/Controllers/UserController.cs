@@ -130,6 +130,34 @@ namespace SakuraHomeAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Get user activities with pagination
+        /// </summary>
+        [HttpGet("activities")]
+        public async Task<ActionResult<ApiResponseDto<PagedResponseDto<UserActivityDto>>>> GetUserActivities(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (!userId.HasValue)
+                    return Unauthorized(ApiResponseDto<PagedResponseDto<UserActivityDto>>.ErrorResult("User not authenticated"));
+
+                var result = await _userService.GetUserActivitiesAsync(userId.Value, page, pageSize);
+                
+                if (result.Success)
+                    return Ok(ApiResponseDto<PagedResponseDto<UserActivityDto>>.SuccessResult(result.Data, result.Message));
+                
+                return BadRequest(ApiResponseDto<PagedResponseDto<UserActivityDto>>.ErrorResult(result.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting activities for user {UserId}", GetCurrentUserId());
+                return StatusCode(500, ApiResponseDto<PagedResponseDto<UserActivityDto>>.ErrorResult("An error occurred while retrieving user activities"));
+            }
+        }
+
         #region Address Management
 
         /// <summary>
