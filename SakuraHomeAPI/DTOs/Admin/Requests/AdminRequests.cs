@@ -144,6 +144,9 @@ namespace SakuraHomeAPI.DTOs.Admin.Requests
         public int PageSize { get; set; } = 20;
     }
 
+    /// <summary>
+    /// Admin user filter request DTO
+    /// </summary>
     public class AdminUserFilterRequestDto
     {
         public string? Keyword { get; set; }
@@ -153,32 +156,57 @@ namespace SakuraHomeAPI.DTOs.Admin.Requests
         public int PageSize { get; set; } = 20;
     }
 
+    /// <summary>
+    /// Admin create user request DTO
+    /// </summary>
     public class AdminCreateUserRequestDto
     {
         [Required, EmailAddress]
         public string Email { get; set; } = string.Empty;
+
         [Required, MinLength(3), MaxLength(50)]
         public string UserName { get; set; } = string.Empty;
+
         [Required, MinLength(8)]
         public string Password { get; set; } = string.Empty;
+
         public string? PhoneNumber { get; set; }
         public string? Role { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
+    /// <summary>
+    /// Admin update user request DTO
+    /// </summary>
     public class AdminUpdateUserRequestDto
     {
         [Required, EmailAddress]
         public string Email { get; set; } = string.Empty;
+
         [Required, MinLength(3), MaxLength(50)]
         public string UserName { get; set; } = string.Empty;
+
         public string? PhoneNumber { get; set; }
         public string? Role { get; set; }
         public bool IsActive { get; set; } = true;
     }
 
+    /// <summary>
+    /// Admin change user status request DTO
+    /// </summary>
     public class AdminChangeUserStatusRequestDto
     {
         public bool IsActive { get; set; }
+    }
+
+    /// <summary>
+    /// Reset password request DTO
+    /// </summary>
+    public class ResetPasswordRequest
+    {
+        [Required]
+        [MinLength(8, ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự")]
+        [MaxLength(100, ErrorMessage = "Mật khẩu không được quá 100 ký tự")]
+        public string NewPassword { get; set; } = string.Empty;
     }
 }

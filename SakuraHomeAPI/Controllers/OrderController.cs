@@ -4,9 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Orders.Requests;
 using SakuraHomeAPI.DTOs.Orders.Responses;
-using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace SakuraHomeAPI.Controllers
@@ -15,7 +13,7 @@ namespace SakuraHomeAPI.Controllers
     /// Order management controller
     /// </summary>
     [ApiController]
-    [Route("api/orders")]  // Changed from api/[controller] to api/orders (lowercase, plural)
+    [Route("api/orders")]
     [Authorize]
     public class OrderController : ControllerBase
     {
@@ -27,6 +25,10 @@ namespace SakuraHomeAPI.Controllers
             _orderService = orderService;
             _logger = logger;
         }
+
+        // =================================================================
+        // USER ENDPOINTS - Customer Order Operations
+        // =================================================================
 
         /// <summary>
         /// Create new order from cart
@@ -129,13 +131,10 @@ namespace SakuraHomeAPI.Controllers
                 _logger.LogError(ex, "Unexpected error creating order for user {UserId}: {Message}",
                     GetCurrentUserId(), ex.Message);
 
-                // Don't expose internal errors to client in production
                 var errorMessage = "An error occurred while creating the order";
-
 #if DEBUG
                 errorMessage += $": {ex.Message}";
 #endif
-
                 return StatusCode(500, ApiResponseDto<OrderResponseDto>.ErrorResult(errorMessage));
             }
         }
@@ -156,11 +155,10 @@ namespace SakuraHomeAPI.Controllers
 
                 if (result.Success && result.Data != null)
                 {
-                    // Calculate pagination info using PagedResult
                     var page = filter?.Page ?? 1;
                     var pageSize = filter?.PageSize ?? 20;
-                    var totalCount = result.Data.Count; // TODO: Should come from service with actual total count from DB
-                    
+                    var totalCount = result.Data.Count;
+
                     var pagedResult = new PagedResult<OrderSummaryDto>
                     {
                         Items = result.Data,
@@ -271,7 +269,6 @@ namespace SakuraHomeAPI.Controllers
                 if (!userId.HasValue)
                     return Unauthorized(ApiResponseDto<List<OrderStatusHistoryDto>>.ErrorResult("User not authenticated"));
 
-                // Verify user owns the order
                 var orderResult = await _orderService.GetOrderAsync(orderId, userId.Value);
                 if (!orderResult.Success)
                     return NotFound(ApiResponseDto<List<OrderStatusHistoryDto>>.ErrorResult("Order not found"));
@@ -291,7 +288,7 @@ namespace SakuraHomeAPI.Controllers
         }
 
         /// <summary>
-        /// Add note to order
+        /// Add note to order (customer note)
         /// </summary>
         [HttpPost("{orderId}/notes")]
         public async Task<ActionResult<ApiResponseDto<OrderResponseDto>>> AddOrderNote(int orderId, [FromBody] AddOrderNoteRequestDto request)
@@ -369,26 +366,6 @@ namespace SakuraHomeAPI.Controllers
         }
 
         /// <summary>
-        /// Calculate order total - Method not available (commented out in interface)
-        /// </summary>
-        [HttpPost("calculate-total")]
-        public async Task<ActionResult<ApiResponseDto<object>>> CalculateOrderTotal([FromBody] CalculateOrderTotalRequestDto request)
-        {
-            try
-            {
-                // Method not implemented in interface - return placeholder response
-                _logger.LogWarning("CalculateOrderTotal called but method not available in service interface");
-
-                return Ok(ApiResponseDto<object>.ErrorResult("Calculate order total feature is not currently available"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in calculate order total endpoint");
-                return StatusCode(500, ApiResponseDto<object>.ErrorResult("An error occurred while calculating order total"));
-            }
-        }
-
-        /// <summary>
         /// Request order return
         /// </summary>
         [HttpPost("{orderId}/return")]
@@ -415,7 +392,7 @@ namespace SakuraHomeAPI.Controllers
         }
 
         // =================================================================
-        // STAFF ONLY ENDPOINTS - Order Management
+        // STAFF ONLY ENDPOINTS - Order Management & Processing
         // =================================================================
 
         /// <summary>
@@ -631,7 +608,7 @@ namespace SakuraHomeAPI.Controllers
         /// </summary>
         [HttpGet("recent")]
         [Authorize(Policy = "StaffOnly")]
-        public async Task<ActionResult<ApiResponseDto<List<OrderSummaryDto>>>>GetRecentOrders([FromQuery] int count = 10)
+        public async Task<ActionResult<ApiResponseDto<List<OrderSummaryDto>>>> GetRecentOrders([FromQuery] int count = 10)
         {
             try
             {
@@ -662,68 +639,5 @@ namespace SakuraHomeAPI.Controllers
         }
 
         #endregion
-    }
-
-    /// <summary>
-    /// Cancel order request DTO
-    /// </summary>
-    public class CancelOrderRequestDto
-    {
-        [Required]
-        [MaxLength(500)]
-        public string Reason { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Add order note request DTO
-    /// </summary>
-    public class AddOrderNoteRequestDto
-    {
-        [Required]
-        [MaxLength(1000)]
-        public string Note { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Add staff note request DTO
-    /// </summary>
-    public class AddStaffNoteRequestDto
-    {
-        [Required]
-        [MaxLength(1000)]
-        public string Note { get; set; } = string.Empty;
-
-        public bool IsCustomerVisible { get; set; } = false;
-    }
-
-    /// <summary>
-    /// Update order status request DTO
-    /// </summary>
-    public class UpdateOrderStatusRequestDto
-    {
-        [Required]
-        public OrderStatus Status { get; set; }
-
-        [MaxLength(1000)]
-        public string? Notes { get; set; }
-    }
-
-    /// <summary>
-    /// Calculate order total request DTO - Updated to include ExpressDelivery
-    /// </summary>
-    public class CalculateOrderTotalRequestDto
-    {
-        [Required]
-        public List<OrderItemRequestDto> Items { get; set; } = new();
-
-        public int? ShippingAddressId { get; set; }
-
-        [MaxLength(20)]
-        public string? CouponCode { get; set; }
-
-        /// <summary>
-        /// Whether to use express delivery (affects shipping cost calculation)
-        /// </summary>
-        public bool? ExpressDelivery { get; set; }
     }
 }
