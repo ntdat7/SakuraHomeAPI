@@ -14,7 +14,8 @@
         Delivered = 7,      // Đã giao thành công
         Cancelled = 8,      // Đã hủy
         Returned = 9,       // Đã trả hàng
-        Refunded = 10       // Đã hoàn tiền
+        Refunded = 10,      // Đã hoàn tiền
+        Completed = 11      // Hoàn tất    
     }
 
     /// <summary>

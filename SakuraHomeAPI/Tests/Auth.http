@@ -20,8 +20,8 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "quicktest@example.com", 
-  "password": "Quick123!",
+  "email": "datnt712@gmail.com", 
+  "password": "Dat7122003@",
   "rememberMe": false
 }
 
@@ -93,8 +93,8 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "test1@example.com",
-  "password": "Test123!",
+  "email": "admin@sakurahome.com",
+  "password": "Admin123!",
   "rememberMe": false
 }
 

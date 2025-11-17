@@ -1,0 +1,487 @@
+﻿### ==========================================
+### 🎯 SAKURA HOME API - ORDER WORKFLOW TESTING
+### ==========================================
+### File này test toàn bộ quy trình xử lý đơn hàng
+### Từ tạo đơn → xác nhận → đóng gói → giao hàng → xác nhận nhận hàng
+### ==========================================
+
+@baseUrl = https://localhost:8080
+@contentType = application/json
+
+# ==========================================
+# 🔑 AUTHENTICATION TOKENS
+# ==========================================
+# Cập nhật tokens sau khi đăng nhập
+@customerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIwZWVkNTQ3YS1jMWQ2LTQ0MDctODQxMS1kYTdhMGEyMzkyNTgiLCJlbWFpbCI6ImRhdG50NzEyQGdtYWlsLmNvbSIsInVuaXF1ZV9uYW1lIjoiTmd1eeG7hW4gIFRow6BuaCDEkOG6oXQiLCJyb2xlIjoiQ3VzdG9tZXIiLCJmaXJzdE5hbWUiOiJOZ3V54buFbiAiLCJsYXN0TmFtZSI6IlRow6BuaCDEkOG6oXQiLCJ0aWVyIjoiRGlhbW9uZCIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMzU1NjAwMDAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiJhNmQ4ZmMyMi05MDk5LTQzMWEtYmYwMC04OTUwNDdiNjE1YmQiLCJpYXQiOjE3NjMyNTg5NzIsImJpcnRoZGF0ZSI6IjIwMDMtMTItMDciLCJnZW5kZXIiOiJNYWxlIiwibmJmIjoxNzYzMjU4OTcyLCJleHAiOjE3NjMyNjI1NzIsImlzcyI6IlNha3VyYUhvbWVBUEkiLCJhdWQiOiJTYWt1cmFIb21lVXNlcnMifQ.kj17lhcZLwx1vZhQ8jE7POve0d1EwiBCKiwJQqa42yo
+@staffToken = your-staff-token-here
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiJhZDQ5MGFkYS1mODNjLTQ5MDQtYjRlYS03NDZiNDE3Zjc0YTciLCJpYXQiOjE3NjMxNzIwMzUsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NjMxNzIwMzUsImV4cCI6MTc2MzE3NTYzNSwiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.j30JFMeRE5ujwl-Qsknv3tTmWuACQYr875lV6DHCRiY
+
+# ==========================================
+# 📝 TEST DATA IDs
+# ==========================================
+@addressId = 1
+@orderId = 7
+@productId1 = 1
+@productId2 = 2
+
+### ==========================================
+### 📋 WORKFLOW 1: HAPPY PATH - ĐƠN HÀNG THÀNH CÔNG
+### ==========================================
+### Quy trình: Pending → Confirmed → Processing → Packed → Shipped → OutForDelivery → Delivered → Customer Confirm
+
+### ==========================================
+### STEP 1: 📦 CUSTOMER TẠO ĐƠN HÀNG MỚI (Status: Pending)
+### ==========================================
+### Expected: 
+### - Success: true
+### - Status: Pending (1)
+### - Notification gửi đến customer
+### - Notification gửi đến TẤT CẢ admin/staff
+### ==========================================
+
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customerToken}}
+Content-Type: {{contentType}}
+
+{
+  "items": [
+    {
+      "productId": {{productId1}},
+      "quantity": 2,
+      "customOptions": "{\"color\": \"red\", \"size\": \"M\"}"
+    },
+    {
+      "productId": {{productId2}},
+      "quantity": 1,
+      "customOptions": "{}"
+    }
+  ],
+  "shippingAddressId": {{addressId}},
+  "billingAddressId": null,
+  "paymentMethod": "COD",
+  "orderNotes": "Vui lòng giao sau 6h chiều",
+  "couponCode": null,
+  "expressDelivery": false,
+  "giftWrap": false,
+  "giftMessage": null
+}
+
+###
+
+### ==========================================
+### STEP 2: ✅ STAFF XÁC NHẬN ĐƠN HÀNG (Status: Confirmed)
+### ==========================================
+### Expected:
+### - Status: Confirmed (2)
+### - ConfirmedDate được set
+### - PaymentStatus: Confirmed
+### - Notification gửi đến customer: "Đơn hàng đã được xác nhận và sẽ sớm được xử lý"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/confirm
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ==========================================
+### STEP 3: 🏭 STAFF BẮT ĐẦU XỬ LÝ ĐƠN HÀNG (Status: Processing)
+### ==========================================
+### Expected:
+### - Status: Processing (3)
+### - ProcessingDate được set
+### - Notification gửi đến customer: "Đơn hàng đang được chuẩn bị"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/process
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "processingNotes": "Đang lấy hàng và kiểm tra chất lượng"
+}
+
+###
+
+### ==========================================
+### STEP 4: 📦 STAFF ĐÓNG GÓI ĐƠN HÀNG (Status: Packed)
+### ==========================================
+### Expected:
+### - Status: Packed (4)
+### - PackedDate được set
+### - Notification gửi đến customer: "Đơn hàng đã được đóng gói và sẵn sàng giao"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/pack
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "notes": "Đã đóng gói xong, kiểm tra kỹ càng"
+}
+
+###
+
+### ==========================================
+### STEP 5: 🚚 STAFF GIAO CHO VẬN CHUYỂN (Status: Shipped)
+### ==========================================
+### Expected:
+### - Status: Shipped (5)
+### - ShippedDate được set
+### - TrackingNumber, ShippingCarrier được lưu
+### - Notification gửi đến customer với tracking number
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/ship
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "trackingNumber": "GHN123456789",
+  "shippingCarrier": "Giao Hàng Nhanh",
+  "estimatedDeliveryDate": "2024-12-20T18:00:00Z",
+  "shippingNotes": "Đơn hàng đã được giao cho shipper"
+}
+
+###
+
+### ==========================================
+### STEP 6: 🚗 SHIPPER BẮT ĐẦU GIAO HÀNG (Status: OutForDelivery)
+### ==========================================
+### Expected:
+### - Status: OutForDelivery (6)
+### - Notification gửi đến customer: "Đơn hàng đang trên đường giao đến bạn"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/out-for-delivery
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "notes": "Shipper đang giao hàng đến địa chỉ khách hàng"
+}
+
+###
+
+### ==========================================
+### STEP 7: ✅ SHIPPER GIAO HÀNG THÀNH CÔNG (Status: Delivered)
+### ==========================================
+### Expected:
+### - Status: Delivered (7)
+### - DeliveredDate được set
+### - PaymentStatus: Paid (nếu COD)
+### - Notification gửi đến customer: "Đơn hàng đã được giao thành công. Vui lòng xác nhận đã nhận hàng!"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/deliver
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ==========================================
+### STEP 8A: ✅ KHÁCH HÀNG XÁC NHẬN ĐÃ NHẬN HÀNG (Success Case)
+### ==========================================
+### Expected:
+### - OrderNote được thêm: "Khách hàng xác nhận đã nhận được hàng"
+### - OrderStatusHistory được thêm
+### - Notification gửi đến TẤT CẢ admin/staff
+### - Message: "Cảm ơn bạn đã xác nhận đã nhận được hàng!"
+### ==========================================
+
+POST {{baseUrl}}/api/orders/{{orderId}}/confirm-delivery
+Authorization: Bearer {{customerToken}}
+Content-Type: {{contentType}}
+
+{
+  "isReceived": true,
+  "notes": "Hàng đã nhận, đóng gói cẩn thận, rất hài lòng"
+}
+
+###
+
+### ==========================================
+### 📋 WORKFLOW 2: CUSTOMER CHƯA NHẬN ĐƯỢC HÀNG
+### ==========================================
+
+### ==========================================
+### STEP 8B: 🚨 KHÁCH HÀNG BÁO CHƯA NHẬN ĐƯỢC HÀNG (Issue Case)
+### ==========================================
+### Expected:
+### - OrderNote được thêm: "Khách hàng báo CHƯA nhận được hàng"
+### - OrderStatusHistory được thêm
+### - 🚨 URGENT notification gửi đến TẤT CẢ admin/staff
+### - Title: "🚨 KHẨN CẤP: Khách hàng CHƯA nhận được hàng"
+### - Message: Bao gồm order number, customer info, lý do
+### - Notification cho customer: "Nhân viên sẽ liên hệ với bạn sớm nhất"
+### ==========================================
+
+POST {{baseUrl}}/api/orders/{{orderId}}/confirm-delivery
+Authorization: Bearer {{customerToken}}
+Content-Type: {{contentType}}
+
+{
+  "isReceived": false,
+  "notes": "Tôi không nhận được hàng, nhưng shipper báo đã giao thành công"
+}
+
+###
+
+### ==========================================
+### 📋 WORKFLOW 3: GIAO HÀNG THẤT BẠI
+### ==========================================
+
+### ==========================================
+### STEP 6B: ❌ GIAO HÀNG THẤT BẠI (Delivery Failed)
+### ==========================================
+### Expected:
+### - Status: VẪN GIỮ Shipped hoặc OutForDelivery (để retry)
+### - ✅ INVENTORY ĐƯỢC RESTORE (hoàn hàng về kho)
+### - OrderNote: "GIAO HÀNG THẤT BẠI: {reason}. Hàng đã được hoàn về kho."
+### - Notification cho customer
+### - Notification cho admin với title: "⚠️ Giao hàng thất bại - Đã hoàn kho"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/delivery-failed
+Authorization: Bearer {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "reason": "Khách hàng không có nhà, sẽ giao lại ngày mai"
+}
+
+###
+
+### ==========================================
+### 📋 WORKFLOW 4: HỦY ĐƠN HÀNG
+### ==========================================
+
+### ==========================================
+### STEP 4A: ❌ KHÁCH HÀNG HỦY ĐƠN HÀNG (CHỈ KHI PENDING)
+### ==========================================
+### Expected:
+### - ✅ CHỈ SUCCESS nếu Status = Pending
+### - ❌ FAIL nếu Status != Pending
+### - Status: Cancelled (8)
+### - CancelledDate, CancelReason được set
+### - ✅ INVENTORY ĐƯỢC RESTORE
+### - User statistics được cập nhật (TotalOrders--, TotalSpent--)
+### - Notification cho customer với lý do hủy
+### - 🚨 Notification cho TẤT CẢ admin/staff
+### ==========================================
+
+DELETE {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer {{customerToken}}
+Content-Type: {{contentType}}
+
+{
+  "reason": "Tôi đã đổi ý, không muốn mua nữa"
+}
+
+###
+
+### ==========================================
+### STEP 4B: ❌ THỬ HỦY ĐƠN ĐÃ XÁC NHẬN (PHẢI FAIL)
+### ==========================================
+### Expected:
+### - Success: false
+### - Message: "Không thể hủy đơn hàng đã được xác nhận"
+### - Trạng thái hiện tại: {current status}
+### - Khuyến nghị: "Vui lòng liên hệ với bộ phận hỗ trợ"
+### ==========================================
+
+DELETE {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer {{customerToken}}
+Content-Type: {{contentType}}
+
+{
+  "reason": "Thử hủy đơn đã confirmed (phải fail)"
+}
+
+###
+
+### ==========================================
+### 📋 WORKFLOW 5: XEM THÔNG TIN ĐƠN HÀNG
+### ==========================================
+
+### ==========================================
+### VIEW ORDER DETAILS
+### ==========================================
+
+GET {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer {{customerToken}}
+
+###
+
+### ==========================================
+### VIEW ORDER STATUS HISTORY
+### ==========================================
+### Expected: Xem được toàn bộ lịch sử thay đổi trạng thái
+### ==========================================
+
+GET {{baseUrl}}/api/orders/{{orderId}}/status-history
+Authorization: Bearer {{customerToken}}
+
+###
+
+### ==========================================
+### VIEW ORDER NOTES
+### ==========================================
+### Expected: Xem được tất cả notes (system + customer)
+### ==========================================
+
+GET {{baseUrl}}/api/orders/{{orderId}}/notes
+Authorization: Bearer {{customerToken}}
+
+###
+
+### ==========================================
+### GET USER ORDERS WITH FILTERS
+### ==========================================
+
+GET {{baseUrl}}/api/orders?status=1&page=1&pageSize=10
+Authorization: Bearer {{customerToken}}
+
+###
+
+### ==========================================
+### 📋 WORKFLOW 6: ADMIN OPERATIONS
+### ==========================================
+
+### ==========================================
+### GET ORDER STATISTICS (ADMIN)
+### ==========================================
+
+GET {{baseUrl}}/api/orders/stats?fromDate=2024-01-01&toDate=2024-12-31
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ==========================================
+### GET RECENT ORDERS (ADMIN)
+### ==========================================
+
+GET {{baseUrl}}/api/orders/recent?count=20
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ==========================================
+### 🧪 TEST CASES - ERROR SCENARIOS
+### ==========================================
+
+### ==========================================
+### TEST 1: THỬ SHIP KHI CHƯA PACK (PHẢI FAIL)
+### ==========================================
+### Expected: Error - "Đơn hàng phải ở trạng thái 'Đã đóng gói' trước"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/ship
+Authorization: Bearer {{staffToken}}
+Content-Type: {{contentType}}
+
+{
+  "trackingNumber": "TEST123",
+  "shippingCarrier": "Test"
+}
+
+###
+
+### ==========================================
+### TEST 2: THỬ DELIVER KHI CHƯA OUT FOR DELIVERY (PHẢI FAIL)
+### ==========================================
+### Expected: Error - "Đơn hàng phải ở trạng thái 'Đang giao hàng' trước"
+### ==========================================
+
+PATCH {{baseUrl}}/api/orders/{{orderId}}/deliver
+Authorization: Bearer {{staffToken}}
+
+###
+
+### ==========================================
+### TEST 3: THỬ CONFIRM DELIVERY KHI CHƯA DELIVERED (PHẢI FAIL)
+### ==========================================
+### Expected: Error - "Đơn hàng phải ở trạng thái 'Đã giao hàng'"
+### ==========================================
+
+POST {{baseUrl}}/api/orders/{{orderId}}/confirm-delivery
+Authorization: Bearer {{customerToken}}
+Content-Type: {{contentType}}
+
+{
+  "isReceived": true,
+  "notes": "Test"
+}
+
+###
+
+### ==========================================
+### TEST 4: ACCESS ORDER CỦA USER KHÁC (PHẢI FAIL)
+### ==========================================
+### Expected: 404 Not Found - "Order not found"
+### ==========================================
+
+GET {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer different-user-token
+
+###
+
+### ==========================================
+### 📊 ORDER STATUS REFERENCE
+### ==========================================
+# 1 = Pending          - Đang chờ xử lý
+# 2 = Confirmed        - Đã xác nhận
+# 3 = Processing       - Đang xử lý
+# 4 = Packed           - Đã đóng gói
+# 5 = Shipped          - Đã giao cho vận chuyển
+# 6 = OutForDelivery   - Đang giao hàng
+# 7 = Delivered        - Đã giao hàng
+# 8 = Cancelled        - Đã hủy
+# 9 = Returned         - Đã trả hàng
+# 10 = Refunded        - Đã hoàn tiền
+
+### ==========================================
+### 📝 NOTIFICATION TYPES REFERENCE
+### ==========================================
+# 1 = Order            - Thông báo về đơn hàng
+# 2 = System           - Thông báo hệ thống
+# 3 = Promotion        - Thông báo khuyến mãi
+# 4 = Account          - Thông báo tài khoản
+
+### ==========================================
+### 🎯 TEST CHECKLIST
+### ==========================================
+# [ ] 1. Customer tạo đơn hàng → Pending
+# [ ] 2. Staff confirm → Confirmed
+# [ ] 3. Staff process → Processing
+# [ ] 4. Staff pack → Packed
+# [ ] 5. Staff ship → Shipped (với tracking)
+# [ ] 6. Staff out for delivery → OutForDelivery
+# [ ] 7. Staff deliver → Delivered
+# [ ] 8A. Customer confirm received → Success message
+# [ ] 8B. Customer report not received → Urgent admin notification
+# [ ] 9. Staff delivery failed → Inventory restored
+# [ ] 10. Customer cancel (Pending only) → Success + restore inventory
+# [ ] 11. Customer cancel (Confirmed+) → Error message
+# [ ] 12. All notifications sent to correct users
+# [ ] 13. Status validation working (can't skip steps)
+# [ ] 14. Authorization working (customer vs staff endpoints)
+
+### ==========================================
+### 🚀 QUICK START GUIDE
+### ==========================================
+# 1. Đăng nhập để lấy customerToken và staffToken (dùng Auth.http)
+# 2. Tạo address cho customer (dùng User.http hoặc Address.http)
+# 3. Cập nhật @addressId, @productId1, @productId2
+# 4. Chạy từng step theo thứ tự trong WORKFLOW 1
+# 5. Verify notifications trong database hoặc UI
+# 6. Test các error scenarios
+# 7. Kiểm tra inventory được restore khi cancel/delivery failed
+
+### ==========================================
+### 📌 NOTES
+### ==========================================
+# - Mỗi step phải chờ step trước complete
+# - Không thể skip bước trong workflow
+# - Admin/Staff nhận notification cho: Pending, Cancelled, Returned
+# - Customer nhận notification cho MỌI status change
+# - Inventory được restore khi: Cancel, Delivery Failed
+# - Chỉ có thể cancel order khi status = Pending
