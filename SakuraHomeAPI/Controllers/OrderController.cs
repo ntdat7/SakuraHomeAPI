@@ -391,6 +391,38 @@ namespace SakuraHomeAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Xác nhận đã nhận hàng (hoặc báo cáo vấn đề)
+        /// </summary>
+        [HttpPost("{orderId}/confirm-delivery")]
+        public async Task<ActionResult<ApiResponseDto<OrderResponseDto>>> ConfirmDeliveryReceived(
+            int orderId,
+            [FromBody] ConfirmDeliveryRequestDto request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (!userId.HasValue)
+                    return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Người dùng chưa xác thực"));
+
+                var result = await _orderService.ConfirmDeliveryReceivedAsync(
+                    orderId,
+                    userId.Value,
+                    request.IsReceived,
+                    request.Notes);
+
+                if (result.Success)
+                    return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
+
+                return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error confirming delivery for order {OrderId}", orderId);
+                return StatusCode(500, ApiResponseDto<OrderResponseDto>.ErrorResult("Lỗi khi xác nhận giao hàng"));
+            }
+        }
+
         // =================================================================
         // STAFF ONLY ENDPOINTS - Order Management & Processing
         // =================================================================
@@ -419,6 +451,98 @@ namespace SakuraHomeAPI.Controllers
             {
                 _logger.LogError(ex, "Error confirming order {OrderId}", orderId);
                 return StatusCode(500, ApiResponseDto<OrderResponseDto>.ErrorResult("An error occurred while confirming the order"));
+            }
+        }
+
+        /// <summary>
+        /// Mark delivery as failed - Giao hàng thất bại (Staff only)
+        /// </summary>
+        [HttpPatch("{orderId}/delivery-failed")]
+        [Authorize(Policy = "StaffOnly")]
+        public async Task<ActionResult<ApiResponseDto<OrderResponseDto>>> MarkDeliveryFailed(
+            int orderId,
+            [FromBody] DeliveryFailedRequestDto request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.Reason))
+                {
+                    return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult("Vui lòng cung cấp lý do giao hàng thất bại"));
+                }
+
+                var staffId = GetCurrentUserId();
+                if (!staffId.HasValue)
+                    return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
+
+                var result = await _orderService.MarkDeliveryFailedAsync(orderId, staffId.Value, request.Reason);
+
+                if (result.Success)
+                    return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
+
+                return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking delivery failed for order {OrderId}", orderId);
+                return StatusCode(500, ApiResponseDto<OrderResponseDto>.ErrorResult("Lỗi khi ghi nhận giao hàng thất bại"));
+            }
+        }
+
+        /// <summary>
+        /// Mark order as out for delivery - Đang giao hàng (Staff only)
+        /// </summary>
+        [HttpPatch("{orderId}/out-for-delivery")]
+        [Authorize(Policy = "StaffOnly")]
+        public async Task<ActionResult<ApiResponseDto<OrderResponseDto>>> MarkOutForDelivery(
+            int orderId,
+            [FromBody] OutForDeliveryRequestDto? request = null)
+        {
+            try
+            {
+                var staffId = GetCurrentUserId();
+                if (!staffId.HasValue)
+                    return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
+
+                var result = await _orderService.MarkOutForDeliveryAsync(orderId, staffId.Value, request?.Notes);
+
+                if (result.Success)
+                    return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
+
+                return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking order {OrderId} as out for delivery", orderId);
+                return StatusCode(500, ApiResponseDto<OrderResponseDto>.ErrorResult("An error occurred"));
+            }
+        }
+
+        /// <summary>
+        /// Pack order - Đóng gói đơn hàng (Staff only)
+        /// </summary>
+        [HttpPatch("{orderId}/pack")]
+        [Authorize(Policy = "StaffOnly")]
+        public async Task<ActionResult<ApiResponseDto<OrderResponseDto>>> PackOrder(
+            int orderId,
+            [FromBody] PackOrderRequestDto? request = null)
+        {
+            try
+            {
+                var staffId = GetCurrentUserId();
+                if (!staffId.HasValue)
+                    return Unauthorized(ApiResponseDto<OrderResponseDto>.ErrorResult("Staff not authenticated"));
+
+                var result = await _orderService.PackOrderAsync(orderId, staffId.Value, request?.Notes);
+
+                if (result.Success)
+                    return Ok(ApiResponseDto<OrderResponseDto>.SuccessResult(result.Data, result.Message));
+
+                return BadRequest(ApiResponseDto<OrderResponseDto>.ErrorResult(result.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error packing order {OrderId}", orderId);
+                return StatusCode(500, ApiResponseDto<OrderResponseDto>.ErrorResult("An error occurred while packing the order"));
             }
         }
 

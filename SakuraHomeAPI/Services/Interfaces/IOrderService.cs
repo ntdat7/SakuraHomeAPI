@@ -47,5 +47,27 @@ namespace SakuraHomeAPI.Services.Interfaces
         // Return & Refund
         Task<ApiResponse<OrderResponseDto>> RequestReturnAsync(int orderId, ReturnRequestDto request, Guid userId);
         Task<ApiResponse<OrderResponseDto>> ProcessReturnAsync(int orderId, ProcessReturnRequestDto request, Guid staffId);
+
+        /// <summary>
+        /// Customer confirms delivery received (or reports issue)
+        /// </summary>
+        Task<ApiResponse<OrderResponseDto>> ConfirmDeliveryReceivedAsync(int orderId, Guid userId, bool isReceived, string? notes = null);
+
+        /// <summary>
+        /// Pack order - Staff đóng gói xong
+        /// </summary>
+        Task<ApiResponse<OrderResponseDto>> PackOrderAsync(int orderId, Guid staffId, string? notes = null);
+
+        /// <summary>
+        /// Mark order as out for delivery
+        /// </summary>
+        Task<ApiResponse<OrderResponseDto>> MarkOutForDeliveryAsync(int orderId, Guid staffId, string? notes = null);
+
+        /// <summary>
+        /// Mark delivery as failed and restore inventory
+        /// </summary>
+        Task<ApiResponse<OrderResponseDto>> MarkDeliveryFailedAsync(int orderId, Guid staffId, string failureReason);
+
     }
+
 }

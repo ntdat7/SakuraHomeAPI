@@ -1,4 +1,4 @@
-using SakuraHomeAPI.Models.Enums;
+Ôªøusing SakuraHomeAPI.Models.Enums;
 
 namespace SakuraHomeAPI.DTOs.Orders.Responses
 {
@@ -67,14 +67,14 @@ namespace SakuraHomeAPI.DTOs.Orders.Responses
         public bool IsCompleted => Status == OrderStatus.Delivered;
         public string StatusText => Status switch
         {
-            OrderStatus.Pending => "?ang ch? x? l˝",
-            OrderStatus.Confirmed => "?„ x·c nh?n",
-            OrderStatus.Processing => "?ang x? l˝",
-            OrderStatus.Shipped => "?„ giao cho v?n chuy?n",
-            OrderStatus.Delivered => "?„ giao h‡ng",
-            OrderStatus.Cancelled => "?„ h?y",
-            OrderStatus.Returned => "?„ tr? h‡ng",
-            _ => "KhÙng x·c ??nh"
+            OrderStatus.Pending => "?ang ch? x? l√Ω",
+            OrderStatus.Confirmed => "?√£ x√°c nh?n",
+            OrderStatus.Processing => "?ang x? l√Ω",
+            OrderStatus.Shipped => "?√£ giao cho v?n chuy?n",
+            OrderStatus.Delivered => "?√£ giao h√†ng",
+            OrderStatus.Cancelled => "?√£ h?y",
+            OrderStatus.Returned => "?√£ tr? h√†ng",
+            _ => "Kh√¥ng x√°c ??nh"
         };
     }
 
@@ -146,11 +146,17 @@ namespace SakuraHomeAPI.DTOs.Orders.Responses
         public DateTime CreatedAt { get; set; }
         public DateTime? EstimatedDeliveryDate { get; set; }
         public string? TrackingNumber { get; set; }
-        
+
+        // Customer Information
+        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerEmail { get; set; } = string.Empty;
+        public string CustomerPhone { get; set; } = string.Empty;
+
+
         // Preview of first few items
         public List<string> ItemNames { get; set; } = new();
         public string ItemsPreview => string.Join(", ", ItemNames.Take(3)) + 
-                                     (ItemNames.Count > 3 ? $" v‡ {ItemNames.Count - 3} s?n ph?m kh·c" : "");
+                                     (ItemNames.Count > 3 ? $" v√† {ItemNames.Count - 3} s·∫£n ph·∫©m kh√°c" : "");
     }
 
     /// <summary>

@@ -6,17 +6,18 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SakuraHomeAPI.Data;
+using SakuraHomeAPI.Hubs;
 using SakuraHomeAPI.Models.Entities.Identity;
-using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.Services.Implementations;
+using SakuraHomeAPI.Services.Interfaces;
 using SakuraHomeAPI.Tools; 
 using Serilog;
 using System;
@@ -144,6 +145,20 @@ builder.Services.AddAuthentication(options =>
         {
             Log.Information("JWT Token validated for user: {User}", context.Principal?.Identity?.Name);
             return Task.CompletedTask;
+        },
+        OnMessageReceived = context =>
+        {
+            // ✅ THÊM: Allow JWT token from query string for SignalR
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+                Log.Information("JWT token received from query string for SignalR connection");
+            }
+            
+            return Task.CompletedTask;
         }
     };
 });
@@ -177,7 +192,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 // Memory Cache
 builder.Services.AddMemoryCache();
 
-// CORS - FIXED: Better configuration
+// CORS - FIXED: Better configuration with SignalR support
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -189,10 +204,17 @@ builder.Services.AddCors(options =>
 
     options.AddPolicy("Development", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5173", "https://localhost:5173")
+        policy.WithOrigins(
+                "http://localhost:3000", 
+                "https://localhost:3000", 
+                "http://localhost:5173", 
+                "https://localhost:5173",
+                "http://localhost:5174",
+                "https://localhost:5174")
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowCredentials() // ✅ REQUIRED for SignalR
+              .SetIsOriginAllowedToAllowWildcardSubdomains();
     });
 
     options.AddPolicy("Production", policy =>
@@ -200,7 +222,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("https://yourdomain.com", "https://admin.yourdomain.com")
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowCredentials(); // ✅ REQUIRED for SignalR
     });
 });
 
@@ -275,6 +297,22 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 // Product services - ENABLED for refactoring
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<SakuraHomeAPI.Repositories.Interfaces.IProductRepository, SakuraHomeAPI.Repositories.Implementations.ProductRepository>();
+
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true; // For debugging
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.MaximumReceiveMessageSize = 32768; // 32KB
+    options.StreamBufferCapacity = 10;
+})
+.AddJsonProtocol(options =>
+{
+    // ✅ THÊM: Configure JSON serialization for SignalR
+    options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.PayloadSerializerOptions.WriteIndented = false;
+    options.PayloadSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+});
 
 //builder.Services.AddScoped(ICategoryService, CategoryService>();
 //builder.Services.AddScoped(IBrandService, BrandService>();
@@ -359,6 +397,10 @@ app.UseHealthChecks("/health");
 
 // Controllers
 app.MapControllers();
+
+// SignalR Hubs - Multiple endpoints for compatibility
+app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<NotificationHub>("/notificationHub"); // ✅ THÊM: Để tương thích với frontend hiện tại
 
 // Database Migration and Seeding - FIXED: Better error handling
 using (var scope = app.Services.CreateScope())

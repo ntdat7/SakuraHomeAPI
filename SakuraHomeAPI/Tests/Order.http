@@ -5,11 +5,11 @@
 @contentType = application/json
 
 # Variables for testing (update these after running auth tests)
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJiZTlhZTY4Yy0xZWE1LTQzYTktYjcwZC0zZDMwMmM2MjAxMWEiLCJlbWFpbCI6InF1aWNrdGVzdEBleGFtcGxlLmNvbSIsInVuaXF1ZV9uYW1lIjoiUXVpY2sgVGVzdCIsInJvbGUiOiJDdXN0b21lciIsImZpcnN0TmFtZSI6IlF1aWNrIiwibGFzdE5hbWUiOiJUZXN0IiwidGllciI6IkJyb256ZSIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMC4wMCIsInByZWZlcnJlZExhbmd1YWdlIjoidmkiLCJwcmVmZXJyZWRDdXJyZW5jeSI6IlZORCIsImp0aSI6ImJhNjM0Mjc1LTEzNTktNDJkZS1iMmMwLTRjYmUwYWYwZjRlMyIsImlhdCI6MTc1NDM4NDg1MiwiZ2VuZGVyIjoiVW5rbm93biIsIm5iZiI6MTc1NDM4NDg1MiwiZXhwIjoxNzU0Mzg4NDUyLCJpc3MiOiJTYWt1cmFIb21lQVBJIiwiYXVkIjoiU2FrdXJhSG9tZVVzZXJzIn0.BOtPAGI8bF9fjCVXIUkewJClD0fLmIiZcV7XiKObbg4
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIwZWVkNTQ3YS1jMWQ2LTQ0MDctODQxMS1kYTdhMGEyMzkyNTgiLCJlbWFpbCI6ImRhdG50NzEyQGdtYWlsLmNvbSIsInVuaXF1ZV9uYW1lIjoiTmd1eeG7hW4gIFRow6BuaCDEkOG6oXQiLCJyb2xlIjoiQ3VzdG9tZXIiLCJmaXJzdE5hbWUiOiJOZ3V54buFbiAiLCJsYXN0TmFtZSI6IlRow6BuaCDEkOG6oXQiLCJ0aWVyIjoiRGlhbW9uZCIsInN0YXR1cyI6IkFjdGl2ZSIsImVtYWlsVmVyaWZpZWQiOiJGYWxzZSIsInBob25lVmVyaWZpZWQiOiJGYWxzZSIsInBvaW50cyI6IjAiLCJ0b3RhbFNwZW50IjoiMzU2MzUwMDAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiIxOWU2OWJkNi1kY2Q3LTQ0YjgtYTU5Zi05ZmVmNDBjZTI1ZmMiLCJpYXQiOjE3NjI0OTk0MjgsImJpcnRoZGF0ZSI6IjIwMDMtMTItMDciLCJnZW5kZXIiOiJNYWxlIiwibmJmIjoxNzYyNDk5NDI4LCJleHAiOjE3NjI1MDMwMjgsImlzcyI6IlNha3VyYUhvbWVBUEkiLCJhdWQiOiJTYWt1cmFIb21lVXNlcnMifQ.CgBl3Tq0rGDsgDm4xo_GTDECkBLOZcL8Wr-_jsVe8dA
 @userId = be9ae68c-1ea5-43a9-b70d-3d302c62011a
 @addressId = 1
 @orderId = 1
-
+@admintoken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxZGJkOTljMC1iMzI5LTRmNWMtOTM1Ny1mMTFhYWNiYmI1NmMiLCJlbWFpbCI6ImFkbWluQHNha3VyYWhvbWUuY29tIiwidW5pcXVlX25hbWUiOiJBZG1pbiBTeXN0ZW0iLCJyb2xlIjoiU3VwZXJBZG1pbiIsImZpcnN0TmFtZSI6IkFkbWluIiwibGFzdE5hbWUiOiJTeXN0ZW0iLCJ0aWVyIjoiQnJvbnplIiwic3RhdHVzIjoiQWN0aXZlIiwiZW1haWxWZXJpZmllZCI6IlRydWUiLCJwaG9uZVZlcmlmaWVkIjoiRmFsc2UiLCJwb2ludHMiOiIwIiwidG90YWxTcGVudCI6IjAuMDAiLCJwcmVmZXJyZWRMYW5ndWFnZSI6InZpIiwicHJlZmVycmVkQ3VycmVuY3kiOiJWTkQiLCJqdGkiOiIwYjVhZjJiZi1kZmNjLTRiNTctYTdlMy05OTZiYjRmZDU1MzEiLCJpYXQiOjE3NjI0OTk1NzQsImdlbmRlciI6IlVua25vd24iLCJuYmYiOjE3NjI0OTk1NzQsImV4cCI6MTc2MjUwMzE3NCwiaXNzIjoiU2FrdXJhSG9tZUFQSSIsImF1ZCI6IlNha3VyYUhvbWVVc2VycyJ9.inT9NpwOzjYEUxUZfs_TiDoM4FWQWwY5xX7lAn1xv48
 ### ==========================================
 ### 1. CALCULATE ORDER TOTAL (Guest/User)
 ### ==========================================
@@ -78,7 +78,7 @@ Content-Type: {{contentType}}
 ### 4. GET USER ORDERS (All Orders)
 ### ==========================================
 
-GET {{baseUrl}}/api/order
+GET {{baseUrl}}/api/orders
 Authorization: Bearer {{accessToken}}
 
 ### ==========================================
@@ -92,8 +92,8 @@ Authorization: Bearer {{accessToken}}
 ### 6. GET SPECIFIC ORDER DETAILS
 ### ==========================================
 
-GET {{baseUrl}}/api/order/{{orderId}}
-Authorization: Bearer {{accessToken}}
+GET {{baseUrl}}/api/orders/stats
+Authorization: Bearer {{admintoken}}
 
 ### ==========================================
 ### 7. UPDATE ORDER (Only for Pending Orders)

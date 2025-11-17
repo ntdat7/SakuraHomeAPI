@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Notifications.Requests;
 using SakuraHomeAPI.DTOs.Notifications.Responses;
+using SakuraHomeAPI.Hubs;
 using SakuraHomeAPI.Models.Entities;
 using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
@@ -20,17 +22,20 @@ namespace SakuraHomeAPI.Services.Implementations
         private readonly ILogger<NotificationService> _logger;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
         public NotificationService(
             ApplicationDbContext context,
             ILogger<NotificationService> logger,
             IEmailService emailService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHubContext<NotificationHub> hubContext)
         {
             _context = context;
             _logger = logger;
             _emailService = emailService;
             _configuration = configuration;
+            _hubContext = hubContext;
         }
 
         public async Task<ApiResponse<NotificationResponseDto>> SendNotificationAsync(CreateNotificationRequestDto request)
@@ -55,30 +60,127 @@ namespace SakuraHomeAPI.Services.Implementations
                 _context.Notifications.Add(notification);
                 await _context.SaveChangesAsync();
 
+                // ✅ THÊM: Gửi real-time notification qua SignalR
+                await SendRealTimeNotificationAsync(notification);
+
+                // ✅ GỬI EMAIL (nếu enable)
                 if (request.SendEmail)
                 {
                     var user = await _context.Users.FindAsync(request.UserId);
-                    if (user != null)
+                    if (user != null && user.EmailNotifications)
                     {
-                        await _emailService.SendEmailAsync(user.Email, "General Notification", new
+                        try
                         {
-                            UserName = user.FullName,
-                            Title = request.Title,
-                            Message = request.Message,
-                            ActionUrl = request.ActionUrl
-                        }, request.Title);
+                            await _emailService.SendEmailAsync(user.Email, "General", new
+                            {
+                                UserName = user.FullName,
+                                Title = request.Title,
+                                Message = request.Message,
+                                ActionUrl = request.ActionUrl
+                            }, request.Title);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to send email notification to {Email}", user.Email);
+                            // Continue - email failure không block notification
+                        }
                     }
                 }
 
                 var response = MapToNotificationResponseDto(notification);
-                
-                _logger.LogInformation("Notification sent to user {UserId}: {Title}", request.UserId, request.Title);
+
+                _logger.LogInformation("✅ Notification sent to user {UserId}: {Title}", request.UserId, request.Title);
                 return ApiResponse.SuccessResult(response, "Notification sent successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error sending notification to user {UserId}", request.UserId);
                 return ApiResponse.ErrorResult<NotificationResponseDto>("Failed to send notification");
+            }
+        }
+
+        /// <summary>
+        /// ✅ THÊM: Send real-time notification via SignalR
+        /// </summary>
+        private async Task SendRealTimeNotificationAsync(Notification notification)
+        {
+            try
+            {
+                var notificationData = new
+                {
+                    id = notification.Id,
+                    title = notification.Title,
+                    message = notification.Message,
+                    type = notification.Type.ToString(),
+                    typeName = GetNotificationTypeName(notification.Type),
+                    priority = notification.Priority.ToString(),
+                    priorityName = GetPriorityName(notification.Priority),
+                    actionUrl = notification.ActionUrl,
+                    data = !string.IsNullOrEmpty(notification.Data) ?
+                        JsonSerializer.Deserialize<Dictionary<string, object>>(notification.Data) : null,
+                    createdAt = notification.CreatedAt,
+                    isRead = notification.IsRead
+                };
+
+                // ✅ Gửi đến user cụ thể
+                await _hubContext.Clients
+                    .Group($"user_{notification.UserId}")
+                    .SendAsync("ReceiveNotification", notificationData);
+
+                // ✅ FIXED: Nếu là notification cho Admin/Staff/SuperAdmin, broadcast đến admin group
+                var user = await _context.Users.FindAsync(notification.UserId);
+                if (user != null && (user.Role == UserRole.SuperAdmin || user.Role == UserRole.Admin || user.Role == UserRole.Staff))
+                {
+                    await _hubContext.Clients
+                        .Group("admins")
+                        .SendAsync("ReceiveNotification", notificationData);
+                    
+                    _logger.LogInformation("✅ Real-time notification broadcasted to admins group");
+                }
+
+                _logger.LogInformation("✅ Real-time notification sent to user {UserId} via SignalR",
+                    notification.UserId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send real-time notification to user {UserId}",
+                    notification.UserId);
+                // Don't throw - notification is already saved in DB
+            }
+        }
+
+        /// <summary>
+        /// ✅ THÊM: Send real-time notification to all admins
+        /// </summary>
+        private async Task BroadcastToAdminsAsync(string title, string message, NotificationType type, string? actionUrl = null, Dictionary<string, object>? data = null)
+        {
+            try
+            {
+                var notificationData = new
+                {
+                    id = 0, // Temporary ID for broadcast
+                    title = title,
+                    message = message,
+                    type = type.ToString(),
+                    typeName = GetNotificationTypeName(type),
+                    priority = NotificationPriority.High.ToString(),
+                    priorityName = GetPriorityName(NotificationPriority.High),
+                    actionUrl = actionUrl,
+                    data = data,
+                    createdAt = DateTime.UtcNow,
+                    isRead = false
+                };
+
+                // ✅ Broadcast đến tất cả admin đang online
+                await _hubContext.Clients
+                    .Group("admins")
+                    .SendAsync("ReceiveNotification", notificationData);
+
+                _logger.LogInformation("✅ Real-time notification broadcasted to all admins: {Title}", title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to broadcast notification to admins: {Title}", title);
             }
         }
 
@@ -495,8 +597,8 @@ namespace SakuraHomeAPI.Services.Implementations
                 var notification = new CreateNotificationRequestDto
                 {
                     UserId = order.User.Id,
-                    Title = "Xác nh?n thanh toán",
-                    Message = $"Thanh toán cho ??n hàng #{order.OrderNumber} ?ã ???c xác nh?n thành công.",
+                    Title = "Xác nhận thanh toán",
+                    Message = $"Thanh toán cho đơn hàng #{order.OrderNumber} đã xác nhận thành công.",
                     Type = NotificationType.Payment,
                     ActionUrl = $"/orders/{orderId}",
                     Priority = ConvertNotificationPriorityToPriority(NotificationPriority.High),
@@ -533,16 +635,18 @@ namespace SakuraHomeAPI.Services.Implementations
                     return ApiResponse.ErrorResult("Product not found");
                 }
 
+                // ✅ FIXED: Lấy tất cả admin bao gồm SuperAdmin, Admin và Staff
                 var adminUsers = await _context.Users
-                    .Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Staff)
+                    .Where(u => u.Role == UserRole.SuperAdmin || u.Role == UserRole.Admin || u.Role == UserRole.Staff)
+                    .Where(u => u.IsActive && !u.IsDeleted)
                     .Select(u => u.Id)
                     .ToListAsync();
 
                 var bulkNotification = new CreateBulkNotificationRequestDto
                 {
                     UserIds = adminUsers,
-                    Title = "C?nh báo t?n kho th?p",
-                    Message = $"S?n ph?m {product.Name} (SKU: {product.SKU}) ch? còn {currentStock} s?n ph?m trong kho (ng??ng: {threshold}).",
+                    Title = "Cảnh báo tồn kho thấp",
+                    Message = $"Sản phẩm {product.Name} (SKU: {product.SKU}) chỉ còn {currentStock} sản phẩm trong kho (Ngưỡng cảnh báo: {threshold}).",
                     Type = NotificationType.Alert,
                     ActionUrl = $"/admin/products/{productId}",
                     Priority = ConvertNotificationPriorityToPriority(NotificationPriority.High),
@@ -610,8 +714,8 @@ namespace SakuraHomeAPI.Services.Implementations
                 var bulkNotification = new CreateBulkNotificationRequestDto
                 {
                     SendToAll = true,
-                    Title = "Thông báo b?o trì h? th?ng",
-                    Message = $"H? th?ng s? b?o trì t? {startTime:dd/MM/yyyy HH:mm} ??n {endTime:dd/MM/yyyy HH:mm}. {message}",
+                    Title = "Thông báo bảo trì hệ thống",
+                    Message = $"Hệ thống sé bảo trì từ {startTime:dd/MM/yyyy HH:mm} đến {endTime:dd/MM/yyyy HH:mm}. {message}",
                     Type = NotificationType.System,
                     Priority = ConvertNotificationPriorityToPriority(NotificationPriority.High),
                     SendEmail = true,
@@ -676,18 +780,18 @@ namespace SakuraHomeAPI.Services.Implementations
             return type switch
             {
                 NotificationType.General => "Thông báo chung",
-                NotificationType.Order => "??n hàng",
+                NotificationType.Order => "Đơn hàng",
                 NotificationType.Payment => "Thanh toán",
-                NotificationType.Shipping => "V?n chuy?n",
-                NotificationType.Product => "S?n ph?m",
-                NotificationType.Promotion => "Khuy?n mãi",
-                NotificationType.System => "H? th?ng",
-                NotificationType.Security => "B?o m?t",
+                NotificationType.Shipping => "Vận chuyển",
+                NotificationType.Product => "Sản phẩm",
+                NotificationType.Promotion => "Khuyến mãi",
+                NotificationType.System => "Hệ thống",
+                NotificationType.Security => "Bảo mật",
                 NotificationType.Marketing => "Marketing",
-                NotificationType.Reminder => "Nh?c nh?",
-                NotificationType.Alert => "C?nh báo",
-                NotificationType.Newsletter => "B?n tin",
-                _ => "Không xác ??nh"
+                NotificationType.Reminder => "Nhắc nhở",
+                NotificationType.Alert => "Cảnh báo",
+                NotificationType.Newsletter => "Bản tin",
+                _ => "Không xác định"
             };
         }
 
@@ -695,12 +799,12 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return priority switch
             {
-                NotificationPriority.Low => "Th?p",
+                NotificationPriority.Low => "Thấp",
                 NotificationPriority.Normal => "Trung bình",
                 NotificationPriority.High => "Cao",
-                NotificationPriority.Urgent => "Kh?n c?p",
-                NotificationPriority.Critical => "Nghiêm tr?ng",
-                _ => "Không xác ??nh"
+                NotificationPriority.Urgent => "Khẩn cấp",
+                NotificationPriority.Critical => "Nghiêm trọng",
+                _ => "Không xác định"
             };
         }
 
@@ -708,15 +812,15 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Confirmed => $"??n hàng #{orderNumber} ?ã ???c xác nh?n",
-                OrderStatus.Processing => $"??n hàng #{orderNumber} ?ang ???c x? lý",
-                OrderStatus.Packed => $"??n hàng #{orderNumber} ?ã ???c ?óng gói",
-                OrderStatus.Shipped => $"??n hàng #{orderNumber} ?ang ???c v?n chuy?n",
-                OrderStatus.Delivered => $"??n hàng #{orderNumber} ?ã ???c giao thành công",
-                OrderStatus.Cancelled => $"??n hàng #{orderNumber} ?ã b? h?y",
-                OrderStatus.Returned => $"??n hàng #{orderNumber} ?ã ???c tr? l?i",
-                OrderStatus.Refunded => $"??n hàng #{orderNumber} ?ã ???c hoàn ti?n",
-                _ => $"C?p nh?t ??n hàng #{orderNumber}"
+                OrderStatus.Confirmed => $"Đơn hàng #{orderNumber} đã được xác nhận",
+                OrderStatus.Processing => $"Đơn hàng #{orderNumber} đang được xử lý",
+                OrderStatus.Packed => $"Đơn hàng #{orderNumber} đã được đóng gói",
+                OrderStatus.Shipped => $"Đơn hàng #{orderNumber} đang được vận chuyển",
+                OrderStatus.Delivered => $"Đơn hàng #{orderNumber} đã được giao thành công",
+                OrderStatus.Cancelled => $"Đơn hàng #{orderNumber} đã bị hủy",
+                OrderStatus.Returned => $"Đơn hàng #{orderNumber} đã được trả lại",
+                OrderStatus.Refunded => $"Đơn hàng #{orderNumber} đã được hoàn tiền",
+                _ => $"Cập nhật đơn hàng #{orderNumber}"
             };
         }
 
@@ -724,15 +828,15 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Confirmed => $"??n hàng #{orderNumber} c?a b?n ?ã ???c xác nh?n và s? ???c x? lý s?m nh?t.",
-                OrderStatus.Processing => $"??n hàng #{orderNumber} ?ang ???c chu*n b? và ?óng gói.",
-                OrderStatus.Packed => $"??n hàng #{orderNumber} ?ã ???c ?óng gói và s?n sàng giao hàng.",
-                OrderStatus.Shipped => $"??n hàng #{orderNumber} ?ã ???c giao cho ??n v? v?n chuy?n.",
-                OrderStatus.Delivered => $"??n hàng #{orderNumber} ?ã ???c giao thành công. C?m ?n b?n ?ã mua hàng!",
-                OrderStatus.Cancelled => $"??n hàng #{orderNumber} ?ã b? h?y. N?u b?n ?ã thanh toán, ti?n s? ???c hoàn l?i.",
-                OrderStatus.Returned => $"??n hàng #{orderNumber} ?ã ???c tr? l?i thành công.",
-                OrderStatus.Refunded => $"Ti�n c�a ??n hàng #{orderNumber} ?ã ???c hoàn l?i vào tài kho?n c?a b?n.",
-                _ => $"Tr?ng thái ??n hàng #{orderNumber} ?ã ???c c?p nh?t."
+                OrderStatus.Confirmed => $"Đơn hàng #{orderNumber} của bạn đã được xác nhận và sẽ được xử lý sớm nhất.",
+                OrderStatus.Processing => $"Đơn hàng #{orderNumber} đang được chuẩn bị và đóng gói.",
+                OrderStatus.Packed => $"Đơn hàng #{orderNumber} đã được đóng gói và sẵn sàng giao hàng.",
+                OrderStatus.Shipped => $"Đơn hàng #{orderNumber} đã được giao cho đơn vị vận chuyển.",
+                OrderStatus.Delivered => $"Đơn hàng #{orderNumber} đã được giao thành công. Cảm ơn bạn đã mua hàng!",
+                OrderStatus.Cancelled => $"Đơn hàng #{orderNumber} đã bị hủy. Nếu bạn đã thanh toán, tiền sẽ được hoàn lại.",
+                OrderStatus.Returned => $"Đơn hàng #{orderNumber} đã được trả lại thành công.",
+                OrderStatus.Refunded => $"Tiền của đơn hàng #{orderNumber} đã được hoàn lại vào tài khoản của bạn.",
+                _ => $"Trạng thái đơn hàng #{orderNumber} đã được cập nhật."
             };
         }
 
@@ -767,16 +871,18 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                OrderStatus.Pending => "Ch? x? lý",
-                OrderStatus.Confirmed => "?ã xác nh?n",
-                OrderStatus.Processing => "?ang x? lý",
-                OrderStatus.Packed => "?ã ?óng gói",
-                OrderStatus.Shipped => "?ang v?n chuy?n",
-                OrderStatus.Delivered => "?ã giao hàng",
-                OrderStatus.Cancelled => "?ã h?y",
-                OrderStatus.Returned => "?ã tr? hàng",
-                OrderStatus.Refunded => "?ã hoàn ti?n",
-                _ => "Không xác ??nh"
+                OrderStatus.Pending => "Chờ xử lý",
+                OrderStatus.Confirmed => "Đã xác nhận",
+                OrderStatus.Processing => "Đang xử lý",
+                OrderStatus.Packed => "Đã đóng gói",
+                OrderStatus.Shipped => "Đang vận chuyển",
+                OrderStatus.OutForDelivery => "Đang giao hàng",
+                OrderStatus.Delivered => "Đã giao hàng",
+                OrderStatus.Cancelled => "Đã hủy",
+                OrderStatus.Returned => "Đã trả hàng",
+                OrderStatus.Refunded => "Đã hoàn tiền",
+                OrderStatus.Completed => "Đã hoàn thành", 
+                _ => "Không xác định"
             };
         }
 

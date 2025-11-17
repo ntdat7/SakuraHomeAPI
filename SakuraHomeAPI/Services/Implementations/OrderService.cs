@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Common;
+using SakuraHomeAPI.DTOs.Notifications.Requests;
 using SakuraHomeAPI.DTOs.Orders.Requests;
 using SakuraHomeAPI.DTOs.Orders.Responses;
 using SakuraHomeAPI.Models.Entities;
@@ -26,6 +27,7 @@ namespace SakuraHomeAPI.Services.Implementations
         private readonly INotificationService _notificationService;
         private readonly IEmailService _emailService;
         private readonly ILogger<OrderService> _logger;
+        private readonly IServiceProvider _serviceProvider;
 
         public OrderService(
             ApplicationDbContext context,
@@ -33,7 +35,8 @@ namespace SakuraHomeAPI.Services.Implementations
             ICartService cartService,
             INotificationService notificationService,
             IEmailService emailService,
-            ILogger<OrderService> logger)
+            ILogger<OrderService> logger,
+            IServiceProvider serviceProvider)
         {
             _context = context;
             _mapper = mapper;
@@ -41,6 +44,7 @@ namespace SakuraHomeAPI.Services.Implementations
             _notificationService = notificationService;
             _emailService = emailService;
             _logger = logger;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<ApiResponse<OrderResponseDto>> CreateOrderAsync(CreateOrderRequestDto request, Guid userId)
@@ -346,17 +350,35 @@ namespace SakuraHomeAPI.Services.Implementations
                             order.OrderNumber, userId, totalAmount);
 
                         // 14. Send notifications (fire and forget - outside transaction)
+                        //var orderNumber = order.OrderNumber;
+                        var receiverName = order.ReceiverName;
+                        //var totalAmount = order.TotalAmount;
+                        var itemCount = order.OrderItems.Count;
+
                         _ = Task.Run(async () =>
                         {
                             try
                             {
-                                await _notificationService.SendOrderConfirmationNotificationAsync(order.Id);
-                                await _emailService.SendOrderConfirmationEmailAsync(order);
-                                _logger.LogInformation("Order notifications sent for order {OrderNumber}", order.OrderNumber);
+                                using var scope = _serviceProvider.CreateScope();
+                                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                                // Notification cho customer
+                                await notificationService.SendOrderConfirmationNotificationAsync(order.Id);
+
+                                // Notification cho admin
+                                await SendNotificationToAllAdminsWithScopeAsync(
+                                    scope.ServiceProvider,
+                                    "📦 Đơn hàng mới",
+                                    $"Khách hàng {receiverName} vừa đặt đơn hàng #{orderNumber}. " +
+                                    $"Tổng tiền: {totalAmount:N0} VND. Số lượng sản phẩm: {itemCount}",
+                                    NotificationType.Order,
+                                    order.Id);
+
+                                _logger.LogInformation("✅ Order notifications sent for order {OrderNumber}", orderNumber);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to send order notifications for order {OrderNumber}", order.OrderNumber);
+                                _logger.LogWarning(ex, "⚠️ Failed to send order notifications for order {OrderNumber}", orderNumber);
                             }
                         });
 
@@ -573,81 +595,114 @@ namespace SakuraHomeAPI.Services.Implementations
 
         public async Task<ApiResponse> CancelOrderAsync(int orderId, string reason, Guid userId)
         {
-            try
+            _logger.LogInformation("User {UserId} attempting to cancel order {OrderId}", userId, orderId);
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
             {
-                var order = await _context.Orders
-                    .Include(o => o.OrderItems)
-                    .Include(o => o.User)
-                    .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
-
-                if (order == null)
-                    return ApiResponse.ErrorResult("Order not found");
-
-                // Check if order can be cancelled
-                if (!order.CanCancel)
-                    return ApiResponse.ErrorResult("Order cannot be cancelled at this stage");
-
-                // Restore product stock
-                foreach (var item in order.OrderItems)
+                using (var transaction = await _context.Database.BeginTransactionAsync())
                 {
-                    var product = await _context.Products.FindAsync(item.ProductId);
-                    if (product != null && product.Status != ProductStatus.Discontinued)
+                    try
                     {
-                        product.Stock += item.Quantity;
-                        if (product.Stock > 0 && product.Status == ProductStatus.OutOfStock)
+                        var order = await _context.Orders
+                            .Include(o => o.OrderItems) 
+                            .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+
+                        if (order == null)
                         {
-                            product.Status = ProductStatus.Active;
+                            _logger.LogWarning("Order {OrderId} not found for user {UserId}", orderId, userId);
+                            return ApiResponse.ErrorResult("Không tìm thấy đơn hàng");
                         }
+
+                        if (order.Status != OrderStatus.Pending)
+                        {
+                            _logger.LogWarning("Order {OrderId} cannot be cancelled. Current status: {Status}", orderId, order.Status);
+                            return ApiResponse.ErrorResult(
+                                $"❌ Không thể hủy đơn hàng đã được xác nhận. " +
+                                $"Trạng thái hiện tại: {GetStatusText(order.Status)}. " +
+                                "Vui lòng liên hệ với bộ phận hỗ trợ để được hỗ trợ.");
+                        }
+
+                        foreach (var item in order.OrderItems)
+                        {
+                            var product = await _context.Products.FindAsync(item.ProductId);
+                            if (product != null && product.Status != ProductStatus.Discontinued)
+                            {
+                                product.Stock += item.Quantity;
+                                if (product.Stock > 0 && product.Status == ProductStatus.OutOfStock)
+                                {
+                                    product.Status = ProductStatus.Active;
+                                }
+                            }
+                        }
+
+                        var oldStatus = order.Status;
+                        order.Status = OrderStatus.Cancelled;
+                        order.CancelledDate = DateTime.UtcNow;
+                        order.CancelReason = reason;
+                        order.UpdatedAt = DateTime.UtcNow;
+
+                        var statusHistory = new OrderStatusHistory
+                        {
+                            OrderId = order.Id,
+                            OldStatus = oldStatus,
+                            NewStatus = OrderStatus.Cancelled,
+                            Notes = $"Đơn hàng bị hủy bởi khách hàng. Lý do: {reason}",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        _context.OrderStatusHistory.Add(statusHistory);
+
+                        var user = await _context.Users.FindAsync(userId);
+                        if (user != null)
+                        {
+                            user.TotalOrders = Math.Max(0, user.TotalOrders - 1);
+                            user.TotalSpent = Math.Max(0, user.TotalSpent - order.TotalAmount);
+                            user.UpdateTier();
+                        }
+
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        _logger.LogInformation("✅ Order {OrderNumber} cancelled successfully by user {UserId}. Reason: {Reason}",
+                            order.OrderNumber, userId, reason);
+
+                        var orderNumber = order.OrderNumber;
+                        var receiverName = order.ReceiverName;
+
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                using var scope = _serviceProvider.CreateScope();
+                                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                                await notificationService.SendOrderStatusNotificationAsync(
+                                    orderId, OrderStatus.Cancelled,
+                                    $"Đơn hàng #{orderNumber} đã bị hủy. Lý do: {reason}");
+
+                                await SendNotificationToAllAdminsWithScopeAsync(
+                                    scope.ServiceProvider,
+                                    "🚨 Đơn hàng bị hủy",
+                                    $"Khách hàng {receiverName} đã hủy đơn hàng #{orderNumber}. Lý do: {reason}.",
+                                    NotificationType.Order, orderId);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "⚠️ Failed to send cancellation notifications for order {OrderNumber}", orderNumber);
+                            }
+                        });
+
+                        return ApiResponse.SuccessResult($"✅ Đã hủy đơn hàng thành công. Lý do: {reason}");
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(ex, "Error during order cancellation transaction for order {OrderId}", orderId);                        
+                        throw;
                     }
                 }
-
-                // Update order status
-                order.Status = OrderStatus.Cancelled;
-                order.CancelledDate = DateTime.UtcNow;
-                order.CancelReason = reason;
-                order.UpdatedAt = DateTime.UtcNow;
-
-                // Add status history
-                var statusHistory = new OrderStatusHistory
-                {
-                    OrderId = order.Id,
-                    OldStatus = order.Status,
-                    NewStatus = OrderStatus.Cancelled,
-                    Notes = $"Order cancelled by customer. Reason: {reason}",
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.OrderStatusHistory.Add(statusHistory);
-
-                // Update user statistics
-                var user = await _context.Users.FindAsync(userId);
-                if (user != null)
-                {
-                    user.TotalOrders = Math.Max(0, user.TotalOrders - 1);
-                    user.TotalSpent = Math.Max(0, user.TotalSpent - order.TotalAmount);
-                    user.UpdateTier();
-                }
-
-                await _context.SaveChangesAsync();
-
-                // Send cancellation notifications
-                try
-                {
-                    await _notificationService.SendOrderStatusNotificationAsync(orderId, OrderStatus.Cancelled, reason);
-                    await _emailService.SendOrderStatusUpdateEmailAsync(order, OrderStatus.Cancelled);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send cancellation notifications for order {OrderNumber}", order.OrderNumber);
-                }
-
-                _logger.LogInformation("Order {OrderNumber} cancelled by user {UserId}", order.OrderNumber, userId);
-                return ApiResponse.SuccessResult("Order cancelled successfully");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error cancelling order {OrderId} for user {UserId}", orderId, userId);
-                return ApiResponse.ErrorResult("Failed to cancel order");
-            }
+            });
         }
 
         public async Task<ApiResponse<OrderResponseDto>> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string? notes = null)
@@ -703,28 +758,41 @@ namespace SakuraHomeAPI.Services.Implementations
                 await _context.SaveChangesAsync();
 
                 // Send notifications for status change
-                try
-                {
-                    await _notificationService.SendOrderStatusNotificationAsync(orderId, newStatus, notes);
+                var orderNumber = order.OrderNumber;
+                var receiverName = order.ReceiverName;
+                var totalAmount = order.TotalAmount;
 
-                    // Send specific email notifications for important status changes
-                    switch (newStatus)
+                _ = Task.Run(async () =>
+                {
+                    try
                     {
-                        case OrderStatus.Confirmed:
-                        case OrderStatus.Shipped:
-                        case OrderStatus.Delivered:
-                        case OrderStatus.Cancelled:
-                            await _emailService.SendOrderStatusUpdateEmailAsync(order, newStatus);
-                            break;
-                    }
+                        using var scope = _serviceProvider.CreateScope();
+                        var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
-                    _logger.LogInformation("Order status notifications sent for order {OrderNumber} - Status: {Status}",
-                        order.OrderNumber, newStatus);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to send status update notifications for order {OrderNumber}", order.OrderNumber);
-                }
+                        var notificationMessage = GetNotificationMessageForStatus(newStatus, notes);
+
+                        await notificationService.SendOrderStatusNotificationAsync(orderId, newStatus, notificationMessage);
+
+                        if (ShouldNotifyAdminForStatus(newStatus))
+                        {
+                            var adminTitle = GetAdminNotificationTitle(newStatus);
+                            var adminMessage = $"Đơn hàng #{orderNumber} - {receiverName} - " +
+                                $"{GetStatusText(newStatus)}. Tổng tiền: {totalAmount:N0} VND";
+
+                            await SendNotificationToAllAdminsWithScopeAsync(
+                                scope.ServiceProvider,
+                                adminTitle, adminMessage,
+                                NotificationType.Order, orderId);
+                        }
+
+                        _logger.LogInformation("✅ Notifications sent for order {OrderNumber} - Status: {OldStatus} → {NewStatus}",
+                            orderNumber, oldStatus, newStatus);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Failed to send status update notifications for order {OrderNumber}", orderNumber);
+                    }
+                });
 
                 var orderDto = await MapOrderToDetailDto(order);
                 return ApiResponse.SuccessResult(orderDto, "Order status updated successfully");
@@ -747,6 +815,16 @@ namespace SakuraHomeAPI.Services.Implementations
                 if (order == null)
                     return ApiResponse.ErrorResult<OrderResponseDto>("Order not found");
 
+                // ✅ THÊM: Validate status transition - CHỈ CHO PHÉP SHIP KHI Ở PACKED
+                if (order.Status != OrderStatus.Packed)
+                {
+                    _logger.LogWarning("Order {OrderId} cannot be shipped. Current status: {Status}",
+                        orderId, order.Status);
+                    return ApiResponse.ErrorResult<OrderResponseDto>(
+                        $"Không thể giao vận chuyển từ trạng thái hiện tại: {GetStatusText(order.Status)}. " +
+                        "Đơn hàng phải ở trạng thái 'Đã đóng gói' trước.");
+                }
+
                 order.TrackingNumber = request.TrackingNumber;
                 order.ShippingCarrier = request.ShippingCarrier;
                 order.EstimatedDeliveryDate = request.EstimatedDeliveryDate;
@@ -760,7 +838,6 @@ namespace SakuraHomeAPI.Services.Implementations
                     try
                     {
                         await _notificationService.SendOrderShipmentNotificationAsync(orderId, request.TrackingNumber);
-                        await _emailService.SendShipmentNotificationEmailAsync(order, request.TrackingNumber);
                     }
                     catch (Exception ex)
                     {
@@ -781,27 +858,29 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             try
             {
+                // ✅ THÊM: Load order để validate
+                var order = await _context.Orders.FindAsync(orderId);
+
+                if (order == null)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Không tìm thấy đơn hàng");
+                }
+
+                // ✅ THÊM: Validate status - CHỈ CHO PHÉP DELIVER KHI Ở OutForDelivery
+                if (order.Status != OrderStatus.OutForDelivery)
+                {
+                    _logger.LogWarning("Order {OrderId} cannot be delivered. Current status: {Status}",
+                        orderId, order.Status);
+                    return ApiResponse.ErrorResult<OrderResponseDto>(
+                        $"Không thể đánh dấu đã giao từ trạng thái hiện tại: {GetStatusText(order.Status)}. " +
+                        "Đơn hàng phải ở trạng thái 'Đang giao hàng' trước.");
+                }
+
                 var result = await UpdateOrderStatusAsync(orderId, OrderStatus.Delivered, "Order delivered successfully");
 
                 if (result.Success)
                 {
-                    try
-                    {
-                        await _notificationService.SendOrderDeliveryNotificationAsync(orderId);
-
-                        var order = await _context.Orders
-                            .Include(o => o.User)
-                            .FirstOrDefaultAsync(o => o.Id == orderId);
-
-                        if (order != null)
-                        {
-                            await _emailService.SendDeliveryConfirmationEmailAsync(order);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to send delivery notifications for order {OrderId}", orderId);
-                    }
+                    _logger.LogInformation("✅ Order {OrderId} delivered successfully", orderId);
                 }
 
                 return result;
@@ -1039,6 +1118,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 _logger.LogInformation("Getting {Count} recent orders", count);
 
                 var orders = await _context.Orders
+                    .Include(o => o.User)
                     .Include(o => o.OrderItems)
                         .ThenInclude(oi => oi.Product)
                     .OrderByDescending(o => o.CreatedAt)
@@ -1146,6 +1226,164 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return ApiResponse.ErrorResult<OrderResponseDto>("Feature not implemented yet");
         }
+        /// <summary>
+        /// Xác nhận đã nhận hàng - Customer confirms delivery
+        /// </summary>
+        public async Task<ApiResponse<OrderResponseDto>> ConfirmDeliveryReceivedAsync(int orderId, Guid userId, bool isReceived, string? notes = null)
+        {
+            try
+            {
+                _logger.LogInformation("User {UserId} confirming delivery for order {OrderId}. Received: {IsReceived}",
+                    userId, orderId, isReceived);
+
+                var order = await _context.Orders
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+
+                if (order == null)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Không tìm thấy đơn hàng");
+                }
+
+                if (order.Status != OrderStatus.Delivered)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>(
+                        $"Không thể xác nhận nhận hàng cho đơn hàng ở trạng thái {GetStatusText(order.Status)}. " +
+                        "Đơn hàng phải ở trạng thái 'Đã giao hàng'.");
+                }
+
+                if (isReceived)
+                {
+                    // ✅ CASE 1: Đã nhận hàng → Completed
+                    var confirmNote = new OrderNote
+                    {
+                        OrderId = orderId,
+                        Note = $"✅ Khách hàng xác nhận đã nhận được hàng. {notes ?? ""}".Trim(),
+                        IsPublic = true,
+                        IsSystem = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.OrderNotes.Add(confirmNote);
+
+                    var oldStatus = order.Status;
+                    order.Status = OrderStatus.Completed; // ✅ Chuyển sang Completed
+                    order.UpdatedAt = DateTime.UtcNow;
+
+                    var statusHistory = new OrderStatusHistory
+                    {
+                        OrderId = order.Id,
+                        OldStatus = oldStatus,
+                        NewStatus = OrderStatus.Completed,
+                        Notes = $"✅ Khách hàng xác nhận đã nhận được hàng lúc {DateTime.UtcNow:dd/MM/yyyy HH:mm}. Đơn hàng hoàn thành.",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.OrderStatusHistory.Add(statusHistory);
+
+                    await _context.SaveChangesAsync();
+
+                    // ✅ SỬA: Gửi notifications với scope riêng
+                    var orderNumber = order.OrderNumber;
+                    var receiverName = order.ReceiverName;
+
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            using var scope = _serviceProvider.CreateScope();
+                            var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                            // Notification cho customer
+                            await notificationService.SendOrderStatusNotificationAsync(
+                                orderId,
+                                OrderStatus.Completed,
+                                "🎉 Đơn hàng đã hoàn thành. Cảm ơn bạn đã mua hàng tại Sakura Home!");
+
+                            // Notification cho admin
+                            await SendNotificationToAllAdminsWithScopeAsync(
+                                scope.ServiceProvider,
+                                "✅ Đơn hàng hoàn thành",
+                                $"Đơn hàng #{orderNumber} - {receiverName} đã được khách hàng xác nhận và hoàn thành.",
+                                NotificationType.Order,
+                                orderId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to send completion notifications for order {OrderId}", orderId);
+                        }
+                    });
+
+                    _logger.LogInformation("✅ Order {OrderNumber} completed by customer", order.OrderNumber);
+
+                    var orderDto = await MapOrderToDetailDto(order);
+                    return ApiResponse.SuccessResult(orderDto, "✅ Cảm ơn bạn đã xác nhận! Đơn hàng đã hoàn thành.");
+                }
+                else
+                {
+                    // ✅ CASE 2: Chưa nhận hàng → URGENT
+                    var issueNote = new OrderNote
+                    {
+                        OrderId = orderId,
+                        Note = $"⚠️ Khách hàng báo CHƯA nhận được hàng. Lý do: {notes ?? "Không nêu rõ"}",
+                        IsPublic = true,
+                        IsSystem = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.OrderNotes.Add(issueNote);
+
+                    var statusHistory = new OrderStatusHistory
+                    {
+                        OrderId = order.Id,
+                        OldStatus = OrderStatus.Delivered,
+                        NewStatus = OrderStatus.Delivered,
+                        Notes = $"⚠️ Khách hàng báo CHƯA nhận được hàng. Cần liên hệ xử lý. Lý do: {notes ?? "Không nêu rõ"}",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.OrderStatusHistory.Add(statusHistory);
+
+                    order.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+
+                    var orderNumber = order.OrderNumber;
+                    var receiverName = order.ReceiverName;
+                    var receiverPhone = order.ReceiverPhone;
+
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            using var scope = _serviceProvider.CreateScope();
+                            var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                            await notificationService.SendOrderStatusNotificationAsync(
+                                orderId,
+                                OrderStatus.Delivered,
+                                "⚠️ Chúng tôi đã ghi nhận vấn đề của bạn. Nhân viên sẽ liên hệ với bạn sớm nhất có thể.");
+
+                            await SendNotificationToAllAdminsWithScopeAsync(
+                                scope.ServiceProvider,
+                                "🚨 KHẨN CẤP: Khách hàng CHƯA nhận được hàng",
+                                $"Đơn hàng #{orderNumber} - {receiverName} ({receiverPhone}) " +
+                                $"báo CHƯA nhận được hàng. Lý do: {notes ?? "Không nêu rõ"}. VUI LÒNG LIÊN HỆ NGAY!",
+                                NotificationType.Order,
+                                orderId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to send delivery issue notifications");
+                        }
+                    });
+
+                    var orderDto = await MapOrderToDetailDto(order);
+                    return ApiResponse.SuccessResult(orderDto,
+                        "⚠️ Chúng tôi đã ghi nhận vấn đề của bạn. Nhân viên chăm sóc khách hàng sẽ liên hệ với bạn trong thời gian sớm nhất.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing delivery confirmation for order {OrderId}", orderId);
+                return ApiResponse.ErrorResult<OrderResponseDto>("Lỗi khi xác nhận giao hàng");
+            }
+        }
 
         private async Task<OrderResponseDto> MapOrderToDetailDto(Order order)
         {
@@ -1245,24 +1483,27 @@ namespace SakuraHomeAPI.Services.Implementations
             };
         }
 
-        private OrderSummaryDto MapOrderToSummaryDto(Order order)
-        {
-            return new OrderSummaryDto
+            private OrderSummaryDto MapOrderToSummaryDto(Order order)
             {
-                Id = order.Id,
-                OrderNumber = order.OrderNumber,
-                Status = order.Status,
-                StatusText = GetStatusText(order.Status),
-                TotalAmount = order.TotalAmount,
-                PaymentMethod = "COD", // Default
-                PaymentStatus = order.PaymentStatus,
-                ItemCount = order.OrderItems?.Count ?? 0,
-                CreatedAt = order.CreatedAt,
-                EstimatedDeliveryDate = order.EstimatedDeliveryDate,
-                TrackingNumber = order.TrackingNumber,
-                ItemNames = order.OrderItems?.Select(oi => oi.ProductName).ToList() ?? new List<string>()
-            };
-        }
+                return new OrderSummaryDto
+                {
+                    Id = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    Status = order.Status,
+                    StatusText = GetStatusText(order.Status),
+                    TotalAmount = order.TotalAmount,
+                    PaymentMethod = "COD", // Default
+                    PaymentStatus = order.PaymentStatus,
+                    ItemCount = order.OrderItems?.Count ?? 0,
+                    CreatedAt = order.CreatedAt,
+                    EstimatedDeliveryDate = order.EstimatedDeliveryDate,
+                    TrackingNumber = order.TrackingNumber,
+                    CustomerName = order.User?.FullName ?? order.ReceiverName,
+                    CustomerEmail = order.User?.Email ?? order.ReceiverEmail ?? string.Empty,
+                    CustomerPhone = order.User?.PhoneNumber ?? order.ReceiverPhone,
+                    ItemNames = order.OrderItems?.Select(oi => oi.ProductName).ToList() ?? new List<string>()
+                };
+            }
 
         private OrderItemDto MapOrderItemToDto(OrderItem item)
         {
@@ -1302,6 +1543,7 @@ namespace SakuraHomeAPI.Services.Implementations
                 OrderStatus.Cancelled => "Đã hủy",
                 OrderStatus.Returned => "Đã trả hàng",
                 OrderStatus.Refunded => "Đã hoàn tiền",
+                OrderStatus.Completed => "Đã hoàn thành",
                 _ => "Không xác định"
             };
         }
@@ -1370,7 +1612,220 @@ namespace SakuraHomeAPI.Services.Implementations
             }
         }
 
-        #region Helper Methods - FIXED
+        /// <summary>
+        /// Pack order - Đóng gói đơn hàng (Staff only)
+        /// </summary>
+        public async Task<ApiResponse<OrderResponseDto>> PackOrderAsync(int orderId, Guid staffId, string? notes = null)
+        {
+            try
+            {
+                _logger.LogInformation("Staff {StaffId} packing order {OrderId}", staffId, orderId);
+
+                var order = await _context.Orders
+                    .Include(o => o.User)
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Không tìm thấy đơn hàng");
+                }
+
+                // ✅ Validate transition: Chỉ cho phép Pack khi ở Processing
+                if (order.Status != OrderStatus.Processing)
+                {
+                    _logger.LogWarning("Order {OrderId} cannot be packed. Current status: {Status}",
+                        orderId, order.Status);
+                    return ApiResponse.ErrorResult<OrderResponseDto>(
+                        $"Không thể đóng gói đơn hàng từ trạng thái hiện tại: {GetStatusText(order.Status)}. " +
+                        "Đơn hàng phải ở trạng thái 'Đang xử lý'.");
+                }
+
+                var packingNotes = notes ?? "Đơn hàng đã được đóng gói và sẵn sàng giao";
+                var result = await UpdateOrderStatusAsync(orderId, OrderStatus.Packed, packingNotes);
+
+                if (result.Success)
+                {
+                    _logger.LogInformation("✅ Order {OrderId} packed successfully by staff {StaffId}",
+                        orderId, staffId);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error packing order {OrderId}", orderId);
+                return ApiResponse.ErrorResult<OrderResponseDto>("Lỗi khi đóng gói đơn hàng");
+            }
+        }
+
+        /// <summary>
+        /// Mark order as out for delivery - Đang giao hàng
+        /// </summary>
+        public async Task<ApiResponse<OrderResponseDto>> MarkOutForDeliveryAsync(int orderId, Guid staffId, string? notes = null)
+        {
+            try
+            {
+                _logger.LogInformation("Staff {StaffId} marking order {OrderId} as out for delivery", staffId, orderId);
+
+                var order = await _context.Orders
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Không tìm thấy đơn hàng");
+                }
+
+                // ✅ Validate transition: Chỉ cho phép OutForDelivery khi ở Shipped
+                if (order.Status != OrderStatus.Shipped)
+                {
+                    _logger.LogWarning("Order {OrderId} cannot be marked as out for delivery. Current status: {Status}",
+                        orderId, order.Status);
+                    return ApiResponse.ErrorResult<OrderResponseDto>(
+                        $"Không thể chuyển sang trạng thái 'Đang giao hàng' từ trạng thái hiện tại: {GetStatusText(order.Status)}. " +
+                        "Đơn hàng phải ở trạng thái 'Đã giao cho vận chuyển' trước.");
+                }
+
+                var deliveryNotes = notes ?? "Đơn hàng đang được giao đến khách hàng";
+                var result = await UpdateOrderStatusAsync(orderId, OrderStatus.OutForDelivery, deliveryNotes);
+
+                if (result.Success)
+                {
+                    _logger.LogInformation("✅ Order {OrderId} marked as out for delivery by staff {StaffId}",
+                        orderId, staffId);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking order {OrderId} as out for delivery", orderId);
+                return ApiResponse.ErrorResult<OrderResponseDto>("Lỗi khi cập nhật trạng thái giao hàng");
+            }
+        }
+
+        /// <summary>
+        /// Handle delivery failure - Giao hàng thất bại
+        /// </summary>
+        /// <summary>
+        /// Handle delivery failure - Giao hàng thất bại và hoàn kho
+        /// </summary>
+        public async Task<ApiResponse<OrderResponseDto>> MarkDeliveryFailedAsync(int orderId, Guid staffId, string failureReason)
+        {
+            try
+            {
+                _logger.LogInformation("Staff {StaffId} marking order {OrderId} as delivery failed. Reason: {Reason}",
+                    staffId, orderId, failureReason);
+
+                var order = await _context.Orders
+                    .Include(o => o.User)
+                    .Include(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Product)  // ✅ THÊM: ThenInclude để lấy Product
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>("Không tìm thấy đơn hàng");
+                }
+
+                // ✅ Only allow from OutForDelivery or Shipped status
+                if (order.Status != OrderStatus.OutForDelivery && order.Status != OrderStatus.Shipped)
+                {
+                    return ApiResponse.ErrorResult<OrderResponseDto>(
+                        "Chỉ có thể đánh dấu giao hàng thất bại cho đơn hàng đang trong quá trình vận chuyển");
+                }
+
+                // ✅ ====== THÊM ĐOẠN NÀY: RESTORE INVENTORY ======
+                _logger.LogInformation("Restoring inventory for failed delivery order {OrderId}", orderId);
+
+                foreach (var item in order.OrderItems)
+                {
+                    var product = item.Product;
+                    if (product != null && product.Status != ProductStatus.Discontinued)
+                    {
+                        var oldStock = product.Stock;
+                        product.Stock += item.Quantity;
+
+                        // Nếu sản phẩm đang OutOfStock, đổi về Active
+                        if (product.Stock > 0 && product.Status == ProductStatus.OutOfStock)
+                        {
+                            product.Status = ProductStatus.Active;
+                        }
+
+                        product.UpdatedAt = DateTime.UtcNow;
+
+                        _logger.LogInformation("✅ Restored {Quantity} units of product {ProductId} to stock. " +
+                            "Old stock: {OldStock}, New stock: {NewStock}",
+                            item.Quantity, product.Id, oldStock, product.Stock);
+                    }
+                }
+                // ✅ ====== KẾT THÚC RESTORE INVENTORY ======
+
+                // ✅ Add a note about delivery failure - CẬP NHẬT MESSAGE
+                var noteText = $"⚠️ GIAO HÀNG THẤT BẠI: {failureReason}. Hàng đã được hoàn về kho.";
+
+                var orderNote = new OrderNote
+                {
+                    OrderId = orderId,
+                    Note = noteText,
+                    IsPublic = true, // Visible to customer
+                    IsSystem = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.OrderNotes.Add(orderNote);
+
+                // ✅ Keep status as Shipped or OutForDelivery (will retry)
+                var statusHistory = new OrderStatusHistory
+                {
+                    OrderId = order.Id,
+                    OldStatus = order.Status,
+                    NewStatus = order.Status, // Same status - keep for retry
+                    Notes = noteText,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.OrderStatusHistory.Add(statusHistory);
+
+                order.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                // ✅ Send notification about delivery failure - CẬP NHẬT MESSAGE
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        // Notification cho khách hàng
+                        await _notificationService.SendOrderStatusNotificationAsync(orderId, order.Status,
+                            $"⚠️ Giao hàng thất bại: {failureReason}. Hàng đã được hoàn về kho. " +
+                            "Chúng tôi sẽ liên hệ với bạn để sắp xếp giao lại.");
+
+                        // Notification cho admin - CẬP NHẬT MESSAGE
+                        await SendNotificationToAllAdminsAsync(
+                            "⚠️ Giao hàng thất bại - Đã hoàn kho",
+                            $"Đơn hàng #{order.OrderNumber} - {order.ReceiverName} giao hàng thất bại. " +
+                            $"Lý do: {failureReason}. Hàng đã được hoàn về kho.",
+                            NotificationType.Order,
+                            orderId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to send delivery failure notifications for order {OrderId}", orderId);
+                    }
+                });
+
+                _logger.LogInformation("✅ Order {OrderId} marked as delivery failed and inventory restored", orderId);
+
+                var orderDto = await MapOrderToDetailDto(order);
+                return ApiResponse.SuccessResult(orderDto, "Đã ghi nhận giao hàng thất bại và hoàn hàng về kho");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking order {OrderId} as delivery failed", orderId);
+                return ApiResponse.ErrorResult<OrderResponseDto>("Lỗi khi ghi nhận giao hàng thất bại");
+            }
+        }
+
+        #region Helper Methods 
 
         /// <summary>
         /// Calculate shipping cost - NEW LOGIC: Simple standard/express rates + free shipping threshold
@@ -1654,6 +2109,164 @@ namespace SakuraHomeAPI.Services.Implementations
             {
                 _logger.LogError(ex, "Error calculating discount for coupon {CouponCode}", couponCode);
                 return 0;
+            }
+        }
+
+        /// <summary>
+        /// Gửi notification real-time cho tất cả Admin và Staff
+        /// </summary>
+        private async Task SendNotificationToAllAdminsAsync(string title, string message, NotificationType type, int orderId)
+        {
+            try
+            {
+                // Lấy tất cả user có role Admin hoặc Staff
+                var adminUsers = await _context.Users
+                    .Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Staff)
+                    .ToListAsync();
+
+                if (!adminUsers.Any())
+                {
+                    _logger.LogWarning("No admin users found to send notification for order {OrderId}", orderId);
+                    return;
+                }
+
+                // Gửi notification cho từng admin
+                foreach (var admin in adminUsers)
+                {
+                    var notification = new CreateNotificationRequestDto
+                    {
+                        UserId = admin.Id,
+                        Title = title,
+                        Message = message,
+                        Type = type,
+                        Priority = Priority.High,
+                        ActionUrl = $"/admin/orders/{orderId}",
+                        Data = new Dictionary<string, object>
+                {
+                    { "orderId", orderId },
+                    { "timestamp", DateTime.UtcNow }
+                }
+                    };
+
+                    await _notificationService.SendNotificationAsync(notification);
+                }
+
+                _logger.LogInformation("✅ Real-time notifications sent to {Count} admins for order {OrderId}",
+                    adminUsers.Count, orderId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Failed to send admin notifications for order {OrderId}", orderId);
+                // Không throw exception - notification failure không nên làm fail toàn bộ operation
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra có nên gửi notification cho admin không (dựa trên status)
+        /// </summary>
+        private bool ShouldNotifyAdminForStatus(OrderStatus status)
+        {
+            return status switch
+            {
+                OrderStatus.Pending => true,      // Đơn hàng mới
+                OrderStatus.Cancelled => true,    // Đơn bị hủy
+                OrderStatus.Returned => true,     // Đơn trả hàng
+                _ => false
+            };
+        }
+
+        /// <summary>
+        /// Tạo tiêu đề notification cho admin theo trạng thái
+        /// </summary>
+        private string GetAdminNotificationTitle(OrderStatus status)
+        {
+            return status switch
+            {
+                OrderStatus.Pending => "📦 Đơn hàng mới",
+                OrderStatus.Cancelled => "❌ Đơn hàng bị hủy",
+                OrderStatus.Returned => "↩️ Yêu cầu trả hàng",
+                _ => "📋 Cập nhật đơn hàng"
+            };
+        }
+
+        /// <summary>
+        /// Tạo message notification cho customer theo trạng thái
+        /// </summary>
+        private string GetNotificationMessageForStatus(OrderStatus status, string? additionalNotes = null)
+        {
+            var baseMessage = status switch
+            {
+                OrderStatus.Pending => "📦 Đơn hàng của bạn đang chờ xác nhận",
+                OrderStatus.Confirmed => "✅ Đơn hàng đã được xác nhận và sẽ sớm được xử lý",
+                OrderStatus.Processing => "📦 Đơn hàng đang được chuẩn bị",
+                OrderStatus.Packed => "✅ Đơn hàng đã được đóng gói và sẵn sàng giao",
+                OrderStatus.Shipped => "🚚 Đơn hàng đã được giao cho đơn vị vận chuyển",
+                OrderStatus.OutForDelivery => "🚗 Đơn hàng đang trên đường giao đến bạn",
+                OrderStatus.Delivered => "✅ Đơn hàng đã được giao thành công. Vui lòng xác nhận đã nhận hàng!",
+                OrderStatus.Cancelled => "❌ Đơn hàng đã bị hủy",
+                OrderStatus.Returned => "↩️ Đơn hàng đã được trả lại",
+                OrderStatus.Refunded => "💰 Đơn hàng đã được hoàn tiền",
+                OrderStatus.Completed => "🎉 Đơn hàng đã hoàn thành. Cảm ơn bạn đã mua hàng!",
+                _ => "📋 Trạng thái đơn hàng đã được cập nhật"
+            };
+
+            return string.IsNullOrEmpty(additionalNotes)
+                ? baseMessage
+                : $"{baseMessage}. {additionalNotes}";
+        }
+
+        /// <summary>
+        /// ✅ THÊM: Gửi notification cho admin với scope riêng
+        /// </summary>
+        private async Task SendNotificationToAllAdminsWithScopeAsync(
+            IServiceProvider scopedServiceProvider,
+            string title,
+            string message,
+            NotificationType type,
+            int orderId)
+        {
+            try
+            {
+                var scopedContext = scopedServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var notificationService = scopedServiceProvider.GetRequiredService<INotificationService>();
+
+                var adminUsers = await scopedContext.Users
+                    .Where(u => u.Role == UserRole.Admin || u.Role == UserRole.Staff || u.Role == UserRole.SuperAdmin)
+                    .ToListAsync();
+
+                if (!adminUsers.Any())
+                {
+                    _logger.LogWarning("No admin users found for order {OrderId}", orderId);
+                    return;
+                }
+
+                foreach (var admin in adminUsers)
+                {
+                    var notification = new CreateNotificationRequestDto
+                    {
+                        UserId = admin.Id,
+                        Title = title,
+                        Message = message,
+                        Type = type,
+                        Priority = Priority.High,
+                        ActionUrl = $"/admin/orders/{orderId}",
+                        SendEmail = true, // ✅ Gửi cả email
+                        Data = new Dictionary<string, object>
+                {
+                    { "orderId", orderId },
+                    { "timestamp", DateTime.UtcNow }
+                }
+                    };
+
+                    await notificationService.SendNotificationAsync(notification);
+                }
+
+                _logger.LogInformation("✅ Notifications sent to {Count} admins for order {OrderId}",
+                    adminUsers.Count, orderId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send admin notifications for order {OrderId}", orderId);
             }
         }
 
