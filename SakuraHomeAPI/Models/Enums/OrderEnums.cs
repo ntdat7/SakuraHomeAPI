@@ -71,7 +71,10 @@
         DebitCard = 4,      // Thẻ ghi nợ
         EWallet = 5,        // Ví điện tử (MoMo, ZaloPay)
         QRCode = 6,         // Quét mã QR
-        Installment = 7     // Trả góp
+        Installment = 7,    // Trả góp
+        SePay = 8,          // SePay - Chuyển khoản ngân hàng qua SePay
+        VNPay = 9,          // VNPay - Cổng thanh toán VNPay
+        MoMo = 10           // MoMo - Ví điện tử MoMo
     }
 
     /// <summary>

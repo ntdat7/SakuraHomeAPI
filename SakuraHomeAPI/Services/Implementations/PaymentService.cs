@@ -10,6 +10,8 @@ using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.SignalR; 
+using SakuraHomeAPI.Hubs;
 
 namespace SakuraHomeAPI.Services.Implementations
 {
@@ -21,15 +23,18 @@ namespace SakuraHomeAPI.Services.Implementations
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PaymentService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
         public PaymentService(
             ApplicationDbContext context,
             ILogger<PaymentService> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHubContext<NotificationHub> hubContext)
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _hubContext = hubContext;
         }
 
         public async Task<ApiResponse<List<PaymentMethodDto>>> GetPaymentMethodsAsync(GetPaymentMethodsRequestDto request)
@@ -383,8 +388,384 @@ namespace SakuraHomeAPI.Services.Implementations
             }
         }
 
+        public async Task<ApiResponse<SePayResponseDto>> CreateSePayPaymentAsync(SePayRequestDto request, Guid userId)
+        {
+            try
+            {
+                _logger.LogInformation("Creating SePay payment for order {OrderId} by user {UserId}", request.OrderId, userId);
+
+                // Validate order
+                var order = await _context.Orders
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == request.OrderId && o.User.Id == userId);
+
+                if (order == null)
+                {
+                    return ApiResponse.ErrorResult<SePayResponseDto>("Order not found");
+                }
+
+                if (order.PaymentStatus == PaymentStatus.Paid)
+                {
+                    return ApiResponse.ErrorResult<SePayResponseDto>("Order is already paid");
+                }
+
+                // Get SePay configuration
+                var sePayConfig = _configuration.GetSection("Payment:SePay");
+                var accountNumber = sePayConfig["AccountNumber"] ?? "0123499999";
+                var bankName = sePayConfig["BankName"] ?? "Vietcombank";
+                var accountHolder = sePayConfig["AccountHolder"] ?? "CONG TY SAKURA HOME";
+                var branch = sePayConfig["BankBranch"] ?? "Chi nhánh TP.HCM";
+                var paymentPrefix = sePayConfig["PaymentPrefix"] ?? "SAKURA";
+
+                // Generate transaction ID and payment code
+                var transactionId = GenerateTransactionId();
+                var paymentCode = $"{paymentPrefix}{request.OrderId:D6}";
+                var transferContent = $"{paymentCode} {request.CustomerName?.Replace(" ", "")}";
+
+                // Create payment transaction
+                var paymentTransaction = new PaymentTransaction
+                {
+                    TransactionId = transactionId,
+                    OrderId = request.OrderId,
+                    User = order.User,
+                    PaymentMethod = "SEPAY",
+                    Amount = request.Amount,
+                    Currency = "VND",
+                    Status = PaymentStatus.Pending,
+                    Description = request.OrderDescription,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.PaymentTransactions.Add(paymentTransaction);
+
+                // Update order payment status
+                order.PaymentStatus = PaymentStatus.Pending;
+                order.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("SePay payment transaction {TransactionId} created for order {OrderId}",
+                    transactionId, request.OrderId);
+
+                // Generate QR Code URL if requested
+                var response = new SePayResponseDto
+                {
+                    TransactionId = transactionId,
+                    OrderId = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    Amount = request.Amount,
+                    Currency = "VND",
+                    PaymentCode = paymentCode,
+                    TransferContent = transferContent,
+                    BankAccount = new BankAccountInfo
+                    {
+                        BankName = bankName,
+                        BankCode = "MB", // or get from config
+                        AccountNumber = accountNumber,
+                        AccountHolder = accountHolder,
+                        Branch = branch
+                    },
+                    QRCodeUrl = null, // ← Remove QR generation
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(request.TimeoutMinutes),
+                    Instructions = new List<string>
+            {
+                "1. Mở ứng dụng ngân hàng hoặc ví điện tử của bạn",
+                "2. Quét mã QR hoặc chuyển khoản thủ công theo thông tin bên dưới",
+                "3. Nhập ĐÚNG SỐ TIỀN và NỘI DUNG CHUYỂN KHOẢN",
+                "4. Xác nhận giao dịch",
+                "5. Hệ thống sẽ tự động xác nhận đơn hàng sau khi nhận được tiền (1-5 phút)"
+            }
+                };
+
+                return ApiResponse.SuccessResult(response, "SePay payment created successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating SePay payment for order {OrderId}", request.OrderId);
+                return ApiResponse.ErrorResult<SePayResponseDto>("Failed to create SePay payment");
+            }
+        }
+
+        public async Task<ApiResponse<SePayWebhookResponseDto>> ProcessSePayWebhookAsync(SePayWebhookDto webhookData, string apiKey)
+        {
+            try
+            {
+                _logger.LogInformation("Processing SePay webhook: TransactionId={Id}, Amount={Amount}, Code={Code}",
+                    webhookData.Id, webhookData.TransferAmount, webhookData.Code);
+
+                // Verify API Key
+                var expectedApiKey = _configuration["Payment:SePay:ApiKey"];
+                if (!string.IsNullOrEmpty(expectedApiKey) && apiKey != expectedApiKey)
+                {
+                    _logger.LogWarning("Invalid API Key in SePay webhook");
+                    return ApiResponse.ErrorResult<SePayWebhookResponseDto>("Invalid API Key");
+                }
+
+                // Verify transfer type is "in" (tiền vào)
+                if (webhookData.TransferType?.ToLower() != "in")
+                {
+                    _logger.LogInformation("Ignoring SePay webhook with transfer type: {TransferType}", webhookData.TransferType);
+                    return ApiResponse.SuccessResult(new SePayWebhookResponseDto
+                    {
+                        Success = true,
+                        Message = "Transfer type ignored",
+                        TransactionId = null,
+                        OrderNumber = null,
+                        Amount = null,
+                        Status = "Ignored"
+                    });
+                }
+
+                // Extract payment code from webhook
+                var paymentCode = webhookData.Code;
+                if (string.IsNullOrEmpty(paymentCode))
+                {
+                    _logger.LogWarning("No payment code found in SePay webhook");
+                    return ApiResponse.ErrorResult<SePayWebhookResponseDto>("No payment code found");
+                }
+
+                // Extract order ID from payment code (e.g., "SAKURA001001" -> 1001)
+                var prefix = _configuration["Payment:SePay:PaymentPrefix"] ?? "SAKURA";
+                if (!paymentCode.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning("Invalid payment code format: {Code}", paymentCode);
+                    return ApiResponse.ErrorResult<SePayWebhookResponseDto>("Invalid payment code format");
+                }
+
+                var orderIdString = paymentCode.Substring(prefix.Length);
+                if (!int.TryParse(orderIdString, out int orderId))
+                {
+                    _logger.LogWarning("Could not parse order ID from payment code: {Code}", paymentCode);
+                    return ApiResponse.ErrorResult<SePayWebhookResponseDto>("Invalid order ID in payment code");
+                }
+
+                // Find pending payment transaction for this order
+                var paymentTransaction = await _context.PaymentTransactions
+                    .Include(pt => pt.Order)
+                    .ThenInclude(o => o.User)
+                    .Where(pt => pt.OrderId == orderId &&
+                                pt.PaymentMethod == "SEPAY" &&
+                                pt.Status == PaymentStatus.Pending)
+                    .OrderByDescending(pt => pt.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+                if (paymentTransaction == null)
+                {
+                    _logger.LogWarning("No pending SePay payment found for order {OrderId}", orderId);
+                    return ApiResponse.ErrorResult<SePayWebhookResponseDto>("No pending payment found for this order");
+                }
+
+                // Verify amount matches
+                if (Math.Abs(webhookData.TransferAmount - paymentTransaction.Amount) > 0.01m)
+                {
+                    _logger.LogWarning("Payment amount mismatch. Expected: {Expected}, Received: {Received}",
+                        paymentTransaction.Amount, webhookData.TransferAmount);
+                    return ApiResponse.ErrorResult<SePayWebhookResponseDto>("Payment amount mismatch");
+                }
+
+                // Update payment status
+                paymentTransaction.Status = PaymentStatus.Paid;
+                paymentTransaction.ExternalTransactionId = webhookData.ReferenceCode;
+                paymentTransaction.CompletedAt = DateTime.Parse(webhookData.TransactionDate);
+                paymentTransaction.ResponseMessage = $"Paid via {webhookData.Gateway}";
+                paymentTransaction.ResponseData = System.Text.Json.JsonSerializer.Serialize(webhookData);
+
+                // Update order payment status
+                var order = paymentTransaction.Order;
+                order.PaymentStatus = PaymentStatus.Paid;
+                order.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                try
+                {
+                    // Gửi thông báo đến User cụ thể sở hữu đơn hàng này
+                    // Frontend cần lắng nghe sự kiện: "ReceivePaymentStatus"
+                    await _hubContext.Clients.User(order.User.Id.ToString())
+                        .SendAsync("ReceivePaymentStatus", new
+                        {
+                            Success = true,
+                            OrderId = order.Id,
+                            OrderNumber = order.OrderNumber,
+                            Status = "Paid",
+                            TransactionId = paymentTransaction.TransactionId,
+                            Message = "Thanh toán thành công!"
+                        });
+
+                    _logger.LogInformation("Sent SignalR notification for Order {OrderId}", order.Id);
+                }
+                catch (Exception ex)
+                {
+                    // Log lỗi nhưng KHÔNG throw exception để tránh làm fail quy trình Webhook
+                    _logger.LogError(ex, "Error sending SignalR notification for Order {OrderId}", order.Id);
+                }
+                // ===========================================================================
+
+                _logger.LogInformation("SePay payment processed successfully for order {OrderId}", orderId);
+
+                return ApiResponse.SuccessResult(new SePayWebhookResponseDto
+                {
+                    Success = true,
+                    Message = "Webhook processed successfully",
+                    TransactionId = paymentTransaction.TransactionId,
+                    OrderNumber = order.OrderNumber,
+                    Amount = paymentTransaction.Amount,
+                    Status = "Paid"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing SePay webhook");
+                return ApiResponse.ErrorResult<SePayWebhookResponseDto>("Failed to process webhook");
+            }
+        }
+
+        public async Task<ApiResponse<QRCodePaymentResponseDto>> CreateQRCodePaymentAsync(QRCodePaymentRequestDto request, Guid userId)
+        {
+            try
+            {
+                _logger.LogInformation("Creating QR Code payment for order {OrderId} by user {UserId}", request.OrderId, userId);
+
+                // Validate order
+                var order = await _context.Orders
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == request.OrderId && o.User.Id == userId);
+
+                if (order == null)
+                {
+                    return ApiResponse.ErrorResult<QRCodePaymentResponseDto>("Order not found");
+                }
+
+                if (order.PaymentStatus == PaymentStatus.Paid)
+                {
+                    return ApiResponse.ErrorResult<QRCodePaymentResponseDto>("Order is already paid");
+                }
+
+                // Get QR Code configuration
+                var qrConfig = _configuration.GetSection("Payment:QRCode");
+                var bankCode = request.BankCode ?? qrConfig["BankCode"] ?? "MB";
+                var accountNumber = request.AccountNumber ?? qrConfig["AccountNumber"] ?? "0396966376";
+                var accountName = request.AccountName ?? qrConfig["AccountName"] ?? "NGUYEN THANH DAT";
+
+                // Generate transaction ID
+                var transactionId = GenerateTransactionId();
+                var transferContent = $"ORD{request.OrderId:D6}";
+
+                // Create payment transaction
+                var paymentTransaction = new PaymentTransaction
+                {
+                    TransactionId = transactionId,
+                    OrderId = request.OrderId,
+                    User = order.User,
+                    PaymentMethod = "QRCODE",
+                    Amount = request.Amount,
+                    Currency = "VND",
+                    Status = PaymentStatus.Pending,
+                    Description = request.Description,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.PaymentTransactions.Add(paymentTransaction);
+
+                // Update order payment status
+                order.PaymentStatus = PaymentStatus.Pending;
+                order.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("QR Code payment transaction {TransactionId} created for order {OrderId}",
+                    transactionId, request.OrderId);
+
+                // Generate QR Code URL
+                var qrCodeUrl = GenerateVietQRUrl(
+                    bankCode: bankCode,
+                    accountNumber: accountNumber,
+                    accountName: accountName,
+                    amount: request.Amount,
+                    description: transferContent,
+                    template: request.Template
+                );
+
+                // Create response
+                var response = new QRCodePaymentResponseDto
+                {
+                    TransactionId = transactionId,
+                    OrderId = order.Id,
+                    OrderNumber = order.OrderNumber,
+                    Amount = request.Amount,
+                    Description = request.Description,
+                    QRCodeUrl = qrCodeUrl,
+                    BankAccount = new BankAccountInfo
+                    {
+                        BankName = GetBankName(bankCode),
+                        BankCode = bankCode,
+                        AccountNumber = accountNumber,
+                        AccountHolder = accountName
+                    },
+                    TransferContent = transferContent,
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+                };
+
+                return ApiResponse.SuccessResult(response, "QR Code payment created successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating QR Code payment for order {OrderId}", request.OrderId);
+                return ApiResponse.ErrorResult<QRCodePaymentResponseDto>("Failed to create QR Code payment");
+            }
+        }
+
         #region Private Helper Methods
 
+        private string GenerateVietQRUrl(string bankCode, string accountNumber, string accountName, decimal amount, string description, string template = "compact")
+        {
+            try
+            {
+                // VietQR API format
+                var baseUrl = "https://img.vietqr.io/image";
+                var qrUrl = $"{baseUrl}/{bankCode}-{accountNumber}-{template}.png";
+
+                var queryParams = new List<string>
+        {
+            $"amount={amount:F0}",
+            $"addInfo={Uri.EscapeDataString(description)}",
+            $"accountName={Uri.EscapeDataString(accountName)}"
+        };
+
+                qrUrl += "?" + string.Join("&", queryParams);
+
+                return qrUrl;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating VietQR URL");
+                return string.Empty;
+            }
+        }
+
+        private string GetBankName(string bankCode)
+        {
+            return bankCode.ToUpper() switch
+            {
+                "VCB" => "Vietcombank",
+                "TCB" => "Techcombank",
+                "MB" or "MBB" => "MB Bank",
+                "VIB" => "VIB",
+                "ICB" => "VietinBank",
+                "ACB" => "ACB",
+                "SHB" => "SHB",
+                "VPB" => "VPBank",
+                "TPB" => "TPBank",
+                "STB" => "Sacombank",
+                "HDB" => "HDBank",
+                "BIDV" => "BIDV",
+                "OCB" => "OCB",
+                "MSB" => "MSB",
+                _ => bankCode
+            };
+        }
         private string GenerateTransactionId()
         {
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -452,21 +833,27 @@ namespace SakuraHomeAPI.Services.Implementations
                 PaymentMethod.EWallet => "MOMO",
                 PaymentMethod.QRCode => "QRCODE",
                 PaymentMethod.Installment => "INSTALLMENT",
+                PaymentMethod.SePay => "SEPAY",         
+                PaymentMethod.VNPay => "VNPAY",         
+                PaymentMethod.MoMo => "MOMO",
                 _ => "COD"  // Default to COD
             };
         }
 
         private PaymentMethod ParsePaymentMethod(string code)
         {
-            return code switch
+            return code.ToUpper() switch
             {
                 "COD" => PaymentMethod.COD,
                 "BANK_TRANSFER" => PaymentMethod.BankTransfer,
                 "CREDIT_CARD" => PaymentMethod.CreditCard,
                 "DEBIT_CARD" => PaymentMethod.DebitCard,
-                "MOMO" or "ZALOPAY" => PaymentMethod.EWallet,
+                "MOMO" => PaymentMethod.MoMo,         
+                "ZALOPAY" => PaymentMethod.EWallet,
                 "QRCODE" => PaymentMethod.QRCode,
                 "INSTALLMENT" => PaymentMethod.Installment,
+                "SEPAY" => PaymentMethod.SePay,          
+                "VNPAY" => PaymentMethod.VNPay,          
                 _ => PaymentMethod.COD
             };
         }
@@ -475,14 +862,17 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return method switch
             {
-                PaymentMethod.COD => "Thanh toán khi nh?n hàng",
-                PaymentMethod.BankTransfer => "Chuy?n kho?n ngân hàng",
-                PaymentMethod.CreditCard => "Th? tín d?ng",
-                PaymentMethod.DebitCard => "Th? ghi n?",
-                PaymentMethod.EWallet => "Ví ?i?n t?",
+                PaymentMethod.COD => "Thanh toán khi nhận hàng",
+                PaymentMethod.BankTransfer => "Chuyển khoản ngân hàng",
+                PaymentMethod.CreditCard => "Thẻ tín dụng",
+                PaymentMethod.DebitCard => "Thẻ ghi nợ",
+                PaymentMethod.EWallet => "Ví điện tử",
                 PaymentMethod.QRCode => "Quét mã QR",
-                PaymentMethod.Installment => "Tr? góp",
-                _ => "Thanh toán khi nh?n hàng"  // Default to COD
+                PaymentMethod.Installment => "Trả góp",
+                PaymentMethod.SePay => "Chuyển khoản SePay",    
+                PaymentMethod.VNPay => "VNPay",                 
+                PaymentMethod.MoMo => "Ví MoMo",                
+                _ => "Thanh toán khi nhận hàng"
             };
         }
 
@@ -507,24 +897,26 @@ namespace SakuraHomeAPI.Services.Implementations
         {
             return status switch
             {
-                PaymentStatus.Pending => "Ch? thanh toán",
-                PaymentStatus.Processing => "?ang x? lý",
-                PaymentStatus.Paid => "?ã thanh toán",
-                PaymentStatus.Failed => "Thanh toán th?t b?i",
-                PaymentStatus.Cancelled => "?ã h?y",
-                PaymentStatus.Refunded => "?ã hoàn ti?n",
-                PaymentStatus.PartiallyRefunded => "Hoàn ti?n m?t ph?n",
-                PaymentStatus.Expired => "H?t h?n",
-                PaymentStatus.Confirmed => "?ã xác nh?n",
+                PaymentStatus.Pending => "Chờ thanh toán",
+                PaymentStatus.Processing => "Đang xử lý",
+                PaymentStatus.Paid => "Đã thanh toán",
+                PaymentStatus.Failed => "Thanh toán thất bại",
+                PaymentStatus.Cancelled => "Đã hủy",
+                PaymentStatus.Refunded => "Đã hoàn tiền",
+                PaymentStatus.PartiallyRefunded => "Hoàn tiền một phần",
+                PaymentStatus.Expired => "Hết hạn",
+                PaymentStatus.Confirmed => "Đã xác nhận",
                 _ => "Không xác ??nh"
             };
         }
 
         private string? GetPaymentInstructions(string code)
         {
-            return code switch
+            return code.ToUpper() switch
             {
-                "COD" => "Thanh toán b?ng ti?n m?t khi nh?n hàng. Shipper s? thu ti?n khi giao hàng.",
+                "COD" => "Thanh toán bằng tiền mặt khi nhận hàng. Shipper sẽ thu tiền khi giao hàng.",
+                "SEPAY" => "Chuyển khoản ngân hàng với xác nhận tự động qua SePay.",         // ← Thêm
+                "QRCODE" => "Quét mã QR Code bằng ứng dụng ngân hàng để thanh toán nhanh chóng.",  // ← Thêm
                 _ => null
             };
         }

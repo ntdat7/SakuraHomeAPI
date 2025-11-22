@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SakuraHomeAPI.Data;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Orders.Requests;
 using SakuraHomeAPI.DTOs.Orders.Responses;
+using SakuraHomeAPI.Models.Entities;
+using SakuraHomeAPI.Models.Enums;
 using SakuraHomeAPI.Services.Interfaces;
 using System.Security.Claims;
 
@@ -19,11 +22,16 @@ namespace SakuraHomeAPI.Controllers
     {
         private readonly IOrderService _orderService;
         private readonly ILogger<OrderController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public OrderController(IOrderService orderService, ILogger<OrderController> logger)
+        public OrderController(
+            IOrderService orderService, 
+            ILogger<OrderController> logger,
+            ApplicationDbContext context)
         {
             _orderService = orderService;
             _logger = logger;
+            _context = context;
         }
 
         // =================================================================
@@ -362,6 +370,116 @@ namespace SakuraHomeAPI.Controllers
             {
                 _logger.LogError(ex, "Error validating order for user {UserId}", GetCurrentUserId());
                 return StatusCode(500, ApiResponseDto<OrderValidationDto>.ErrorResult("An error occurred while validating the order"));
+            }
+        }
+
+        /// <summary>
+        /// Calculate order total with shipping, discounts, etc.
+        /// </summary>
+        [HttpPost("calculate-total")]
+        public async Task<ActionResult<ApiResponseDto<OrderTotalCalculationDto>>> CalculateOrderTotal([FromBody] CalculateOrderTotalRequestDto request)
+        {
+            try
+            {
+                _logger.LogInformation("Calculating order total for {ItemCount} items", request.Items?.Count ?? 0);
+
+                if (request == null || request.Items == null || !request.Items.Any())
+                {
+                    return BadRequest(ApiResponseDto<OrderTotalCalculationDto>.ErrorResult("No items provided for calculation"));
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponseDto<OrderTotalCalculationDto>.ErrorResult("Validation failed", errors));
+                }
+
+                // Determine express delivery
+                bool isExpressDelivery = request.ExpressDelivery ?? false;
+
+                // Calculate total
+                var totalResult = await _orderService.CalculateOrderTotalAsync(
+                    request.Items,
+                    request.ShippingAddressId,
+                    request.CouponCode,
+                    isExpressDelivery);
+
+                if (!totalResult.Success)
+                {
+                    return BadRequest(ApiResponseDto<OrderTotalCalculationDto>.ErrorResult(
+                        totalResult.Message ?? "Failed to calculate order total"));
+                }
+
+                // Calculate breakdown for detailed response
+                decimal subtotal = 0;
+                foreach (var item in request.Items)
+                {
+                    var product = await _context.Products.FindAsync(item.ProductId);
+                    if (product != null)
+                    {
+                        subtotal += product.Price * item.Quantity;
+                    }
+                }
+
+                // Get shipping cost
+                decimal shippingCost = 0;
+                if (request.ShippingAddressId.HasValue)
+                {
+                    var orderItemsData = new List<(Product Product, int Quantity, string CustomOptions)>();
+                    foreach (var item in request.Items)
+                    {
+                        var product = await _context.Products.FindAsync(item.ProductId);
+                        if (product != null)
+                        {
+                            orderItemsData.Add((product, item.Quantity, item.CustomOptions ?? "{}"));
+                        }
+                    }
+                    shippingCost = await CalculateShippingForCalculation(
+                        request.ShippingAddressId.Value,
+                        orderItemsData,
+                        isExpressDelivery);
+                }
+                else
+                {
+                    // Default shipping cost
+                    shippingCost = isExpressDelivery ? 50000 : 30000;
+                }
+
+                // Calculate discount
+                decimal discount = 0;
+                if (!string.IsNullOrEmpty(request.CouponCode))
+                {
+                    discount = await CalculateCouponDiscountForCalculation(request.CouponCode, subtotal);
+                }
+
+                var calculationResult = new OrderTotalCalculationDto
+                {
+                    Subtotal = subtotal,
+                    ShippingCost = shippingCost,
+                    DiscountAmount = discount,
+                    TaxAmount = 0, // Vietnam typically doesn't show VAT separately for retail
+                    TotalAmount = totalResult.Data,
+                    CouponCode = request.CouponCode,
+                    IsExpressDelivery = isExpressDelivery,
+                    ItemCount = request.Items.Sum(i => i.Quantity),
+                    EstimatedDeliveryDays = isExpressDelivery ? 1 : 3
+                };
+
+                _logger.LogInformation("Order total calculated: Subtotal={Subtotal}, Shipping={Shipping}, Discount={Discount}, Total={Total}",
+                    subtotal, shippingCost, discount, totalResult.Data);
+
+                return Ok(ApiResponseDto<OrderTotalCalculationDto>.SuccessResult(
+                    calculationResult,
+                    "Order total calculated successfully"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating order total");
+                return StatusCode(500, ApiResponseDto<OrderTotalCalculationDto>.ErrorResult(
+                    "An error occurred while calculating order total"));
             }
         }
 
@@ -760,6 +878,111 @@ namespace SakuraHomeAPI.Controllers
                 return userId;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Helper method to calculate shipping cost for order total calculation
+        /// </summary>
+        private async Task<decimal> CalculateShippingForCalculation(
+            int shippingAddressId,
+            List<(Product Product, int Quantity, string CustomOptions)> orderItems,
+            bool isExpressDelivery)
+        {
+            try
+            {
+                // Calculate subtotal first
+                decimal subtotal = 0;
+                foreach (var (product, quantity, _) in orderItems)
+                {
+                    subtotal += product.Price * quantity;
+                }
+
+                // FREE SHIPPING for orders > 700,000 VND
+                if (subtotal > 700000)
+                {
+                    _logger.LogDebug("Free shipping applied for subtotal {Subtotal} VND", subtotal);
+                    return 0;
+                }
+
+                // Standard shipping based on delivery method
+                decimal shippingFee = isExpressDelivery ? 50000 : 30000;
+
+                _logger.LogDebug("Calculated shipping: {Fee} VND (Express: {IsExpress})", 
+                    shippingFee, isExpressDelivery);
+
+                return shippingFee;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error calculating shipping, using default");
+                return isExpressDelivery ? 50000 : 30000;
+            }
+        }
+
+        /// <summary>
+        /// Helper method to calculate coupon discount for order total calculation
+        /// </summary>
+        private async Task<decimal> CalculateCouponDiscountForCalculation(string couponCode, decimal subtotal)
+        {
+            if (string.IsNullOrWhiteSpace(couponCode) || subtotal <= 0) 
+                return 0;
+
+            try
+            {
+                var coupon = await _context.Coupons
+                    .FirstOrDefaultAsync(c => c.Code.ToUpper() == couponCode.ToUpper() &&
+                        c.IsActive &&
+                        c.StartDate <= DateTime.UtcNow &&
+                        c.EndDate >= DateTime.UtcNow);
+
+                if (coupon == null)
+                {
+                    _logger.LogDebug("Coupon {Code} not found or not valid", couponCode);
+                    return 0;
+                }
+
+                if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit)
+                {
+                    _logger.LogDebug("Coupon {Code} exceeded usage limit", couponCode);
+                    return 0;
+                }
+
+                if (coupon.MinOrderAmount.HasValue && subtotal < coupon.MinOrderAmount)
+                {
+                    _logger.LogDebug("Order amount {Amount} below minimum {Min} for coupon {Code}",
+                        subtotal, coupon.MinOrderAmount, couponCode);
+                    return 0;
+                }
+
+                decimal discount = 0;
+
+                if (coupon.Type == CouponType.Percentage)
+                {
+                    discount = subtotal * (coupon.Value / 100);
+                }
+                else if (coupon.Type == CouponType.FixedAmount)
+                {
+                    discount = coupon.Value;
+                }
+
+                // Apply max discount cap
+                if (coupon.MaxDiscountAmount.HasValue)
+                {
+                    discount = Math.Min(discount, coupon.MaxDiscountAmount.Value);
+                }
+
+                // Discount cannot exceed subtotal
+                discount = Math.Min(discount, subtotal);
+
+                _logger.LogDebug("Coupon {Code} discount: {Discount} VND", couponCode, discount);
+
+                return discount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error calculating coupon discount for {Code}", couponCode);
+                return 0;
+            }
         }
 
         #endregion

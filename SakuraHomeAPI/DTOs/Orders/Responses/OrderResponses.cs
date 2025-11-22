@@ -346,4 +346,69 @@ namespace SakuraHomeAPI.DTOs.Orders.Responses
         public string? Location { get; set; }
         public string? Carrier { get; set; }
     }
+
+    /// <summary>
+    /// Order total calculation DTO - Response for calculate-total endpoint
+    /// </summary>
+    public class OrderTotalCalculationDto
+    {
+        /// <summary>
+        /// Subtotal before shipping, taxes, and discounts
+        /// </summary>
+        public decimal Subtotal { get; set; }
+
+        /// <summary>
+        /// Shipping/delivery cost
+        /// </summary>
+        public decimal ShippingCost { get; set; }
+
+        /// <summary>
+        /// Tax amount (if applicable)
+        /// </summary>
+        public decimal TaxAmount { get; set; }
+
+        /// <summary>
+        /// Total discount amount (from coupons, promotions, etc.)
+        /// </summary>
+        public decimal DiscountAmount { get; set; }
+
+        /// <summary>
+        /// Final total amount to pay
+        /// </summary>
+        public decimal TotalAmount { get; set; }
+
+        /// <summary>
+        /// Applied coupon code (if any)
+        /// </summary>
+        public string? CouponCode { get; set; }
+
+        /// <summary>
+        /// Whether express delivery was selected
+        /// </summary>
+        public bool IsExpressDelivery { get; set; }
+
+        /// <summary>
+        /// Total number of items
+        /// </summary>
+        public int ItemCount { get; set; }
+
+        /// <summary>
+        /// Estimated delivery days
+        /// </summary>
+        public int EstimatedDeliveryDays { get; set; }
+
+        /// <summary>
+        /// Breakdown of savings
+        /// </summary>
+        public string SavingsSummary => DiscountAmount > 0 
+            ? $"Bạn tiết kiệm {DiscountAmount:N0} VND" 
+            : "Không có giảm giá";
+
+        /// <summary>
+        /// Free shipping message
+        /// </summary>
+        public string ShippingMessage => ShippingCost == 0 
+            ? "✓ Miễn phí vận chuyển" 
+            : $"Phí vận chuyển: {ShippingCost:N0} VND";
+    }
 }

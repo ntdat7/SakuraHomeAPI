@@ -93,6 +93,21 @@ namespace SakuraHomeAPI.Services.Interfaces
         Task<ApiResponse<PaymentResponseDto>> ConfirmBankTransferAsync(string transactionId, BankTransferRequestDto request, Guid staffId);
 
         /// <summary>
+        /// Create SePay payment
+        /// </summary>
+        Task<ApiResponse<SePayResponseDto>> CreateSePayPaymentAsync(SePayRequestDto request, Guid userId);
+
+        /// <summary>
+        /// Process SePay webhook callback
+        /// </summary>
+        Task<ApiResponse<SePayWebhookResponseDto>> ProcessSePayWebhookAsync(SePayWebhookDto webhookData, string apiKey);
+
+        /// <summary>
+        /// Create QR Code payment
+        /// </summary>
+        Task<ApiResponse<QRCodePaymentResponseDto>> CreateQRCodePaymentAsync(QRCodePaymentRequestDto request, Guid userId);
+
+        /// <summary>
         /// Verify payment gateway signature
         /// </summary>
         Task<bool> VerifyPaymentSignatureAsync(PaymentMethod method, Dictionary<string, string> data);

@@ -1,0 +1,609 @@
+﻿### ==========================================
+### 💳 SEPAY PAYMENT SYSTEM - COMPLETE TESTS
+### ==========================================
+### Sakura Home API - SePay Integration Testing
+### Base URL: https://localhost:7240
+### Make sure to run the application first: dotnet run
+
+@baseUrl = https://localhost:8080
+@productionUrl = https://sakukohome-f2apecavcygjaqbd.southeastasia-01.azurewebsites.net
+@contentType = application/json
+
+# ==========================================
+# VARIABLES - REPLACE WITH YOUR DATA
+# ==========================================
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...your-token-here
+@orderId = 1001
+@sePayApiKey = your-sepay-api-key-here
+@transactionId = PAY_20241210_001
+
+# ==========================================
+# QUICK START GUIDE
+# ==========================================
+# 1. Login để lấy user token (dùng Auth.http)
+# 2. Tạo một order (dùng Order.http)
+# 3. Replace @userToken và @orderId ở trên
+# 4. Cấu hình SePay API Key trong appsettings.json
+# 5. Chạy tests theo thứ tự từ trên xuống
+
+### ==========================================
+### 1️⃣ CREATE SEPAY PAYMENT
+### ==========================================
+
+### Test 1.1: Create SePay payment with all fields
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Thanh toán đơn hàng #ORD-2024-001001",
+  "customerName": "Nguyen Van A",
+  "customerEmail": "customer@example.com",
+  "customerPhone": "+84901234567",
+  "generateQRCode": true,
+  "timeoutMinutes": 15
+}
+
+### Test 1.2: Create SePay payment - Minimal fields (without customer info)
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 750000,
+  "orderDescription": "Thanh toán đơn hàng",
+  "generateQRCode": true,
+  "timeoutMinutes": 15
+}
+
+### Test 1.3: Create SePay payment - Without QR Code
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 250000,
+  "orderDescription": "Thanh toán đơn hàng",
+  "customerName": "Test User",
+  "generateQRCode": false,
+  "timeoutMinutes": 30
+}
+
+### Test 1.4: Create SePay payment - Large amount
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 50000000,
+  "orderDescription": "Thanh toán đơn hàng lớn 50 triệu",
+  "customerName": "Khach Hang VIP",
+  "customerEmail": "vip@example.com",
+  "customerPhone": "+84912345678",
+  "generateQRCode": true,
+  "timeoutMinutes": 60
+}
+
+### Test 1.5: Create SePay payment - Small amount
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 10000,
+  "orderDescription": "Thanh toán đơn hàng nhỏ",
+  "customerName": "Test Small",
+  "generateQRCode": true,
+  "timeoutMinutes": 5
+}
+
+### ==========================================
+### 2️⃣ SEPAY WEBHOOK - SUCCESS SCENARIOS
+### ==========================================
+
+### Test 2.1: Valid webhook - Successful payment
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92704,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 15:05:37",
+  "accountNumber": "0123499999",
+  "code": "SAKURA001001",
+  "content": "SAKURA001001 NguyenVanA",
+  "transferType": "in",
+  "transferAmount": 500000,
+  "accumulated": 19077000,
+  "subAccount": null,
+  "referenceCode": "MBVCB.3278907687",
+  "description": "GD: +500,000VND SAKURA001001 NguyenVanA SO DU TK 19,077,000VND"
+}
+
+### Test 2.2: Webhook with different bank
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92705,
+  "gateway": "Techcombank",
+  "transactionDate": "2024-12-10 15:10:00",
+  "accountNumber": "0123499999",
+  "code": "SAKURA001002",
+  "content": "SAKURA001002 TranThiB",
+  "transferType": "in",
+  "transferAmount": 750000,
+  "accumulated": 19827000,
+  "referenceCode": "TCB.123456789",
+  "description": "Transfer from customer"
+}
+
+### Test 2.3: Webhook with special characters in name
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92706,
+  "gateway": "MB Bank",
+  "transactionDate": "2024-12-10 15:15:00",
+  "accountNumber": "0123499999",
+  "code": "SAKURA001003",
+  "content": "SAKURA001003 NguyenVănĐức",
+  "transferType": "in",
+  "transferAmount": 1200000,
+  "referenceCode": "MB.987654321"
+}
+
+### ==========================================
+### 3️⃣ SEPAY WEBHOOK - ERROR SCENARIOS
+### ==========================================
+
+### Test 3.1: Webhook - Transfer OUT (should be ignored)
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92707,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 15:20:00",
+  "accountNumber": "0123499999",
+  "code": "",
+  "content": "Transfer to supplier",
+  "transferType": "out",
+  "transferAmount": 100000,
+  "accumulated": 18977000,
+  "referenceCode": "MBVCB.3278907688"
+}
+
+### Test 3.2: Webhook - Wrong amount (should fail validation)
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92708,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 15:25:00",
+  "accountNumber": "0123499999",
+  "code": "SAKURA001001",
+  "content": "SAKURA001001 NguyenVanA",
+  "transferType": "in",
+  "transferAmount": 300000,
+  "referenceCode": "MBVCB.3278907689"
+}
+
+### Test 3.3: Webhook - Invalid payment code format
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92709,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 15:30:00",
+  "accountNumber": "0123499999",
+  "code": "INVALID123",
+  "content": "INVALID123 test",
+  "transferType": "in",
+  "transferAmount": 500000,
+  "referenceCode": "MBVCB.3278907690"
+}
+
+### Test 3.4: Webhook - Empty payment code
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92710,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 15:35:00",
+  "accountNumber": "0123499999",
+  "code": "",
+  "content": "No code transfer",
+  "transferType": "in",
+  "transferAmount": 500000,
+  "referenceCode": "MBVCB.3278907691"
+}
+
+### Test 3.5: Webhook - Invalid API Key (should fail authentication)
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey wrong-api-key-123
+Content-Type: {{contentType}}
+
+{
+  "id": 92711,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 15:40:00",
+  "accountNumber": "0123499999",
+  "code": "SAKURA001001",
+  "content": "SAKURA001001 test",
+  "transferType": "in",
+  "transferAmount": 500000,
+  "referenceCode": "MBVCB.3278907692"
+}
+
+### Test 3.6: Webhook - No pending payment found
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92712,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 15:45:00",
+  "accountNumber": "0123499999",
+  "code": "SAKURA999999",
+  "content": "SAKURA999999 NonExistentOrder",
+  "transferType": "in",
+  "transferAmount": 500000,
+  "referenceCode": "MBVCB.3278907693"
+}
+
+### ==========================================
+### 4️⃣ PAYMENT VALIDATION ERRORS
+### ==========================================
+
+### Test 4.1: Create payment - Invalid order ID (should fail)
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": 999999,
+  "amount": 500000,
+  "orderDescription": "Payment for non-existent order",
+  "generateQRCode": true
+}
+
+### Test 4.2: Create payment - Already paid order (should fail)
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": 1,
+  "amount": 500000,
+  "orderDescription": "Payment for already paid order",
+  "generateQRCode": true
+}
+
+### Test 4.3: Create payment - Invalid amount (negative)
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": -100,
+  "orderDescription": "Invalid negative amount",
+  "generateQRCode": true
+}
+
+### Test 4.4: Create payment - Amount = 0
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 0,
+  "orderDescription": "Zero amount payment",
+  "generateQRCode": true
+}
+
+### Test 4.5: Create payment - Missing required fields
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}}
+}
+
+### Test 4.6: Create payment - Invalid timeout
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Test",
+  "timeoutMinutes": 120
+}
+
+### Test 4.7: Create payment - Without authentication (should fail)
+POST {{baseUrl}}/api/payment/sepay
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Unauthorized payment",
+  "generateQRCode": true
+}
+
+### ==========================================
+### 5️⃣ GET PAYMENT INFO
+### ==========================================
+
+### Test 5.1: Get payment by transaction ID
+GET {{baseUrl}}/api/payment/{{transactionId}}
+Authorization: Bearer {{userToken}}
+
+### Test 5.2: Get payments for specific order
+GET {{baseUrl}}/api/payment/order/{{orderId}}
+Authorization: Bearer {{userToken}}
+
+### Test 5.3: Get my payments (with pagination)
+GET {{baseUrl}}/api/payment/my-payments?page=1&pageSize=10
+Authorization: Bearer {{userToken}}
+
+### Test 5.4: Get non-existent payment (should fail)
+GET {{baseUrl}}/api/payment/INVALID_TRANSACTION_ID
+Authorization: Bearer {{userToken}}
+
+### ==========================================
+### 6️⃣ PRODUCTION ENVIRONMENT TESTS
+### ==========================================
+
+### Test 6.1: Create SePay payment - PRODUCTION
+POST {{productionUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Production test payment",
+  "customerName": "Production Test",
+  "customerEmail": "test@production.com",
+  "customerPhone": "+84901234567",
+  "generateQRCode": true,
+  "timeoutMinutes": 15
+}
+
+### Test 6.2: SePay webhook - PRODUCTION
+POST {{productionUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92713,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 16:00:00",
+  "accountNumber": "0123499999",
+  "code": "SAKURA001001",
+  "content": "SAKURA001001 ProductionTest",
+  "transferType": "in",
+  "transferAmount": 500000,
+  "referenceCode": "PROD.123456789"
+}
+
+### ==========================================
+### 7️⃣ INTEGRATION TESTS
+### ==========================================
+
+### Test 7.1: Full payment flow - Create and simulate webhook
+# Step 1: Create payment
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Full flow test",
+  "customerName": "Test User",
+  "generateQRCode": true,
+  "timeoutMinutes": 15
+}
+
+# Step 2: Copy transactionId from response above, then simulate webhook
+# Replace SAKURA{orderId} with actual payment code from response
+
+### Test 7.2: Webhook for the above payment
+POST {{baseUrl}}/api/payment/sepay/webhook
+Authorization: Apikey {{sePayApiKey}}
+Content-Type: {{contentType}}
+
+{
+  "id": 92714,
+  "gateway": "Vietcombank",
+  "transactionDate": "2024-12-10 16:10:00",
+  "accountNumber": "0123499999",
+  "code": "SAKURA001001",
+  "content": "SAKURA001001 TestUser",
+  "transferType": "in",
+  "transferAmount": 500000,
+  "referenceCode": "TEST.123456789"
+}
+
+### Test 7.3: Verify order payment status after webhook
+GET {{baseUrl}}/api/payment/order/{{orderId}}
+Authorization: Bearer {{userToken}}
+
+### ==========================================
+### 8️⃣ EDGE CASES & SPECIAL SCENARIOS
+### ==========================================
+
+### Test 8.1: Multiple payments for same order (should handle pending cancellation)
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Second payment attempt",
+  "generateQRCode": true
+}
+
+### Test 8.2: Very long customer name
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Test long name",
+  "customerName": "Nguyen Van A B C D E F G H I J K L M N O P Q R S T U V W X Y Z",
+  "generateQRCode": true
+}
+
+### Test 8.3: Special characters in description
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Test special chars: ₫ @ # $ % & * () [] {} <> / \\ | ~ ` ' \"",
+  "customerName": "Test User",
+  "generateQRCode": true
+}
+
+### Test 8.4: Unicode characters in customer name
+POST {{baseUrl}}/api/payment/sepay
+Authorization: Bearer {{userToken}}
+Content-Type: {{contentType}}
+
+{
+  "orderId": {{orderId}},
+  "amount": 500000,
+  "orderDescription": "Test unicode",
+  "customerName": "Nguyễn Văn Đức Thắng Trần Thị Hương",
+  "generateQRCode": true
+}
+
+### ==========================================
+### 📊 TESTING CHECKLIST
+### ==========================================
+# 
+# ✅ BASIC FUNCTIONALITY
+# [ ] Create SePay payment successfully
+# [ ] QR Code URL is generated
+# [ ] Payment code format is correct (SAKURA{orderId})
+# [ ] Transfer content is properly formatted
+# [ ] Bank account info is returned
+# [ ] Expiry time is calculated correctly
+# 
+# ✅ WEBHOOK PROCESSING
+# [ ] Valid webhook updates payment status
+# [ ] Order status is updated to Paid
+# [ ] Transfer type "out" is ignored
+# [ ] Wrong amount is rejected
+# [ ] Invalid payment code is rejected
+# [ ] Invalid API key is rejected
+# [ ] No pending payment returns proper error
+# 
+# ✅ VALIDATION
+# [ ] Non-existent order is rejected
+# [ ] Already paid order is rejected
+# [ ] Negative amount is rejected
+# [ ] Zero amount is rejected
+# [ ] Missing required fields returns validation errors
+# [ ] Invalid timeout range is handled
+# [ ] Unauthenticated requests are rejected
+# 
+# ✅ EDGE CASES
+# [ ] Multiple payments for same order (cancels previous pending)
+# [ ] Long customer names are handled
+# [ ] Special characters are handled
+# [ ] Unicode characters are handled
+# [ ] Large amounts (> 50 million) work correctly
+# [ ] Small amounts (< 100k) work correctly
+# 
+# ✅ INTEGRATION
+# [ ] Full payment flow works end-to-end
+# [ ] Payment status can be queried
+# [ ] Order payments can be listed
+# [ ] User payments can be retrieved
+# 
+# ✅ PRODUCTION READINESS
+# [ ] Production URL works
+# [ ] Production webhook works
+# [ ] Logs are properly generated
+# [ ] Error messages are user-friendly
+# [ ] Response times are acceptable (<500ms)
+#
+### ==========================================
+### 📝 NOTES
+### ==========================================
+#
+# SEPAY CONFIGURATION:
+# 1. Configure in appsettings.json:
+#    "Payment": {
+#      "SePay": {
+#        "ApiKey": "your-api-key",
+#        "AccountNumber": "0123499999",
+#        "BankName": "Vietcombank",
+#        "BankCode": "VCB",
+#        "AccountHolder": "CONG TY SAKURA HOME",
+#        "PaymentPrefix": "SAKURA"
+#      }
+#    }
+#
+# 2. Configure webhook on SePay dashboard:
+#    - URL: https://your-domain.com/api/payment/sepay/webhook
+#    - Authorization: Apikey your-api-key
+#    - Event: Có tiền vào (Transfer IN)
+#    - Filter by code: Yes
+#
+# 3. Payment code structure:
+#    Format: SAKURA{orderId:D6}
+#    Example: SAKURA001001 (for order ID 1001)
+#
+# 4. QR Code:
+#    - Uses VietQR standard
+#    - URL: https://img.vietqr.io/image/{bankCode}-{accountNumber}-{template}.png
+#    - Includes amount and transfer content
+#
+# EXPECTED RESPONSE TIMES:
+# - Create payment: < 300ms
+# - Webhook processing: < 200ms
+# - Get payment info: < 100ms
+#
+# WEBHOOK FLOW:
+# 1. Customer transfers money with payment code
+# 2. SePay detects transaction
+# 3. SePay sends webhook to your API
+# 4. API validates webhook (API key, amount, code)
+# 5. API updates payment status to Paid
+# 6. API updates order status to Paid
+# 7. Customer is notified (optional)
+#
+### ==========================================

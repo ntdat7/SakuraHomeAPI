@@ -14,7 +14,8 @@
 ### 1. CALCULATE ORDER TOTAL (Guest/User)
 ### ==========================================
 
-POST {{baseUrl}}/api/order/calculate-total
+### 1.1. Basic calculation - No address, no coupon
+POST {{baseUrl}}/api/orders/calculate-total
 Content-Type: {{contentType}}
 
 {
@@ -29,9 +30,99 @@ Content-Type: {{contentType}}
       "productVariantId": null,
       "quantity": 1
     }
+  ]
+}
+
+### 1.2. With shipping address for accurate shipping cost
+POST {{baseUrl}}/api/orders/calculate-total
+Content-Type: {{contentType}}
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    },
+    {
+      "productId": 2,
+      "quantity": 1
+    }
+  ],
+  "shippingAddressId": {{addressId}}
+}
+
+### 1.3. With coupon code
+POST {{baseUrl}}/api/orders/calculate-total
+Content-Type: {{contentType}}
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 3
+    }
   ],
   "shippingAddressId": {{addressId}},
-  "couponCode": null
+  "couponCode": "SAVE10"
+}
+
+### 1.4. With express delivery (higher shipping cost)
+POST {{baseUrl}}/api/orders/calculate-total
+Content-Type: {{contentType}}
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    },
+    {
+      "productId": 2,
+      "quantity": 1
+    }
+  ],
+  "shippingAddressId": {{addressId}},
+  "couponCode": null,
+  "expressDelivery": true
+}
+
+### 1.5. Large order for free shipping (>700,000 VND)
+POST {{baseUrl}}/api/orders/calculate-total
+Content-Type: {{contentType}}
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 5
+    },
+    {
+      "productId": 2,
+      "quantity": 3
+    }
+  ],
+  "shippingAddressId": {{addressId}}
+}
+
+### 1.6. Complete calculation with all options
+POST {{baseUrl}}/api/orders/calculate-total
+Content-Type: {{contentType}}
+
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2,
+      "customOptions": "{\"giftWrap\": true}"
+    },
+    {
+      "productId": 3,
+      "quantity": 1
+    }
+  ],
+  "shippingAddressId": {{addressId}},
+  "couponCode": "FIRSTORDER",
+  "expressDelivery": true
 }
 
 ### ==========================================

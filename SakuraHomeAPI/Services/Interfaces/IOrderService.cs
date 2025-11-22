@@ -42,7 +42,11 @@ namespace SakuraHomeAPI.Services.Interfaces
         
         // Order Validation & Business Logic
         Task<ApiResponse<OrderValidationDto>> ValidateOrderAsync(CreateOrderRequestDto request, Guid userId);
-       // Task<ApiResponse<decimal>> CalculateOrderTotalAsync(List<OrderItemRequestDto> items, int? shippingAddressId = null, string? couponCode = null);
+        Task<ApiResponse<decimal>> CalculateOrderTotalAsync(
+            List<OrderItemRequestDto> items, 
+            int? shippingAddressId = null, 
+            string? couponCode = null, 
+            bool isExpressDelivery = false);
         
         // Return & Refund
         Task<ApiResponse<OrderResponseDto>> RequestReturnAsync(int orderId, ReturnRequestDto request, Guid userId);

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SakuraHomeAPI.DTOs.Common;
 using SakuraHomeAPI.DTOs.Payments.Requests;
@@ -329,6 +329,104 @@ namespace SakuraHomeAPI.Controllers
             {
                 _logger.LogError(ex, "Error creating bank transfer");
                 return StatusCode(500, ApiResponseDto<BankTransferResponseDto>.ErrorResult("An error occurred while creating bank transfer"));
+            }
+        }
+
+        /// <summary>
+        /// Create SePay payment
+        /// </summary>
+        [HttpPost("sepay")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponseDto<SePayResponseDto>>> CreateSePayPayment([FromBody] SePayRequestDto request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (!userId.HasValue)
+                    return Unauthorized(ApiResponseDto<SePayResponseDto>.ErrorResult("User not authenticated"));
+
+                var result = await _paymentService.CreateSePayPaymentAsync(request, userId.Value);
+                
+                if (result.Success)
+                    return Ok(ApiResponseDto<SePayResponseDto>.SuccessResult(result.Data, result.Message));
+                
+                return BadRequest(ApiResponseDto<SePayResponseDto>.ErrorResult(result.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating SePay payment");
+                return StatusCode(500, ApiResponseDto<SePayResponseDto>.ErrorResult("An error occurred while creating SePay payment"));
+            }
+        }
+
+        /// <summary>
+        /// SePay webhook callback
+        /// </summary>
+        [HttpPost("sepay/webhook")]
+        [AllowAnonymous]
+        public async Task<ActionResult<SePayWebhookResponseDto>> SePayWebhook([FromBody] SePayWebhookDto webhookData)
+        {
+            try
+            {
+                // Verify webhook signature (if SePay provides one)
+                var apiKey = Request.Headers["Authorization"].ToString().Replace("Apikey ", "");
+                
+                var result = await _paymentService.ProcessSePayWebhookAsync(webhookData, apiKey);
+                
+                if (result.Success)
+                {
+                    return Ok(new SePayWebhookResponseDto
+                    {
+                        Success = true,
+                        Message = result.Message,
+                        TransactionId = result.Data?.TransactionId,
+                        OrderNumber = result.Data?.OrderNumber,
+                        Amount = result.Data?.Amount,
+                        Status = result.Data?.Status
+                    });
+                }
+                
+                return Ok(new SePayWebhookResponseDto
+                {
+                    Success = false,
+                    Message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing SePay webhook");
+                return Ok(new SePayWebhookResponseDto
+                {
+                    Success = false,
+                    Message = "An error occurred while processing webhook"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Create QR Code payment
+        /// </summary>
+        [HttpPost("qrcode")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponseDto<QRCodePaymentResponseDto>>> CreateQRCodePayment([FromBody] QRCodePaymentRequestDto request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (!userId.HasValue)
+                    return Unauthorized(ApiResponseDto<QRCodePaymentResponseDto>.ErrorResult("User not authenticated"));
+
+                var result = await _paymentService.CreateQRCodePaymentAsync(request, userId.Value);
+                
+                if (result.Success)
+                    return Ok(ApiResponseDto<QRCodePaymentResponseDto>.SuccessResult(result.Data, result.Message));
+                
+                return BadRequest(ApiResponseDto<QRCodePaymentResponseDto>.ErrorResult(result.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating QR Code payment");
+                return StatusCode(500, ApiResponseDto<QRCodePaymentResponseDto>.ErrorResult("An error occurred while creating QR Code payment"));
             }
         }
 

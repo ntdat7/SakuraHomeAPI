@@ -18,7 +18,7 @@ using SakuraHomeAPI.Hubs;
 using SakuraHomeAPI.Models.Entities.Identity;
 using SakuraHomeAPI.Services.Implementations;
 using SakuraHomeAPI.Services.Interfaces;
-using SakuraHomeAPI.Tools; 
+using SakuraHomeAPI.Tools;
 using Serilog;
 using System;
 using System.IO;
@@ -29,32 +29,56 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
-var localConfigPath = @"C:\SakuraHome\appsettings.Local.json";
+
+// ✅ Configuration: Support both local and Azure environments
+// Load optional local configuration file (only exists in local development)
+var localConfigPath = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+    "SakuraHome",
+    "appsettings.Local.json"
+);
+
 if (File.Exists(localConfigPath))
 {
     builder.Configuration.AddJsonFile(localConfigPath, optional: true, reloadOnChange: true);
-    Log.Information("Loaded local configuration from: {Path}", localConfigPath);
+    Console.WriteLine($"Loaded local configuration from: {localConfigPath}");
 }
-else
-{
-    Log.Warning("Local configuration file not found at: {Path}", localConfigPath);
-}
+
+// Add environment variables (Azure App Service uses this)
+builder.Configuration.AddEnvironmentVariables();
+
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
+    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
     .WriteTo.Console()
-    .WriteTo.File("logs/sakura-home-.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(
+        path: builder.Environment.IsProduction()
+            ? "D:\\home\\LogFiles\\Application\\sakura-home-.txt"  // Azure path
+            : "logs/sakura-home-.txt",  // Local path
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30
+    )
     .CreateLogger();
 
 builder.Host.UseSerilog();
 
+Log.Information("Starting Sakura Home API in {Environment} environment", builder.Environment.EnvironmentName);
+
 // Add services to the container.
 
-// Database Configuration - FIXED: Added retry logic and better error handling
+// Database Configuration - FIXED: Support both local and Azure SQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        throw new InvalidOperationException("Database connection string 'DefaultConnection' not found.");
+    }
+
+    options.UseSqlServer(connectionString,
         sqlOptions =>
         {
             sqlOptions.MigrationsAssembly("SakuraHomeAPI");
@@ -62,6 +86,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(30),
                 errorNumbersToAdd: null);
+
+            // Azure SQL specific settings
+            if (builder.Environment.IsProduction())
+            {
+                sqlOptions.CommandTimeout(180); // 3 minutes for production
+            }
         });
 
     // Enable sensitive data logging only in development
@@ -76,12 +106,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
 {
     // Password settings - RELAXED for admin user creation
-    options.Password.RequireDigit = false;           // Không yêu cầu số
-    options.Password.RequireLowercase = false;       // Không yêu cầu chữ thường
-    options.Password.RequireNonAlphanumeric = false; // Không yêu cầu ký tự đặc biệt
-    options.Password.RequireUppercase = false;       // Không yêu cầu chữ hoa
-    options.Password.RequiredLength = 3;             // Chỉ cần tối thiểu 3 ký tự
-    options.Password.RequiredUniqueChars = 1;        // Chỉ cần 1 ký tự unique
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 3;
+    options.Password.RequiredUniqueChars = 1;
 
     // Lockout settings
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
@@ -106,7 +136,7 @@ var jwtKey = jwtSettings["Key"];
 
 if (string.IsNullOrEmpty(jwtKey))
 {
-    throw new InvalidOperationException("JWT Key is not configured in appsettings.json");
+    throw new InvalidOperationException("JWT Key is not configured. Please set JwtSettings:Key in configuration or environment variables.");
 }
 
 var key = Encoding.ASCII.GetBytes(jwtKey);
@@ -118,7 +148,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment(); // Only require HTTPS in production
+    options.RequireHttpsMetadata = builder.Environment.IsProduction();
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -143,21 +173,21 @@ builder.Services.AddAuthentication(options =>
         },
         OnTokenValidated = context =>
         {
-            Log.Information("JWT Token validated for user: {User}", context.Principal?.Identity?.Name);
+            Log.Debug("JWT Token validated for user: {User}", context.Principal?.Identity?.Name);
             return Task.CompletedTask;
         },
         OnMessageReceived = context =>
         {
-            // ✅ THÊM: Allow JWT token from query string for SignalR
+            // Allow JWT token from query string for SignalR
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            
+
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
             {
                 context.Token = accessToken;
-                Log.Information("JWT token received from query string for SignalR connection");
+                Log.Debug("JWT token received from query string for SignalR connection");
             }
-            
+
             return Task.CompletedTask;
         }
     };
@@ -192,37 +222,35 @@ builder.Services.AddAutoMapper(typeof(Program));
 // Memory Cache
 builder.Services.AddMemoryCache();
 
-// CORS - FIXED: Better configuration with SignalR support
+// CORS - FIXED: Dynamic configuration based on environment
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-
+    // Development CORS policy
     options.AddPolicy("Development", policy =>
     {
         policy.WithOrigins(
-                "http://localhost:3000", 
-                "https://localhost:3000", 
-                "http://localhost:5173", 
+                "http://localhost:3000",
+                "https://localhost:3000",
+                "http://localhost:5173",
                 "https://localhost:5173",
                 "http://localhost:5174",
                 "https://localhost:5174")
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials() // ✅ REQUIRED for SignalR
+              .AllowCredentials()
               .SetIsOriginAllowedToAllowWildcardSubdomains();
     });
 
+    // Production CORS policy - get from configuration
+    var productionOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+        ?? new[] { "https://yourdomain.com" };
+
     options.AddPolicy("Production", policy =>
     {
-        policy.WithOrigins("https://yourdomain.com", "https://admin.yourdomain.com")
+        policy.WithOrigins(productionOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials(); // ✅ REQUIRED for SignalR
+              .AllowCredentials();
     });
 });
 
@@ -276,7 +304,7 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// Custom Services - Updated với các services mới
+// Custom Services
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICartService, CartService>();
@@ -286,47 +314,28 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-
-// New services được thêm
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICouponService, CouponService>();
 builder.Services.AddScoped<IShippingService, ShippingService>();
-
 builder.Services.AddScoped<IAdminService, AdminService>();
-
-// Product services - ENABLED for refactoring
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<SakuraHomeAPI.Repositories.Interfaces.IProductRepository, SakuraHomeAPI.Repositories.Implementations.ProductRepository>();
 
+// SignalR
 builder.Services.AddSignalR(options =>
 {
-    options.EnableDetailedErrors = true; // For debugging
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-    options.MaximumReceiveMessageSize = 32768; // 32KB
+    options.MaximumReceiveMessageSize = 32768;
     options.StreamBufferCapacity = 10;
 })
 .AddJsonProtocol(options =>
 {
-    // ✅ THÊM: Configure JSON serialization for SignalR
     options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.PayloadSerializerOptions.WriteIndented = false;
     options.PayloadSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
-
-//builder.Services.AddScoped(ICategoryService, CategoryService>();
-//builder.Services.AddScoped(IBrandService, BrandService>();
-//builder.Services.AddScoped(IFileService, FileService>();
-//builder.Services.AddScoped(ITranslationService, TranslationService>();
-//builder.Services.AddScoped(IAnalyticsService, AnalyticsService>();
-
-//// Repository Pattern
-//builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-//builder.Services.AddScoped(IUnitOfWork, UnitOfWork>();
-
-//// Background Services
-//builder.Services.AddHostedService(EmailProcessorService>();
-//builder.Services.AddHostedService(NotificationProcessorService>();
 
 // Health Checks
 builder.Services.AddHealthChecks()
@@ -340,13 +349,18 @@ builder.Services.AddResponseCompression(options =>
 
 var app = builder.Build();
 
-// Kestrel configuration: chỉ lắng nghe HTTPS trên port 8080
-app.Urls.Clear();
-app.Urls.Add("https://localhost:8080");
+// ✅ FIXED: Dynamic URL configuration - works on both local and Azure
+if (!builder.Environment.IsProduction())
+{
+    // Local development only
+    app.Urls.Clear();
+    app.Urls.Add("https://localhost:8080");
+}
+// Azure App Service handles URLs automatically in production
 
 // Configure the HTTP request pipeline.
 
-// Exception Handling
+// Swagger - Available in both Development and Production (can be disabled in prod if needed)
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -354,23 +368,23 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sakura Home API V1");
-        c.RoutePrefix = string.Empty; // Swagger at root
+        c.RoutePrefix = string.Empty;
         c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
 }
 else
 {
+    // Production: Enable Swagger but with different route
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sakura Home API V1");
+        c.RoutePrefix = "api-docs"; // Access via /api-docs in production
+    });
+
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
-
-// Custom Middlewares
-//app.UseMiddleware<ExceptionMiddleware>();
-//app.UseMiddleware<RequestLoggingMiddleware>();
-//app.UseMiddleware<RateLimitingMiddleware>();
-
-//// Security Headers
-//app.UseMiddleware<SecurityHeadersMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseResponseCompression();
@@ -378,15 +392,8 @@ app.UseResponseCompression();
 // Static Files
 app.UseStaticFiles();
 
-// CORS - FIXED: Better environment handling
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("Development");
-}
-else
-{
-    app.UseCors("Production");
-}
+// CORS - Environment-based
+app.UseCors(builder.Environment.IsDevelopment() ? "Development" : "Production");
 
 // Authentication & Authorization
 app.UseAuthentication();
@@ -398,11 +405,11 @@ app.UseHealthChecks("/health");
 // Controllers
 app.MapControllers();
 
-// SignalR Hubs - Multiple endpoints for compatibility
+// SignalR Hubs
 app.MapHub<NotificationHub>("/hubs/notifications");
-app.MapHub<NotificationHub>("/notificationHub"); // ✅ THÊM: Để tương thích với frontend hiện tại
+app.MapHub<NotificationHub>("/notificationHub");
 
-// Database Migration and Seeding - FIXED: Better error handling
+// Database Migration and Seeding
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -419,7 +426,7 @@ using (var scope = app.Services.CreateScope())
         {
             Log.Information("Database connection successful");
 
-            // Apply pending migrations
+            // Apply pending migrations automatically
             var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
             if (pendingMigrations.Any())
             {
@@ -444,16 +451,15 @@ using (var scope = app.Services.CreateScope())
     {
         Log.Error(ex, "An error occurred while migrating or seeding the database");
 
-        // Don't throw in production to avoid application crash
-        if (app.Environment.IsDevelopment())
+        // Don't crash the app in production
+        if (!app.Environment.IsProduction())
         {
             throw;
         }
     }
 }
 
-// THÊM PHẦN IMPORT ADDRESS VÀO ĐÂY
-// Import Vietnam Addresses if requested
+// Import Vietnam Addresses if requested (local development only)
 if (args.Length > 0 && args[0] == "--import-addresses")
 {
     var csvPath = args.Length > 1 ? args[1] : "Data/Book1.csv";
@@ -477,7 +483,9 @@ app.Lifetime.ApplicationStopping.Register(() =>
 
 try
 {
-    Log.Information("Starting Sakura Home API on {Environment} environment", app.Environment.EnvironmentName);
+    Log.Information("Starting Sakura Home API on {Environment} environment at {Time}",
+        app.Environment.EnvironmentName,
+        DateTime.UtcNow);
     app.Run();
 }
 catch (Exception ex)
